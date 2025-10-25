@@ -1,17 +1,28 @@
 {
   "name": "server",
-  "version": "0.0.1",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "0.1.0",
   "scripts": {
-    "build": "tsc",
-    "dev": "bun --watch run src/index.ts"
-  },
-  "dependencies": {
-    "hono": "^4.7.11",
-    "shared": "workspace:*"
+    "dev": "bun --hot run src/index.ts",
+    "start": "bun run src/index.ts",
+    "migrate": "sequelize-cli db:migrate",
+    "migrate:undo": "sequelize-cli db:migrate:undo"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "sequelize-cli": "^6.6.3",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9",
+    "zod": "^3.25.76"
+  },
+  "dependencies": {
+    "@clerk/backend": "^2.19.0",
+    "@hono/clerk-auth": "^3.0.3",
+    "@hono/zod-validator": "^0.7.4",
+    "dotenv": "^17.2.3",
+    "hono": "^4.10.3",
+    "nanoid": "^5.1.6",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.7",
+    "uuid": "^9.0.1"
   }
 }

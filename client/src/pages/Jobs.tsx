@@ -67,7 +67,7 @@ const mockJobs: Job[] = [
   },
 ];
 
-const Applications = () => {
+const Jobs = () => {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [types, setTypes] = useState<Record<string, boolean>>({
@@ -260,4 +260,4 @@ const Applications = () => {
   );
 };
 
-export default Applications;
+export default Jobs;

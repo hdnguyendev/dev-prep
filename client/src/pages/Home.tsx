@@ -1,12 +1,11 @@
+import logo from "@/assets/logo.svg";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import beaver from "@/assets/beaver.svg";
-import Navbar from "@/components/Navbar";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -81,7 +80,6 @@ const Home = () => {
 
   return (
     <>
-      <Navbar />
       <main className="min-h-dvh">
       <section className="container mx-auto px-4 py-16 md:py-24 reveal">
         <div className="grid items-center gap-10 md:grid-cols-2">
@@ -97,11 +95,11 @@ const Home = () => {
               Search openings from top companies, track applications, and land your next opportunity with a modern, focused workflow.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Button onClick={() => navigate("/applications")}>
-                Explore Applications
+              <Button onClick={() => navigate("/jobs")}>
+                Explore Jobs
               </Button>
-              <Button variant="outline">
-                Post a Job
+              <Button variant="outline" onClick={() => navigate("/auth")}>
+                Get Started
               </Button>
             </div>
             <div className="flex items-center gap-4 pt-2 text-sm text-muted-foreground">
@@ -113,13 +111,9 @@ const Home = () => {
           </div>
 
           <div className="relative mx-auto w-full max-w-md">
-            {/* floating gradient orbs */}
-            <div className="pointer-events-none absolute -left-10 -top-10 size-28 rounded-full bg-gradient-to-br from-primary/30 to-transparent blur-2xl animate-float" />
-            <div className="pointer-events-none absolute -right-10 -bottom-10 size-32 rounded-full bg-gradient-to-tr from-indigo-400/25 to-transparent blur-2xl animate-float-delayed" />
-            <div className="absolute -inset-4 -z-10 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/30 to-transparent blur-xl" />
             <div className="rounded-xl border bg-card shadow-sm">
               <div className="flex items-center justify-center p-8">
-                <img src={beaver} alt="Dev Prep" className="h-40 w-40" />
+                <img src={logo} alt="Dev Prep" className="h-40 w-40" />
               </div>
               <div className="grid grid-cols-3 gap-2 border-t p-3 text-center text-xs text-muted-foreground">
                 <div className="rounded-md bg-muted px-2 py-1">Save</div>

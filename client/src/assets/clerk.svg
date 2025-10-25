@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1">
+      <stop offset="0" stop-color="#f5f7fa"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="16" fill="url(#bg)" />
+
+  <!-- shoulders -->
+  <ellipse cx="60" cy="88" rx="34" ry="14" fill="#cbd5e1" />
+
+  <!-- torso / jacket -->
+  <path d="M38 74c0-8 7-14 22-14s22 6 22 14v12H38V74z" fill="#2b6cb0" />
+
+  <!-- tie -->
+  <path d="M60 76l6 12-6 6-6-6 6-12z" fill="#e53e3e" />
+
+  <!-- head -->
+  <circle cx="60" cy="42" r="20" fill="#ffe9d6" />
+
+  <!-- hair -->
+  <path d="M44 36c2-6 10-10 16-10s14 4 16 10c-8-4-24-4-32 0z" fill="#3b3f46" />
+
+  <!-- glasses -->
+  <rect x="46" y="38" width="12" height="8" rx="2" fill="none" stroke="#273240" stroke-width="2" />
+  <rect x="62" y="38" width="12" height="8" rx="2" fill="none" stroke="#273240" stroke-width="2" />
+  <line x1="58" y1="42" x2="62" y2="42" stroke="#273240" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- smile -->
+  <path d="M52 50c2 2 8 2 10 0" stroke="#3b3f46" stroke-width="1.5" stroke-linecap="round" fill="none" />
+
+  <!-- subtle shadow -->
+  <ellipse cx="60" cy="62" rx="18" ry="4" fill="#000" opacity="0.04" />
+</svg>

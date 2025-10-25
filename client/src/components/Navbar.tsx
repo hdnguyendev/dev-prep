@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import logo from "@/assets/logo.svg";
 import { Button } from "@/components/ui/button";
-import beaver from "@/assets/beaver.svg";
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
 const applyThemeClass = (theme: "light" | "dark") => {
@@ -20,6 +21,9 @@ const getInitialTheme = (): "light" | "dark" => {
 
 const Navbar = () => {
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme());
+  const { user } = useUser();
+
+  const displayName = user?.fullName || user?.emailAddresses[0]?.emailAddress || 'User';
 
   useEffect(() => {
     applyThemeClass(theme);
@@ -32,9 +36,19 @@ const Navbar = () => {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 items-center gap-4 px-4">
         <div className="flex items-center gap-2">
-            <img src={beaver} alt="Logo" className="h-6 w-6" />
+            <img src={logo} alt="Logo" className="h-6 w-6" />
             <Link to="/" className="text-sm font-semibold tracking-tight">Dev Prep</Link>
         </div>
+
+        <nav className="flex items-center gap-4">
+          <Link to="/" className="text-sm hover:underline">Home</Link>
+          <Link to="/jobs" className="text-sm hover:underline">Jobs</Link>
+          <Link to="/interview" className="text-sm hover:underline">Interview Prep</Link>
+          <Link to="/candidates" className="text-sm hover:underline">For Candidates</Link>
+          <Link to="/employers" className="text-sm hover:underline">For Employers</Link>
+          <Link to="/contact" className="text-sm hover:underline">Contact Us</Link>
+        </nav>
+
 
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" size="sm" className="px-2" aria-label="Toggle theme" onClick={toggleTheme}>
@@ -51,8 +65,35 @@ const Navbar = () => {
               </svg>
             )}
           </Button>
-          <Button variant="ghost" size="sm">Sign in</Button>
-          <Button size="sm">Sign up</Button>
+          {
+            user ?
+              (<>
+                <Link to="/dashboard" className="text-sm hover:underline">
+                  Dashboard
+                </Link>
+                <span className="text-sm">Hello, {displayName}!</span>
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8",
+                      userButtonPopoverCard: "shadow-lg border",
+                    }
+                  }}
+                />
+              </>)
+            : (<>
+                <SignInButton mode="modal">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <Button size="sm">
+                    Sign Up
+                  </Button>
+                </SignUpButton>
+              </>)
+          }
         </div>
       </div>
     </header>
@@ -60,5 +101,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
-
