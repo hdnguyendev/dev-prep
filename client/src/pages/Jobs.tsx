@@ -1,73 +1,16 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import Navbar from "@/components/Navbar";
-
-type Job = {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  type: "Full-time" | "Part-time" | "Contract" | "Internship" | "Remote";
-  salary: string;
-  tags: string[];
-  description: string;
-  postedDaysAgo: number;
-};
-
-const mockJobs: Job[] = [
-  {
-    id: "1",
-    title: "Senior Frontend Engineer",
-    company: "Acme Corp",
-    location: "Remote",
-    type: "Remote",
-    salary: "$160k–$185k • Equity",
-    tags: ["React", "TypeScript", "Design Systems"],
-    description:
-      "Lead frontend initiatives, own performance and accessibility, and collaborate with Design on our component system.",
-    postedDaysAgo: 2,
-  },
-  {
-    id: "2",
-    title: "Product Designer",
-    company: "Nova",
-    location: "HCMC",
-    type: "Full-time",
-    salary: "$2,500–$3,500 • Bonus",
-    tags: ["Figma", "UX", "Motion"],
-    description:
-      "Own end-to-end experiences from discovery to polish. Create delightful and accessible interfaces.",
-    postedDaysAgo: 5,
-  },
-  {
-    id: "3",
-    title: "Backend Engineer",
-    company: "Globex",
-    location: "Hanoi",
-    type: "Full-time",
-    salary: "$1,800–$2,800",
-    tags: ["Node.js", "PostgreSQL", "Microservices"],
-    description: "Build resilient APIs, optimize databases, and own service reliability.",
-    postedDaysAgo: 1,
-  },
-  {
-    id: "4",
-    title: "ML Engineer",
-    company: "Stark Industries",
-    location: "Remote",
-    type: "Remote",
-    salary: "$180k–$220k • Equity",
-    tags: ["Python", "LLMs", "MLOps"],
-    description: "Productionize ML systems, iterate on LLM pipelines, and measure impact.",
-    postedDaysAgo: 7,
-  },
-];
+import { apiClient, type Job } from "@/lib/api";
+import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from "@clerk/clerk-react";
 
 const Jobs = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [types, setTypes] = useState<Record<string, boolean>>({
@@ -79,21 +22,49 @@ const Jobs = () => {
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sort, setSort] = useState("recent");
-  const [selectedId, setSelectedId] = useState<string | null>(mockJobs[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 6;
 
+  // Fetch jobs from API
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const token = await getToken();
+        const response = await apiClient.getJobs(token ?? undefined);
+        if (response.success) {
+          setJobs(response.data);
+          if (response.data.length > 0) {
+            setSelectedId(response.data[0].id);
+          }
+        } else {
+          setError(response.message || "Failed to fetch jobs");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, [getToken]);
+
   const allTags = useMemo(() => {
     const t = new Set<string>();
-    mockJobs.forEach((j) => j.tags.forEach((x) => t.add(x)));
+    jobs.forEach((j) => j.tags.forEach((x) => t.add(x)));
     return Array.from(t);
-  }, []);
+  }, [jobs]);
 
   const filtered = useMemo(() => {
     const activeTypes = Object.entries(types)
       .filter(([, v]) => v)
       .map(([k]) => k);
-    let list = mockJobs.filter((j) => {
+    let list = jobs.filter((j) => {
       const q = query.trim().toLowerCase();
       const matchesQuery = !q ||
         j.title.toLowerCase().includes(q) ||
@@ -104,22 +75,47 @@ const Jobs = () => {
       const matchesTags = selectedTags.length === 0 || selectedTags.every((t) => j.tags.includes(t));
       return matchesQuery && matchesLocation && matchesType && matchesTags;
     });
-    if (sort === "recent") list = list.sort((a, b) => a.postedDaysAgo - b.postedDaysAgo);
     if (sort === "salary") list = list.sort((a, b) => a.salary.localeCompare(b.salary));
     return list;
-  }, [location, query, selectedTags, sort, types]);
+  }, [jobs, location, query, selectedTags, sort, types]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const selected = mockJobs.find((j) => j.id === selectedId) ?? null;
+  const selected = jobs.find((j) => j.id === selectedId) ?? null;
 
   const toggleType = (k: string) => setTypes((prev) => ({ ...prev, [k]: !prev[k] }));
   const toggleTag = (t: string) =>
     setSelectedTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
+  if (loading) {
+    return (
+      <main className="container mx-auto flex min-h-dvh items-center justify-center px-4 py-8">
+        <div className="text-center">
+          <div className="mb-4 text-lg font-semibold">Loading jobs...</div>
+          <div className="text-sm text-muted-foreground">Please wait while we fetch the latest job listings.</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="container mx-auto flex min-h-dvh items-center justify-center px-4 py-8">
+        <div className="text-center">
+          <div className="mb-4 text-lg font-semibold text-red-600">Error loading jobs</div>
+          <div className="mb-4 text-sm text-muted-foreground">{error}</div>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <>
-    <Navbar />
+    <SignedOut>
+      <RedirectToSignIn />
+    </SignedOut>
+    <SignedIn>
     <main className="container mx-auto grid min-h-dvh grid-cols-1 gap-6 px-4 py-8 md:grid-cols-[280px_1fr_380px]">
       {/* Sidebar filters */}
       <aside className="rounded-lg border bg-card p-4">
@@ -188,14 +184,12 @@ const Jobs = () => {
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{j.location}</Badge>
                   <Badge variant="outline">{j.type}</Badge>
-                  <span className="text-muted-foreground">{j.postedDaysAgo}d ago</span>
                 </div>
               </div>
               <CardTitle className="text-base md:text-lg">{j.title}</CardTitle>
               <CardDescription>{j.salary}</CardDescription>
             </CardHeader>
             <CardContent className="pb-3">
-              <p className="line-clamp-2 text-sm text-muted-foreground">{j.description}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {j.tags.map((t) => (
                   <Badge key={t} variant="default">{t}</Badge>
@@ -237,15 +231,14 @@ const Jobs = () => {
             </div>
             <Separator className="my-4" />
             <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
-              <p>{selected.description}</p>
-              <ul className="list-inside list-disc">
-                <li>Collaborate with cross-functional teams to define and deliver features.</li>
-                <li>Maintain high standards for code quality and performance.</li>
-                <li>Contribute to design systems and documentation.</li>
-              </ul>
+              <div className="flex flex-wrap gap-2">
+                {selected.tags.map((t) => (
+                  <Badge key={t} variant="outline">{t}</Badge>
+                ))}
+              </div>
             </div>
             <div className="mt-auto flex items-center justify-between pt-6">
-              <div className="text-xs text-muted-foreground">Posted {selected.postedDaysAgo}d ago • Ref {selected.id.padStart(4, "0")}</div>
+              <div className="text-xs text-muted-foreground">Ref {selected.id.padStart(4, "0")}</div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm">Share</Button>
                 <Button variant="ghost" size="sm">Save</Button>
@@ -256,6 +249,7 @@ const Jobs = () => {
         )}
       </aside>
     </main>
+    </SignedIn>
     </>
   );
 };

@@ -1,8 +1,10 @@
 import { appMiddlewares } from "@server/app";
 import { Hono } from "hono";
-import { getMe } from "./user.controller";
+import { listJobs } from "./job.controller";
 const r = new Hono();
 
-r.get("/me", appMiddlewares.authMiddleware(), getMe);
+r.get("/", appMiddlewares.authMiddleware(), listJobs);
 
 export default r;
+
+
