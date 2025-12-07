@@ -1,8 +1,0 @@
-import { appMiddlewares } from "@server/app";
-import { Hono } from "hono";
-import { getMe } from "./user.controller";
-const r = new Hono();
-
-r.get("/me", appMiddlewares.authMiddleware(), getMe);
-
-export default r;

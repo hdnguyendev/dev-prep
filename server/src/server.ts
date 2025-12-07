@@ -1,9 +1,9 @@
+import { clerkMiddleware } from "@hono/clerk-auth";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { appDb, appMiddlewares } from "./app";
-import { cors } from "hono/cors";
 import routes from "./routes";
-import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 
 const app = new Hono();
 

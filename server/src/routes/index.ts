@@ -1,10 +1,9 @@
-import { appModules } from "@server/app";
 import { Hono } from "hono";
+import jobRoutes from "./jobs";
 
 const routes = new Hono();
 
-routes.route("/users", appModules.userRoute);
-routes.route("/jobs", appModules.jobRoute);
-
 routes.get("/health", (c) => c.json({ ok: true, uptime: process.uptime() }));
+routes.route("/jobs", jobRoutes);
+
 export default routes;

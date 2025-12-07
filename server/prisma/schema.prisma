@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Job {
+  id                   String         @id @default(uuid())
+  title                String
+  description          String
+  slug                 String         @unique
+  company_id           String
+  department_id        String
+  employment_type      EmploymentType
+  work_model           WorkModel
+  country              String
+  city                 String
+  address              String
+  min_salary           Int
+  max_salary           Int
+  currency             String
+  experience_min_years Int
+  experience_max_years Int
+  job_level            JobLevel
+  requirements         String
+  nice_to_have         String
+  responsibilities     String
+  skills               String
+  created_at           DateTime       @default(now())
+  updated_at           DateTime       @updatedAt
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERN
+}
+
+enum WorkModel {
+  ON_SITE
+  REMOTE
+  HYBRID
+}
+
+enum JobLevel {
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+  MANAGER
+}
