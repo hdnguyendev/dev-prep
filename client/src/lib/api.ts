@@ -3,11 +3,25 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9999';
 export interface Job {
   id: string;
   title: string;
-  company: string;
-  location: string;
-  type: string;
-  salary: string;
-  tags: string[];
+  slug: string;
+  company_id: string;
+  department_id: string;
+  employment_type: "FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERN";
+  work_model: "ON_SITE" | "REMOTE" | "HYBRID";
+  country: string;
+  city: string;
+  address: string;
+  min_salary: number;
+  max_salary: number;
+  currency: string;
+  experience_min_years: number;
+  experience_max_years: number;
+  job_level: "JUNIOR" | "MID" | "SENIOR" | "LEAD" | "MANAGER";
+  description: string;
+  requirements: string;
+  nice_to_have: string;
+  responsibilities: string;
+  skills: string;
 }
 
 export interface ApiResponse<T> {

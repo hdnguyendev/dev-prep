@@ -17,8 +17,8 @@ const Jobs = () => {
     "Full-time": false,
     "Part-time": false,
     Contract: false,
+    Freelance: false,
     Internship: false,
-    Remote: false,
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sort, setSort] = useState("recent");
@@ -54,9 +54,37 @@ const Jobs = () => {
     fetchJobs();
   }, [getToken]);
 
+  const getLocation = (job: Job) => `${job.city}, ${job.country}`;
+
+  const getEmploymentTypeLabel = (job: Job) => {
+    switch (job.employment_type) {
+      case "FULL_TIME":
+        return "Full-time";
+      case "PART_TIME":
+        return "Part-time";
+      case "CONTRACT":
+        return "Contract";
+      case "FREELANCE":
+        return "Freelance";
+      case "INTERN":
+        return "Internship";
+      default:
+        return job.employment_type;
+    }
+  };
+
+  const getSalaryRange = (job: Job) =>
+    `${job.min_salary.toLocaleString()}–${job.max_salary.toLocaleString()} ${job.currency}`;
+
+  const getSkillTags = (job: Job): string[] =>
+    job.skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
   const allTags = useMemo(() => {
     const t = new Set<string>();
-    jobs.forEach((j) => j.tags.forEach((x) => t.add(x)));
+    jobs.forEach((j) => getSkillTags(j).forEach((x) => t.add(x)));
     return Array.from(t);
   }, [jobs]);
 
@@ -68,14 +96,19 @@ const Jobs = () => {
       const q = query.trim().toLowerCase();
       const matchesQuery = !q ||
         j.title.toLowerCase().includes(q) ||
-        j.company.toLowerCase().includes(q) ||
-        j.tags.some((t) => t.toLowerCase().includes(q));
-      const matchesLocation = !location || j.location.toLowerCase().includes(location.toLowerCase());
-      const matchesType = activeTypes.length === 0 || activeTypes.includes(j.type);
-      const matchesTags = selectedTags.length === 0 || selectedTags.every((t) => j.tags.includes(t));
+        j.description.toLowerCase().includes(q) ||
+        j.skills.toLowerCase().includes(q);
+      const matchesLocation =
+        !location || getLocation(j).toLowerCase().includes(location.toLowerCase());
+      const matchesType =
+        activeTypes.length === 0 || activeTypes.includes(getEmploymentTypeLabel(j));
+      const jobTags = getSkillTags(j);
+      const matchesTags =
+        selectedTags.length === 0 || selectedTags.every((t) => jobTags.includes(t));
       return matchesQuery && matchesLocation && matchesType && matchesTags;
     });
-    if (sort === "salary") list = list.sort((a, b) => a.salary.localeCompare(b.salary));
+    if (sort === "salary")
+      list = list.sort((a, b) => a.min_salary - b.min_salary || a.max_salary - b.max_salary);
     return list;
   }, [jobs, location, query, selectedTags, sort, types]);
 
@@ -180,18 +213,18 @@ const Jobs = () => {
           <Card key={j.id} className={`cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md ${selectedId === j.id ? "ring-2 ring-ring/50" : ""}`} onClick={() => setSelectedId(j.id)}>
             <CardHeader className="pb-2">
               <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="font-semibold">{j.company}</span>
+                <span className="font-semibold">{j.slug}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline">{j.location}</Badge>
-                  <Badge variant="outline">{j.type}</Badge>
+                  <Badge variant="outline">{getLocation(j)}</Badge>
+                  <Badge variant="outline">{getEmploymentTypeLabel(j)}</Badge>
                 </div>
               </div>
               <CardTitle className="text-base md:text-lg">{j.title}</CardTitle>
-              <CardDescription>{j.salary}</CardDescription>
+              <CardDescription>{getSalaryRange(j)}</CardDescription>
             </CardHeader>
             <CardContent className="pb-3">
               <div className="mt-3 flex flex-wrap gap-2">
-                {j.tags.map((t) => (
+                {getSkillTags(j).map((t) => (
                   <Badge key={t} variant="default">{t}</Badge>
                 ))}
               </div>
@@ -221,18 +254,31 @@ const Jobs = () => {
         ) : (
           <div className="flex h-full flex-col">
             <div>
-              <div className="mb-1 text-xs text-muted-foreground">{selected.company}</div>
+              <div className="mb-1 text-xs text-muted-foreground">{selected.slug}</div>
               <h2 className="text-xl font-semibold leading-tight">{selected.title}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                <Badge variant="outline">{selected.location}</Badge>
-                <Badge variant="outline">{selected.type}</Badge>
-                <span className="text-muted-foreground">{selected.salary}</span>
+                <Badge variant="outline">{getLocation(selected)}</Badge>
+                <Badge variant="outline">{getEmploymentTypeLabel(selected)}</Badge>
+                <span className="text-muted-foreground">{getSalaryRange(selected)}</span>
               </div>
             </div>
             <Separator className="my-4" />
             <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+              <p>{selected.description}</p>
+              <div>
+                <div className="mb-1 font-medium">Requirements</div>
+                <p className="whitespace-pre-line">{selected.requirements}</p>
+              </div>
+              <div>
+                <div className="mb-1 font-medium">Responsibilities</div>
+                <p className="whitespace-pre-line">{selected.responsibilities}</p>
+              </div>
+              <div>
+                <div className="mb-1 font-medium">Nice to have</div>
+                <p className="whitespace-pre-line">{selected.nice_to_have}</p>
+              </div>
               <div className="flex flex-wrap gap-2">
-                {selected.tags.map((t) => (
+                {getSkillTags(selected).map((t) => (
                   <Badge key={t} variant="outline">{t}</Badge>
                 ))}
               </div>
