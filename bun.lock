@@ -4,6 +4,7 @@
     "": {
       "name": "bhvr",
       "devDependencies": {
+        "@types/bun": "latest",
         "bun-types": "latest",
         "turbo": "^2.6.3",
       },
