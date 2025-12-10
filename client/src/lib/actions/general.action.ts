@@ -29,7 +29,6 @@ export async function createFeedback(
   params: CreateFeedbackParams
 ): Promise<CreateFeedbackResponse> {
   const apiBase =
-    process.env.REACT_APP_API_BASE_URL ??
     process.env.VITE_API_BASE_URL ??
     "http://localhost:3000";
 
@@ -77,7 +76,6 @@ export async function createInterview(
   params: CreateInterviewParams
 ): Promise<CreateInterviewResponse> {
   const apiBase =
-    process.env.REACT_APP_API_BASE_URL ??
     process.env.VITE_API_BASE_URL ??
     "http://localhost:3000";
 
