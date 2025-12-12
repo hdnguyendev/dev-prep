@@ -185,7 +185,8 @@ exports.Prisma.EducationScalarFieldEnum = {
 
 exports.Prisma.SkillScalarFieldEnum = {
   id: 'id',
-  name: 'name'
+  name: 'name',
+  iconUrl: 'iconUrl'
 };
 
 exports.Prisma.CandidateSkillScalarFieldEnum = {
@@ -243,7 +244,8 @@ exports.Prisma.JobScalarFieldEnum = {
 
 exports.Prisma.CategoryScalarFieldEnum = {
   id: 'id',
-  name: 'name'
+  name: 'name',
+  iconUrl: 'iconUrl'
 };
 
 exports.Prisma.JobCategoryScalarFieldEnum = {
@@ -428,7 +430,8 @@ exports.Prisma.EducationOrderByRelevanceFieldEnum = {
 
 exports.Prisma.SkillOrderByRelevanceFieldEnum = {
   id: 'id',
-  name: 'name'
+  name: 'name',
+  iconUrl: 'iconUrl'
 };
 
 exports.Prisma.CandidateSkillOrderByRelevanceFieldEnum = {
@@ -468,7 +471,8 @@ exports.Prisma.JobOrderByRelevanceFieldEnum = {
 
 exports.Prisma.CategoryOrderByRelevanceFieldEnum = {
   id: 'id',
-  name: 'name'
+  name: 'name',
+  iconUrl: 'iconUrl'
 };
 
 exports.Prisma.JobCategoryOrderByRelevanceFieldEnum = {

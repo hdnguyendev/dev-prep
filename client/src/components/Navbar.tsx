@@ -3,6 +3,18 @@ import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import {
+  Home as HomeIcon,
+  BriefcaseBusiness,
+  Building2,
+  ClipboardList,
+  Mic,
+  ShieldCheck,
+  Sun,
+  Moon,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 const applyThemeClass = (theme: "light" | "dark") => {
   const root = document.documentElement;
@@ -22,7 +34,6 @@ const getInitialTheme = (): "light" | "dark" => {
 const Navbar = () => {
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme());
   const { user } = useUser();
-
   const displayName = user?.fullName || user?.emailAddresses[0]?.emailAddress || 'User';
 
   useEffect(() => {
@@ -40,37 +51,45 @@ const Navbar = () => {
             <Link to="/" className="text-sm font-semibold tracking-tight">Dev Prep</Link>
         </div>
 
-        <nav className="flex items-center gap-4">
-          <Link to="/" className="text-sm hover:underline">Home</Link>
-          <Link to="/jobs" className="text-sm hover:underline">Jobs</Link>
-          <Link to="/interview" className="text-sm hover:underline">Interview Prep</Link>
-          <Link to="/candidates" className="text-sm hover:underline">For Candidates</Link>
-          <Link to="/employers" className="text-sm hover:underline">For Employers</Link>
-          <Link to="/contact" className="text-sm hover:underline">Contact Us</Link>
+        <nav className="flex items-center gap-3 text-sm">
+          <Link to="/" className="flex items-center gap-1 hover:underline">
+            <HomeIcon className="h-4 w-4" /> Home
+          </Link>
+          <Link to="/jobs" className="flex items-center gap-1 hover:underline">
+            <BriefcaseBusiness className="h-4 w-4" /> Jobs
+          </Link>
+          <Link to="/companies" className="flex items-center gap-1 hover:underline">
+            <Building2 className="h-4 w-4" /> Companies
+          </Link>
+          <Link to="/applications" className="flex items-center gap-1 hover:underline">
+            <ClipboardList className="h-4 w-4" /> Applications
+          </Link>
+          <Link to="/interviews" className="flex items-center gap-1 hover:underline">
+            <Mic className="h-4 w-4" /> Interviews
+          </Link>
+          <Link to="/interview" className="flex items-center gap-1 hover:underline">
+            <Sparkles className="h-4 w-4" /> Prep
+          </Link>
+          {user && (
+            <>
+              <Link to="/recruiter" className="flex items-center gap-1 hover:underline">
+                <Users className="h-4 w-4" /> Recruiter
+              </Link>
+              <Link to="/admin" className="flex items-center gap-1 hover:underline">
+                <ShieldCheck className="h-4 w-4" /> Admin
+              </Link>
+            </>
+          )}
         </nav>
 
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
           <Button variant="ghost" size="sm" className="px-2" aria-label="Toggle theme" onClick={toggleTheme}>
-            {theme === "dark" ? (
-              // Sun icon
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-              </svg>
-            ) : (
-              // Moon icon
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            )}
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           {
             user ?
               (<>
-                <Link to="/dashboard" className="text-sm hover:underline">
-                  Dashboard
-                </Link>
                 <span className="text-sm">Hello, {displayName}!</span>
                 <UserButton 
                   appearance={{

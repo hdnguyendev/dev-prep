@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { apiClient, type Job } from "@/lib/api";
+import { apiClient, type Job, type JobType } from "@/lib/api";
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from "@clerk/clerk-react";
 
 const Jobs = () => {
@@ -13,17 +13,19 @@ const Jobs = () => {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [types, setTypes] = useState<Record<string, boolean>>({
-    "Full-time": false,
-    "Part-time": false,
-    Contract: false,
-    Freelance: false,
-    Internship: false,
+  const [types, setTypes] = useState<Record<JobType, boolean>>({
+    FULL_TIME: false,
+    PART_TIME: false,
+    CONTRACT: false,
+    FREELANCE: false,
+    INTERNSHIP: false,
+    REMOTE: false,
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sort, setSort] = useState("recent");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const pageSize = 6;
 
   // Fetch jobs from API
@@ -35,12 +37,13 @@ const Jobs = () => {
         setLoading(true);
         setError(null);
         const token = await getToken();
-        const response = await apiClient.getJobs(token ?? undefined);
+        const response = await apiClient.listJobs({ page, pageSize }, token ?? undefined);
         if (response.success) {
           setJobs(response.data);
           if (response.data.length > 0) {
             setSelectedId(response.data[0].id);
           }
+          setTotal(response.meta?.total ?? response.data.length);
         } else {
           setError(response.message || "Failed to fetch jobs");
         }
@@ -52,35 +55,36 @@ const Jobs = () => {
     };
 
     fetchJobs();
-  }, [getToken]);
+  }, [getToken, page, pageSize]);
 
-  const getLocation = (job: Job) => `${job.city}, ${job.country}`;
+  const getLocation = (job: Job) =>
+    job.isRemote ? "Remote" : job.location || "Not specified";
 
-  const getEmploymentTypeLabel = (job: Job) => {
-    switch (job.employment_type) {
-      case "FULL_TIME":
-        return "Full-time";
-      case "PART_TIME":
-        return "Part-time";
-      case "CONTRACT":
-        return "Contract";
-      case "FREELANCE":
-        return "Freelance";
-      case "INTERN":
-        return "Internship";
-      default:
-        return job.employment_type;
-    }
+  const typeLabels: Record<JobType, string> = {
+    FULL_TIME: "Full-time",
+    PART_TIME: "Part-time",
+    CONTRACT: "Contract",
+    FREELANCE: "Freelance",
+    INTERNSHIP: "Internship",
+    REMOTE: "Remote",
   };
 
-  const getSalaryRange = (job: Job) =>
-    `${job.min_salary.toLocaleString()}–${job.max_salary.toLocaleString()} ${job.currency}`;
+  const getEmploymentTypeLabel = (job: Job) => typeLabels[job.type] ?? job.type;
+
+  const getSalaryRange = (job: Job) => {
+    if (job.isSalaryNegotiable) return "Negotiable";
+    if (job.salaryMin && job.salaryMax) {
+      return `${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()} ${job.currency}`;
+    }
+    if (job.salaryMin) return `${job.salaryMin.toLocaleString()} ${job.currency}`;
+    if (job.salaryMax) return `${job.salaryMax.toLocaleString()} ${job.currency}`;
+    return "Not specified";
+  };
 
   const getSkillTags = (job: Job): string[] =>
-    job.skills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    (job.skills || [])
+      .map((s) => s.skill?.name)
+      .filter((x): x is string => Boolean(x));
 
   const allTags = useMemo(() => {
     const t = new Set<string>();
@@ -97,26 +101,26 @@ const Jobs = () => {
       const matchesQuery = !q ||
         j.title.toLowerCase().includes(q) ||
         j.description.toLowerCase().includes(q) ||
-        j.skills.toLowerCase().includes(q);
+        (j.requirements || "").toLowerCase().includes(q);
       const matchesLocation =
         !location || getLocation(j).toLowerCase().includes(location.toLowerCase());
       const matchesType =
-        activeTypes.length === 0 || activeTypes.includes(getEmploymentTypeLabel(j));
+        activeTypes.length === 0 || activeTypes.includes(j.type);
       const jobTags = getSkillTags(j);
       const matchesTags =
         selectedTags.length === 0 || selectedTags.every((t) => jobTags.includes(t));
       return matchesQuery && matchesLocation && matchesType && matchesTags;
     });
     if (sort === "salary")
-      list = list.sort((a, b) => a.min_salary - b.min_salary || a.max_salary - b.max_salary);
+      list = list.sort((a, b) => (a.salaryMin || 0) - (b.salaryMin || 0) || (a.salaryMax || 0) - (b.salaryMax || 0));
     return list;
   }, [jobs, location, query, selectedTags, sort, types]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil((total || filtered.length) / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
   const selected = jobs.find((j) => j.id === selectedId) ?? null;
 
-  const toggleType = (k: string) => setTypes((prev) => ({ ...prev, [k]: !prev[k] }));
+  const toggleType = (k: JobType) => setTypes((prev) => ({ ...prev, [k]: !prev[k] }));
   const toggleTag = (t: string) =>
     setSelectedTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
@@ -164,17 +168,17 @@ const Jobs = () => {
         <div className="mb-4">
           <div className="mb-2 text-sm font-semibold">Type</div>
           <div className="space-y-2 text-sm">
-            {Object.keys(types).map((k) => (
+            {(Object.keys(types) as JobType[]).map((k) => (
               <label key={k} className="flex items-center gap-2">
                 <input type="checkbox" checked={types[k]} onChange={() => toggleType(k)} className="h-4 w-4" />
-                {k}
+                {typeLabels[k] ?? k}
               </label>
             ))}
           </div>
         </div>
         <Separator className="my-4" />
         <div>
-          <div className="mb-2 text-sm font-semibold">Tags</div>
+          <div className="mb-2 text-sm font-semibold">Tags (Skills)</div>
           <div className="flex flex-wrap gap-2">
             {allTags.map((t) => (
               <Badge
@@ -194,7 +198,7 @@ const Jobs = () => {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-muted-foreground">
-            {filtered.length} jobs • page {page}/{totalPages}
+            {(total || filtered.length)} jobs • page {page}/{totalPages}
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Sort</span>
@@ -213,7 +217,7 @@ const Jobs = () => {
           <Card key={j.id} className={`cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md ${selectedId === j.id ? "ring-2 ring-ring/50" : ""}`} onClick={() => setSelectedId(j.id)}>
             <CardHeader className="pb-2">
               <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="font-semibold">{j.slug}</span>
+                <span className="font-semibold">{j.company?.name ?? j.slug}</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{getLocation(j)}</Badge>
                   <Badge variant="outline">{getEmploymentTypeLabel(j)}</Badge>
@@ -230,7 +234,7 @@ const Jobs = () => {
               </div>
             </CardContent>
             <CardFooter className="justify-between">
-              <div className="text-xs text-muted-foreground">Ref • {j.id.padStart(4, "0")}</div>
+              <div className="text-xs text-muted-foreground">Ref • {j.id.slice(0, 6)}</div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm">Save</Button>
                 <Button size="sm">Apply</Button>
@@ -254,7 +258,7 @@ const Jobs = () => {
         ) : (
           <div className="flex h-full flex-col">
             <div>
-              <div className="mb-1 text-xs text-muted-foreground">{selected.slug}</div>
+              <div className="mb-1 text-xs text-muted-foreground">{selected.company?.name ?? selected.slug}</div>
               <h2 className="text-xl font-semibold leading-tight">{selected.title}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                 <Badge variant="outline">{getLocation(selected)}</Badge>
@@ -264,27 +268,42 @@ const Jobs = () => {
             </div>
             <Separator className="my-4" />
             <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
-              <p>{selected.description}</p>
+              <p>{selected.description || "No description yet."}</p>
               <div>
                 <div className="mb-1 font-medium">Requirements</div>
-                <p className="whitespace-pre-line">{selected.requirements}</p>
+                <p className="whitespace-pre-line">{selected.requirements || "Not provided."}</p>
               </div>
               <div>
-                <div className="mb-1 font-medium">Responsibilities</div>
-                <p className="whitespace-pre-line">{selected.responsibilities}</p>
+                <div className="mb-1 font-medium">Benefits</div>
+                <p className="whitespace-pre-line">{selected.benefits || "Not provided."}</p>
               </div>
+              {(selected.categories?.length ?? 0) > 0 && (
+                <div>
+                  <div className="mb-1 font-medium">Categories</div>
+                  <div className="flex flex-wrap gap-2">
+                    {(selected.categories || []).map((c) => (
+                      <Badge key={`${c.jobId}-${c.categoryId}`} variant="outline">
+                        {c.category?.name || "Category"}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
-                <div className="mb-1 font-medium">Nice to have</div>
-                <p className="whitespace-pre-line">{selected.nice_to_have}</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {getSkillTags(selected).map((t) => (
-                  <Badge key={t} variant="outline">{t}</Badge>
-                ))}
+                <div className="mb-1 font-medium">Skills</div>
+                <div className="flex flex-wrap gap-2">
+                  {getSkillTags(selected).length === 0 ? (
+                    <span className="text-muted-foreground">Not provided.</span>
+                  ) : (
+                    getSkillTags(selected).map((t) => (
+                      <Badge key={t} variant="outline">{t}</Badge>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
             <div className="mt-auto flex items-center justify-between pt-6">
-              <div className="text-xs text-muted-foreground">Ref {selected.id.padStart(4, "0")}</div>
+              <div className="text-xs text-muted-foreground">Ref {selected.id.slice(0, 6)}</div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm">Share</Button>
                 <Button variant="ghost" size="sm">Save</Button>

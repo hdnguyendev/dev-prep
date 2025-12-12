@@ -22,15 +22,25 @@ const getModelClient = (model: Prisma.ModelName) => {
   return client;
 };
 
-const buildWhere = (params: Record<string, string>, primaryKeys: string[]) =>
-  primaryKeys.reduce<Record<string, string>>((acc, key) => {
+const buildWhere = (params: Record<string, string>, primaryKeys: string[]) => {
+  if (primaryKeys.length === 1) {
+    const key = primaryKeys[0];
+    if (!key) throw new Error("Primary key not provided");
     const value = params[key];
-    if (typeof value === "undefined") {
-      throw new Error(`Missing value for primary key: ${key}`);
-    }
-    acc[key] = value;
-    return acc;
-  }, {});
+    if (typeof value === "undefined") throw new Error(`Missing value for primary key: ${key}`);
+    return { [key]: value };
+  }
+
+  const compoundName = primaryKeys.join("_");
+  const compoundValue: Record<string, string> = {};
+  primaryKeys.forEach((key) => {
+    if (!key) throw new Error("Primary key not provided");
+    const value = params[key];
+    if (typeof value === "undefined") throw new Error(`Missing value for primary key: ${key}`);
+    compoundValue[key] = value;
+  });
+  return { [compoundName]: compoundValue };
+};
 
 const parsePagination = (query: Record<string, string | undefined>) => {
   const take = Math.min(Math.max(Number(query.pageSize) || 20, 1), 100);
@@ -217,7 +227,7 @@ export const resources: ResourceConfig[] = [
     path: "skills",
     model: Prisma.ModelName.Skill,
     primaryKeys: ["id"],
-    allowedFields: ["id", "name"],
+    allowedFields: ["id", "name", "iconUrl"],
     include: { candidates: true, jobs: true },
     orderBy: { name: "asc" },
   },
@@ -297,7 +307,7 @@ export const resources: ResourceConfig[] = [
     path: "categories",
     model: Prisma.ModelName.Category,
     primaryKeys: ["id"],
-    allowedFields: ["id", "name"],
+    allowedFields: ["id", "name", "iconUrl"],
     include: { jobs: { include: { job: true } } },
     orderBy: { name: "asc" },
   },

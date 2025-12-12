@@ -171,6 +171,7 @@ model Education {
 model Skill {
   id          String           @id @default(uuid())
   name        String           @unique // Java, Python, SQL...
+  iconUrl     String?
   
   // Relations
   candidates  CandidateSkill[]
@@ -275,6 +276,7 @@ model Job {
 model Category {
   id      String        @id @default(uuid())
   name    String        @unique // IT, Marketing, Sales...
+  iconUrl String?
   jobs    JobCategory[]
 }
 

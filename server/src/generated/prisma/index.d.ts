@@ -9084,16 +9084,19 @@ export namespace Prisma {
   export type SkillMinAggregateOutputType = {
     id: string | null
     name: string | null
+    iconUrl: string | null
   }
 
   export type SkillMaxAggregateOutputType = {
     id: string | null
     name: string | null
+    iconUrl: string | null
   }
 
   export type SkillCountAggregateOutputType = {
     id: number
     name: number
+    iconUrl: number
     _all: number
   }
 
@@ -9101,16 +9104,19 @@ export namespace Prisma {
   export type SkillMinAggregateInputType = {
     id?: true
     name?: true
+    iconUrl?: true
   }
 
   export type SkillMaxAggregateInputType = {
     id?: true
     name?: true
+    iconUrl?: true
   }
 
   export type SkillCountAggregateInputType = {
     id?: true
     name?: true
+    iconUrl?: true
     _all?: true
   }
 
@@ -9189,6 +9195,7 @@ export namespace Prisma {
   export type SkillGroupByOutputType = {
     id: string
     name: string
+    iconUrl: string | null
     _count: SkillCountAggregateOutputType | null
     _min: SkillMinAggregateOutputType | null
     _max: SkillMaxAggregateOutputType | null
@@ -9211,6 +9218,7 @@ export namespace Prisma {
   export type SkillSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
     candidates?: boolean | Skill$candidatesArgs<ExtArgs>
     jobs?: boolean | Skill$jobsArgs<ExtArgs>
     _count?: boolean | SkillCountOutputTypeDefaultArgs<ExtArgs>
@@ -9219,19 +9227,22 @@ export namespace Prisma {
   export type SkillSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
   }, ExtArgs["result"]["skill"]>
 
   export type SkillSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
   }, ExtArgs["result"]["skill"]>
 
   export type SkillSelectScalar = {
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
   }
 
-  export type SkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name", ExtArgs["result"]["skill"]>
+  export type SkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "iconUrl", ExtArgs["result"]["skill"]>
   export type SkillInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     candidates?: boolean | Skill$candidatesArgs<ExtArgs>
     jobs?: boolean | Skill$jobsArgs<ExtArgs>
@@ -9249,6 +9260,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
+      iconUrl: string | null
     }, ExtArgs["result"]["skill"]>
     composites: {}
   }
@@ -9676,6 +9688,7 @@ export namespace Prisma {
   interface SkillFieldRefs {
     readonly id: FieldRef<"Skill", 'String'>
     readonly name: FieldRef<"Skill", 'String'>
+    readonly iconUrl: FieldRef<"Skill", 'String'>
   }
     
 
@@ -13948,16 +13961,19 @@ export namespace Prisma {
   export type CategoryMinAggregateOutputType = {
     id: string | null
     name: string | null
+    iconUrl: string | null
   }
 
   export type CategoryMaxAggregateOutputType = {
     id: string | null
     name: string | null
+    iconUrl: string | null
   }
 
   export type CategoryCountAggregateOutputType = {
     id: number
     name: number
+    iconUrl: number
     _all: number
   }
 
@@ -13965,16 +13981,19 @@ export namespace Prisma {
   export type CategoryMinAggregateInputType = {
     id?: true
     name?: true
+    iconUrl?: true
   }
 
   export type CategoryMaxAggregateInputType = {
     id?: true
     name?: true
+    iconUrl?: true
   }
 
   export type CategoryCountAggregateInputType = {
     id?: true
     name?: true
+    iconUrl?: true
     _all?: true
   }
 
@@ -14053,6 +14072,7 @@ export namespace Prisma {
   export type CategoryGroupByOutputType = {
     id: string
     name: string
+    iconUrl: string | null
     _count: CategoryCountAggregateOutputType | null
     _min: CategoryMinAggregateOutputType | null
     _max: CategoryMaxAggregateOutputType | null
@@ -14075,6 +14095,7 @@ export namespace Prisma {
   export type CategorySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
     jobs?: boolean | Category$jobsArgs<ExtArgs>
     _count?: boolean | CategoryCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["category"]>
@@ -14082,19 +14103,22 @@ export namespace Prisma {
   export type CategorySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
   }, ExtArgs["result"]["category"]>
 
   export type CategorySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
   }, ExtArgs["result"]["category"]>
 
   export type CategorySelectScalar = {
     id?: boolean
     name?: boolean
+    iconUrl?: boolean
   }
 
-  export type CategoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name", ExtArgs["result"]["category"]>
+  export type CategoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "iconUrl", ExtArgs["result"]["category"]>
   export type CategoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     jobs?: boolean | Category$jobsArgs<ExtArgs>
     _count?: boolean | CategoryCountOutputTypeDefaultArgs<ExtArgs>
@@ -14110,6 +14134,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
+      iconUrl: string | null
     }, ExtArgs["result"]["category"]>
     composites: {}
   }
@@ -14536,6 +14561,7 @@ export namespace Prisma {
   interface CategoryFieldRefs {
     readonly id: FieldRef<"Category", 'String'>
     readonly name: FieldRef<"Category", 'String'>
+    readonly iconUrl: FieldRef<"Category", 'String'>
   }
     
 
@@ -27201,7 +27227,8 @@ export namespace Prisma {
 
   export const SkillScalarFieldEnum: {
     id: 'id',
-    name: 'name'
+    name: 'name',
+    iconUrl: 'iconUrl'
   };
 
   export type SkillScalarFieldEnum = (typeof SkillScalarFieldEnum)[keyof typeof SkillScalarFieldEnum]
@@ -27271,7 +27298,8 @@ export namespace Prisma {
 
   export const CategoryScalarFieldEnum: {
     id: 'id',
-    name: 'name'
+    name: 'name',
+    iconUrl: 'iconUrl'
   };
 
   export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
@@ -27519,7 +27547,8 @@ export namespace Prisma {
 
   export const SkillOrderByRelevanceFieldEnum: {
     id: 'id',
-    name: 'name'
+    name: 'name',
+    iconUrl: 'iconUrl'
   };
 
   export type SkillOrderByRelevanceFieldEnum = (typeof SkillOrderByRelevanceFieldEnum)[keyof typeof SkillOrderByRelevanceFieldEnum]
@@ -27571,7 +27600,8 @@ export namespace Prisma {
 
   export const CategoryOrderByRelevanceFieldEnum: {
     id: 'id',
-    name: 'name'
+    name: 'name',
+    iconUrl: 'iconUrl'
   };
 
   export type CategoryOrderByRelevanceFieldEnum = (typeof CategoryOrderByRelevanceFieldEnum)[keyof typeof CategoryOrderByRelevanceFieldEnum]
@@ -28323,6 +28353,7 @@ export namespace Prisma {
     NOT?: SkillWhereInput | SkillWhereInput[]
     id?: StringFilter<"Skill"> | string
     name?: StringFilter<"Skill"> | string
+    iconUrl?: StringNullableFilter<"Skill"> | string | null
     candidates?: CandidateSkillListRelationFilter
     jobs?: JobSkillListRelationFilter
   }
@@ -28330,6 +28361,7 @@ export namespace Prisma {
   export type SkillOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrderInput | SortOrder
     candidates?: CandidateSkillOrderByRelationAggregateInput
     jobs?: JobSkillOrderByRelationAggregateInput
     _relevance?: SkillOrderByRelevanceInput
@@ -28341,6 +28373,7 @@ export namespace Prisma {
     AND?: SkillWhereInput | SkillWhereInput[]
     OR?: SkillWhereInput[]
     NOT?: SkillWhereInput | SkillWhereInput[]
+    iconUrl?: StringNullableFilter<"Skill"> | string | null
     candidates?: CandidateSkillListRelationFilter
     jobs?: JobSkillListRelationFilter
   }, "id" | "name">
@@ -28348,6 +28381,7 @@ export namespace Prisma {
   export type SkillOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrderInput | SortOrder
     _count?: SkillCountOrderByAggregateInput
     _max?: SkillMaxOrderByAggregateInput
     _min?: SkillMinOrderByAggregateInput
@@ -28359,6 +28393,7 @@ export namespace Prisma {
     NOT?: SkillScalarWhereWithAggregatesInput | SkillScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Skill"> | string
     name?: StringWithAggregatesFilter<"Skill"> | string
+    iconUrl?: StringNullableWithAggregatesFilter<"Skill"> | string | null
   }
 
   export type CandidateSkillWhereInput = {
@@ -28706,12 +28741,14 @@ export namespace Prisma {
     NOT?: CategoryWhereInput | CategoryWhereInput[]
     id?: StringFilter<"Category"> | string
     name?: StringFilter<"Category"> | string
+    iconUrl?: StringNullableFilter<"Category"> | string | null
     jobs?: JobCategoryListRelationFilter
   }
 
   export type CategoryOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrderInput | SortOrder
     jobs?: JobCategoryOrderByRelationAggregateInput
     _relevance?: CategoryOrderByRelevanceInput
   }
@@ -28722,12 +28759,14 @@ export namespace Prisma {
     AND?: CategoryWhereInput | CategoryWhereInput[]
     OR?: CategoryWhereInput[]
     NOT?: CategoryWhereInput | CategoryWhereInput[]
+    iconUrl?: StringNullableFilter<"Category"> | string | null
     jobs?: JobCategoryListRelationFilter
   }, "id" | "name">
 
   export type CategoryOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrderInput | SortOrder
     _count?: CategoryCountOrderByAggregateInput
     _max?: CategoryMaxOrderByAggregateInput
     _min?: CategoryMinOrderByAggregateInput
@@ -28739,6 +28778,7 @@ export namespace Prisma {
     NOT?: CategoryScalarWhereWithAggregatesInput | CategoryScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Category"> | string
     name?: StringWithAggregatesFilter<"Category"> | string
+    iconUrl?: StringNullableWithAggregatesFilter<"Category"> | string | null
   }
 
   export type JobCategoryWhereInput = {
@@ -30002,6 +30042,7 @@ export namespace Prisma {
   export type SkillCreateInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     candidates?: CandidateSkillCreateNestedManyWithoutSkillInput
     jobs?: JobSkillCreateNestedManyWithoutSkillInput
   }
@@ -30009,6 +30050,7 @@ export namespace Prisma {
   export type SkillUncheckedCreateInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     candidates?: CandidateSkillUncheckedCreateNestedManyWithoutSkillInput
     jobs?: JobSkillUncheckedCreateNestedManyWithoutSkillInput
   }
@@ -30016,6 +30058,7 @@ export namespace Prisma {
   export type SkillUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     candidates?: CandidateSkillUpdateManyWithoutSkillNestedInput
     jobs?: JobSkillUpdateManyWithoutSkillNestedInput
   }
@@ -30023,6 +30066,7 @@ export namespace Prisma {
   export type SkillUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     candidates?: CandidateSkillUncheckedUpdateManyWithoutSkillNestedInput
     jobs?: JobSkillUncheckedUpdateManyWithoutSkillNestedInput
   }
@@ -30030,16 +30074,19 @@ export namespace Prisma {
   export type SkillCreateManyInput = {
     id?: string
     name: string
+    iconUrl?: string | null
   }
 
   export type SkillUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SkillUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CandidateSkillCreateInput = {
@@ -30436,40 +30483,47 @@ export namespace Prisma {
   export type CategoryCreateInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     jobs?: JobCategoryCreateNestedManyWithoutCategoryInput
   }
 
   export type CategoryUncheckedCreateInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     jobs?: JobCategoryUncheckedCreateNestedManyWithoutCategoryInput
   }
 
   export type CategoryUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     jobs?: JobCategoryUpdateManyWithoutCategoryNestedInput
   }
 
   export type CategoryUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     jobs?: JobCategoryUncheckedUpdateManyWithoutCategoryNestedInput
   }
 
   export type CategoryCreateManyInput = {
     id?: string
     name: string
+    iconUrl?: string | null
   }
 
   export type CategoryUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CategoryUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type JobCategoryCreateInput = {
@@ -31770,16 +31824,19 @@ export namespace Prisma {
   export type SkillCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrder
   }
 
   export type SkillMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrder
   }
 
   export type SkillMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrder
   }
 
   export type SkillScalarRelationFilter = {
@@ -32159,16 +32216,19 @@ export namespace Prisma {
   export type CategoryCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrder
   }
 
   export type CategoryMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrder
   }
 
   export type CategoryMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    iconUrl?: SortOrder
   }
 
   export type JobScalarRelationFilter = {
@@ -35846,12 +35906,14 @@ export namespace Prisma {
   export type SkillCreateWithoutCandidatesInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     jobs?: JobSkillCreateNestedManyWithoutSkillInput
   }
 
   export type SkillUncheckedCreateWithoutCandidatesInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     jobs?: JobSkillUncheckedCreateNestedManyWithoutSkillInput
   }
 
@@ -35919,12 +35981,14 @@ export namespace Prisma {
   export type SkillUpdateWithoutCandidatesInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     jobs?: JobSkillUpdateManyWithoutSkillNestedInput
   }
 
   export type SkillUncheckedUpdateWithoutCandidatesInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     jobs?: JobSkillUncheckedUpdateManyWithoutSkillNestedInput
   }
 
@@ -36490,11 +36554,13 @@ export namespace Prisma {
   export type CategoryCreateWithoutJobsInput = {
     id?: string
     name: string
+    iconUrl?: string | null
   }
 
   export type CategoryUncheckedCreateWithoutJobsInput = {
     id?: string
     name: string
+    iconUrl?: string | null
   }
 
   export type CategoryCreateOrConnectWithoutJobsInput = {
@@ -36587,11 +36653,13 @@ export namespace Prisma {
   export type CategoryUpdateWithoutJobsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CategoryUncheckedUpdateWithoutJobsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type JobCreateWithoutSkillsInput = {
@@ -36662,12 +36730,14 @@ export namespace Prisma {
   export type SkillCreateWithoutJobsInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     candidates?: CandidateSkillCreateNestedManyWithoutSkillInput
   }
 
   export type SkillUncheckedCreateWithoutJobsInput = {
     id?: string
     name: string
+    iconUrl?: string | null
     candidates?: CandidateSkillUncheckedCreateNestedManyWithoutSkillInput
   }
 
@@ -36761,12 +36831,14 @@ export namespace Prisma {
   export type SkillUpdateWithoutJobsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     candidates?: CandidateSkillUpdateManyWithoutSkillNestedInput
   }
 
   export type SkillUncheckedUpdateWithoutJobsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
     candidates?: CandidateSkillUncheckedUpdateManyWithoutSkillNestedInput
   }
 
