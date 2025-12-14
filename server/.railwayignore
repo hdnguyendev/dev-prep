@@ -1,0 +1,3 @@
+.nixpacks/
+*.nix
+nixpacks.toml
