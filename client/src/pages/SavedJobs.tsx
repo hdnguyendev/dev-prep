@@ -7,7 +7,6 @@ import { apiClient, type Job, type JobType } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
 import {
   MapPin,
-  Briefcase,
   DollarSign,
   Heart,
   ArrowRight,

@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { isRecruiterLoggedIn, logout, getCurrentUser, isAdminLoggedIn } from "@/lib/auth";
+import { isRecruiterLoggedIn, logout, getCurrentUser } from "@/lib/auth";
 import {
   BriefcaseBusiness,
   Users,
@@ -28,8 +28,6 @@ import {
   Building2,
   MapPin,
   Globe,
-  Mail,
-  Phone,
   Edit,
   Save,
   X,

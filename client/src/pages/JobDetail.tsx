@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient, type Job } from "@/lib/api";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import {
   MapPin,
   Briefcase,
@@ -16,7 +16,6 @@ import {
   Building2,
   Users,
   Globe,
-  Calendar,
   CheckCircle,
   ArrowLeft,
   Share2,
@@ -30,7 +29,6 @@ const JobDetail = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
-  const { user } = useUser();
   
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);

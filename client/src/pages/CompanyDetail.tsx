@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { apiClient, type Company, type Job, type JobType, type CompanyReview } from "@/lib/api";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Building2,
   MapPin,
   Users,
   Globe,
@@ -16,22 +15,17 @@ import {
   ArrowLeft,
   Briefcase,
   DollarSign,
-  Clock,
   ArrowRight,
   TrendingUp,
-  Mail,
-  Phone,
   ExternalLink,
   Star,
   Award,
-  Target,
 } from "lucide-react";
 
 const CompanyDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
-  const { user } = useUser();
 
   const [company, setCompany] = useState<Company | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);

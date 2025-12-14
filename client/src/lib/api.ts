@@ -87,6 +87,7 @@ export interface Job {
   recruiterId: string;
   description: string;
   requirements?: string | null;
+  responsibilities?: string | null;
   benefits?: string | null;
   type: JobType;
   status: JobStatus;
@@ -169,6 +170,7 @@ export interface ApiResponse<T> {
 type ListParams = {
   page?: number;
   pageSize?: number;
+  include?: string;
 };
 
 const buildQuery = (params?: Record<string, string | number | undefined>) => {
