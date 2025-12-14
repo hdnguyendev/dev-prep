@@ -6,13 +6,19 @@
     "start": "bun run src/index.ts",
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
-    "seed": "bun run prisma/seed.ts"
+    "seed": "bun run prisma/seed.ts",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env development",
+    "deploy:prod": "wrangler deploy --env production",
+    "cf:login": "wrangler login",
+    "cf:tail": "wrangler tail"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "prisma": "^7.1.0",
     "typescript": "^5.9.3",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "wrangler": "^4.54.0"
   },
   "dependencies": {
     "@clerk/backend": "^2.19.0",

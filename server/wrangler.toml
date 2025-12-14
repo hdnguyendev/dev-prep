@@ -1,0 +1,28 @@
+name = "dev-prep-api"
+main = "src/worker.ts"
+compatibility_date = "2025-12-14"
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables (set via dashboard or CLI)
+[vars]
+NODE_ENV = "production"
+
+# For Prisma with external PostgreSQL (Neon/Supabase recommended)
+# Set these via: wrangler secret put <KEY_NAME>
+# - DATABASE_URL (PostgreSQL connection string with connection pooling)
+# - CLERK_PUBLISHABLE_KEY
+# - CLERK_SECRET_KEY
+# - JWT_SECRET
+
+# Worker settings
+workers_dev = true
+route = { pattern = "api.dev-prep.com/*", zone_name = "dev-prep.com" }
+
+# Increase memory and CPU limits for Prisma
+[placement]
+mode = "smart"
+
+# Observability
+[observability]
+enabled = true
+head_sampling_rate = 1
