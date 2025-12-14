@@ -22,7 +22,22 @@ import companyRoutes from "./routes/companies";
 import reviewRoutes from "./routes/reviews";
 import savedJobRoutes from "./routes/savedJobs";
 
-const app = new Hono();
+// Cloudflare Workers environment bindings type
+type Env = {
+  DATABASE_URL: string;
+  CLERK_PUBLISHABLE_KEY: string;
+  CLERK_SECRET_KEY: string;
+  JWT_SECRET: string;
+};
+
+const app = new Hono<{ Bindings: Env }>();
+
+// Set DATABASE_URL globally so Prisma can access it
+app.use("*", async (c, next) => {
+  // @ts-ignore
+  globalThis.DATABASE_URL = c.env.DATABASE_URL;
+  await next();
+});
 
 // CORS - Allow all origins for now (configure specific domains in production)
 app.use("*", cors({

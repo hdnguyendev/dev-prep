@@ -1,35 +1,76 @@
 import "dotenv/config";
-import { PrismaClient } from '../../generated/prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-const connectionString = `${process.env.DATABASE_URL}`
+import { PrismaClient } from '../../generated/prisma/client';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { PrismaNeon } from '@prisma/adapter-neon';
 
-const adapter = new PrismaPg({ connectionString })
-const prisma = new PrismaClient({ adapter })
+// Enable WebSocket for Cloudflare Workers
+neonConfig.webSocketConstructor = WebSocket;
+
+// Get connection string from environment
+// In Workers, this comes from wrangler secrets
+// In local dev, from .env file
+const getConnectionString = () => {
+  // @ts-ignore - globalThis.DATABASE_URL is set by Workers
+  return globalThis.DATABASE_URL || process.env.DATABASE_URL;
+};
+
+let prisma: PrismaClient;
+
+// Initialize Prisma with Neon adapter
+const initPrisma = () => {
+  if (!prisma) {
+    const connectionString = getConnectionString();
+    
+    if (!connectionString) {
+      console.error("[DB] DATABASE_URL not found in environment");
+      throw new Error("DATABASE_URL is required");
+    }
+    
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaNeon(pool);
+    
+    prisma = new PrismaClient({ 
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['error'] : [],
+    });
+  }
+  return prisma;
+};
+
+// Removed blocking testConnection() - causes Workers to hang
+// Connection happens lazily on first query
 
 export const testConnection = async () => {
-  try {
-    console.log("[DB] Connecting to the database...");
-    await prisma.$connect();
-    console.log("[DB] Connected to the database");
-  } catch (error) {
-    console.error("[DB] Unable to connect to the database:", error);
-    throw error;
+  // Non-blocking test for local dev only
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      console.log("[DB] Database connection OK");
+    } catch (error) {
+      console.error("[DB] Database connection failed:", error);
+    }
   }
 };
 
 export const disconnect = async () => {
   try {
-    console.log("[DB] Disconnecting from the database...");
     await prisma.$disconnect();
-    console.log("[DB] Disconnected from the database");
   } catch (error) {
-    console.error("[DB] Unable to disconnect from the database:", error);
-    throw error;
+    console.error("[DB] Disconnect error:", error);
   }
 };
 
 export const getPrisma = () => {
-  return prisma;
+  return initPrisma();
 };
 
-export default prisma;
+// Initialize on import for non-Workers environments
+if (typeof process !== 'undefined' && process.env.DATABASE_URL) {
+  initPrisma();
+}
+
+export default new Proxy({} as PrismaClient, {
+  get(target, prop) {
+    return initPrisma()[prop as keyof PrismaClient];
+  }
+});

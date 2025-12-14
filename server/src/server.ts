@@ -8,8 +8,8 @@ import routes from "./routes";
 
 const app = new Hono();
 
-// Test database connection on startup
-await appDb.testConnection();
+// Note: Database connection test removed for Workers compatibility
+// Connection happens lazily on first query
 
 app.use("*", cors({
   origin: "*",
