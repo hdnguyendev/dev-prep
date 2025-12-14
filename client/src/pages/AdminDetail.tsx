@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import { adminResources } from "@/lib/adminResources";
 import { adminClient, useAdminToken } from "@/lib/adminClient";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isAdminLoggedIn } from "@/lib/auth";
 import {
   CheckCircle2,
   XCircle,
@@ -43,6 +43,13 @@ const AdminDetail = () => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
+
+  // Check admin authentication
+  useEffect(() => {
+    if (!isAdminLoggedIn()) {
+      navigate("/login");
+    }
+  }, [navigate]);
   const getInitials = (r: AdminRow) => {
     const first = (r.firstName as string | undefined) || "";
     const last = (r.lastName as string | undefined) || "";
@@ -204,13 +211,13 @@ const AdminDetail = () => {
     navigate(-1);
   };
 
+  // Don't render if not authenticated
+  if (!isAdminLoggedIn()) {
+    return null;
+  }
+
   return (
-    <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-          <main className="min-h-dvh bg-muted/40">
+    <main className="min-h-dvh bg-muted/40">
             <div className="mx-auto max-w-5xl px-4 py-8 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -398,8 +405,6 @@ const AdminDetail = () => {
         </Card>
       </div>
     </main>
-      </SignedIn>
-    </>
   );
 };
 

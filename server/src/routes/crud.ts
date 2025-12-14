@@ -9,6 +9,7 @@ type ResourceConfig = {
   primaryKeys: string[];
   include?: Record<string, unknown>;
   orderBy?: Record<string, unknown>;
+  where?: Record<string, unknown>;
   allowedFields: string[];
 };
 
@@ -74,9 +75,26 @@ const createCrudRouter = (config: ResourceConfig) => {
     const client = getModelClient(config.model);
     const { take, page, skip } = parsePagination(c.req.query());
 
+    // Build where clause: combine config.where with query params
+    const queryParams = c.req.query();
+    const dynamicWhere: any = { ...config.where };
+    
+    // Support filtering by foreign key IDs (e.g., jobId, candidateId, etc.)
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (key.endsWith('Id') && value && typeof value === 'string') {
+        dynamicWhere[key] = value;
+      }
+    }
+
     const [data, total] = await Promise.all([
-      client.findMany({ take, skip, include: config.include, orderBy: config.orderBy }),
-      client.count(),
+      client.findMany({ 
+        take, 
+        skip, 
+        where: dynamicWhere,
+        include: config.include, 
+        orderBy: config.orderBy 
+      }),
+      client.count({ where: dynamicWhere }),
     ]);
 
     return c.json({ success: true, data, meta: { page, pageSize: take, total } });
@@ -302,6 +320,7 @@ export const resources: ResourceConfig[] = [
       savedBy: true,
     },
     orderBy: { createdAt: "desc" },
+    where: { status: "PUBLISHED" }, // Only show published jobs
   },
   {
     path: "categories",

@@ -1,10 +1,12 @@
-import { useCallback, useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiClient, type Interview } from "@/lib/api";
-import { useApiList } from "@/lib/hooks/useApiList";
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { type Interview } from "@/lib/api";
+import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { getCurrentUser } from "@/lib/auth";
+import { Video } from "lucide-react";
 
 const statusColor: Record<Interview["status"], "default" | "outline" | "success"> = {
   PENDING: "outline",
@@ -15,16 +17,68 @@ const statusColor: Record<Interview["status"], "default" | "outline" | "success"
   EXPIRED: "outline",
 };
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+
 const Interviews = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const pageSize = 8;
+  
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
 
-  const fetcher = useCallback(
-    (token?: string) => apiClient.listInterviews({ page, pageSize }, token),
-    [page, pageSize]
-  );
+  // Check authentication - both Clerk (candidate) and custom (recruiter/admin)
+  const { getToken } = useAuth();
+  const customUser = getCurrentUser();
+  const isAuthenticated = customUser !== null;
 
-  const { data: interviews, loading, error, meta } = useApiList<Interview>(fetcher, [page, pageSize]);
+  useEffect(() => {
+    const fetchInterviews = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        let headers: Record<string, string> = {};
+
+        // Try Clerk token first (for candidates)
+        try {
+          const clerkToken = await getToken();
+          if (clerkToken) {
+            headers["Authorization"] = `Bearer ${clerkToken}`;
+          }
+        } catch {
+          // Clerk not available
+        }
+
+        // Try custom auth (for recruiter/admin)
+        if (!headers["Authorization"] && customUser) {
+          headers["Authorization"] = `Bearer ${customUser.id}`;
+        }
+
+        const response = await fetch(`${API_BASE}/api/interviews?page=${page}&pageSize=${pageSize}`, {
+          headers,
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setInterviews(data.data);
+          setTotal(data.meta?.total ?? data.data.length);
+        } else {
+          setError(data.message || "Failed to fetch interviews");
+        }
+      } catch (err) {
+        console.error("Error fetching interviews:", err);
+        setError("Network error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInterviews();
+  }, [page, pageSize, customUser?.id, getToken]);
 
   if (loading) {
     return (
@@ -49,28 +103,95 @@ const Interviews = () => {
     );
   }
 
-  const total = meta?.total ?? interviews.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  return (
-    <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-        <main className="container mx-auto min-h-dvh px-4 py-8">
-          <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Interviews</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage AI interview sessions synced from the backend.
-              </p>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {total} interviews • page {page}/{totalPages}
-            </div>
-          </header>
+  // If not authenticated at all, show login prompt
+  if (!isAuthenticated) {
+    return (
+      <>
+        <SignedOut>
+          <main className="container mx-auto flex min-h-dvh items-center justify-center px-4 py-8">
+            <Card className="max-w-md">
+              <CardHeader>
+                <div className="mb-4 flex justify-center">
+                  <Video className="h-12 w-12 text-primary" />
+                </div>
+                <CardTitle className="text-center">Login Required</CardTitle>
+                <CardDescription className="text-center">
+                  Please login to view your interviews
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center gap-3">
+                <Button onClick={() => navigate("/login")} variant="default">
+                  Staff Login
+                </Button>
+                <Button onClick={() => navigate("/login")} variant="outline">
+                  Candidate Login
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </SignedOut>
+        <SignedIn>
+          {/* This will render for Clerk-authenticated candidates */}
+          <InterviewsList 
+            interviews={interviews}
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            setPage={setPage}
+          />
+        </SignedIn>
+      </>
+    );
+  }
 
+  return (
+    <InterviewsList 
+      interviews={interviews}
+      page={page}
+      totalPages={totalPages}
+      total={total}
+      setPage={setPage}
+    />
+  );
+};
+
+interface InterviewsListProps {
+  interviews: Interview[];
+  page: number;
+  totalPages: number;
+  total: number;
+  setPage: (page: number | ((prev: number) => number)) => void;
+}
+
+const InterviewsList = ({ interviews, page, totalPages, total, setPage }: InterviewsListProps) => {
+  return (
+    <main className="container mx-auto min-h-dvh px-4 py-8">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Interviews</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage AI interview sessions synced from the backend.
+          </p>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {total} interviews • page {page}/{totalPages}
+        </div>
+      </header>
+
+      {interviews.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Video className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold">No interviews scheduled</h3>
+            <p className="text-sm text-muted-foreground">
+              Your interview sessions will appear here
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
           <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {interviews.map((iv) => (
               <Card key={iv.id} className="h-full">
@@ -112,9 +233,9 @@ const Interviews = () => {
               Next
             </Button>
           </div>
-        </main>
-      </SignedIn>
-    </>
+        </>
+      )}
+    </main>
   );
 };
 

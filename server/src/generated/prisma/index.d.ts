@@ -54,6 +54,11 @@ export type CandidateSkill = $Result.DefaultSelection<Prisma.$CandidateSkillPayl
  */
 export type Company = $Result.DefaultSelection<Prisma.$CompanyPayload>
 /**
+ * Model CompanyReview
+ * 
+ */
+export type CompanyReview = $Result.DefaultSelection<Prisma.$CompanyReviewPayload>
+/**
  * Model Job
  * 
  */
@@ -426,6 +431,16 @@ export class PrismaClient<
     * ```
     */
   get company(): Prisma.CompanyDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.companyReview`: Exposes CRUD operations for the **CompanyReview** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CompanyReviews
+    * const companyReviews = await prisma.companyReview.findMany()
+    * ```
+    */
+  get companyReview(): Prisma.CompanyReviewDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.job`: Exposes CRUD operations for the **Job** model.
@@ -998,6 +1013,7 @@ export namespace Prisma {
     Skill: 'Skill',
     CandidateSkill: 'CandidateSkill',
     Company: 'Company',
+    CompanyReview: 'CompanyReview',
     Job: 'Job',
     Category: 'Category',
     JobCategory: 'JobCategory',
@@ -1026,7 +1042,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "candidateProfile" | "recruiterProfile" | "experience" | "education" | "skill" | "candidateSkill" | "company" | "job" | "category" | "jobCategory" | "jobSkill" | "savedJob" | "application" | "applicationHistory" | "applicationNote" | "interview" | "interviewExchange" | "questionBank" | "message" | "notification"
+      modelProps: "user" | "candidateProfile" | "recruiterProfile" | "experience" | "education" | "skill" | "candidateSkill" | "company" | "companyReview" | "job" | "category" | "jobCategory" | "jobSkill" | "savedJob" | "application" | "applicationHistory" | "applicationNote" | "interview" | "interviewExchange" | "questionBank" | "message" | "notification"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1619,6 +1635,80 @@ export namespace Prisma {
           count: {
             args: Prisma.CompanyCountArgs<ExtArgs>
             result: $Utils.Optional<CompanyCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompanyReview: {
+        payload: Prisma.$CompanyReviewPayload<ExtArgs>
+        fields: Prisma.CompanyReviewFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CompanyReviewFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompanyReviewFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>
+          }
+          findFirst: {
+            args: Prisma.CompanyReviewFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompanyReviewFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>
+          }
+          findMany: {
+            args: Prisma.CompanyReviewFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>[]
+          }
+          create: {
+            args: Prisma.CompanyReviewCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>
+          }
+          createMany: {
+            args: Prisma.CompanyReviewCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CompanyReviewCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>[]
+          }
+          delete: {
+            args: Prisma.CompanyReviewDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>
+          }
+          update: {
+            args: Prisma.CompanyReviewUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompanyReviewDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompanyReviewUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CompanyReviewUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>[]
+          }
+          upsert: {
+            args: Prisma.CompanyReviewUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyReviewPayload>
+          }
+          aggregate: {
+            args: Prisma.CompanyReviewAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCompanyReview>
+          }
+          groupBy: {
+            args: Prisma.CompanyReviewGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CompanyReviewGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompanyReviewCountArgs<ExtArgs>
+            result: $Utils.Optional<CompanyReviewCountAggregateOutputType> | number
           }
         }
       }
@@ -2700,6 +2790,7 @@ export namespace Prisma {
     skill?: SkillOmit
     candidateSkill?: CandidateSkillOmit
     company?: CompanyOmit
+    companyReview?: CompanyReviewOmit
     job?: JobOmit
     category?: CategoryOmit
     jobCategory?: JobCategoryOmit
@@ -2847,6 +2938,7 @@ export namespace Prisma {
     skills: number
     applications: number
     savedJobs: number
+    companyReviews: number
   }
 
   export type CandidateProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2855,6 +2947,7 @@ export namespace Prisma {
     skills?: boolean | CandidateProfileCountOutputTypeCountSkillsArgs
     applications?: boolean | CandidateProfileCountOutputTypeCountApplicationsArgs
     savedJobs?: boolean | CandidateProfileCountOutputTypeCountSavedJobsArgs
+    companyReviews?: boolean | CandidateProfileCountOutputTypeCountCompanyReviewsArgs
   }
 
   // Custom InputTypes
@@ -2901,6 +2994,13 @@ export namespace Prisma {
    */
   export type CandidateProfileCountOutputTypeCountSavedJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SavedJobWhereInput
+  }
+
+  /**
+   * CandidateProfileCountOutputType without action
+   */
+  export type CandidateProfileCountOutputTypeCountCompanyReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompanyReviewWhereInput
   }
 
 
@@ -2982,11 +3082,13 @@ export namespace Prisma {
   export type CompanyCountOutputType = {
     recruiters: number
     jobs: number
+    reviews: number
   }
 
   export type CompanyCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     recruiters?: boolean | CompanyCountOutputTypeCountRecruitersArgs
     jobs?: boolean | CompanyCountOutputTypeCountJobsArgs
+    reviews?: boolean | CompanyCountOutputTypeCountReviewsArgs
   }
 
   // Custom InputTypes
@@ -3012,6 +3114,13 @@ export namespace Prisma {
    */
   export type CompanyCountOutputTypeCountJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: JobWhereInput
+  }
+
+  /**
+   * CompanyCountOutputType without action
+   */
+  export type CompanyCountOutputTypeCountReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompanyReviewWhereInput
   }
 
 
@@ -4674,6 +4783,7 @@ export namespace Prisma {
     skills?: boolean | CandidateProfile$skillsArgs<ExtArgs>
     applications?: boolean | CandidateProfile$applicationsArgs<ExtArgs>
     savedJobs?: boolean | CandidateProfile$savedJobsArgs<ExtArgs>
+    companyReviews?: boolean | CandidateProfile$companyReviewsArgs<ExtArgs>
     _count?: boolean | CandidateProfileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["candidateProfile"]>
 
@@ -4726,6 +4836,7 @@ export namespace Prisma {
     skills?: boolean | CandidateProfile$skillsArgs<ExtArgs>
     applications?: boolean | CandidateProfile$applicationsArgs<ExtArgs>
     savedJobs?: boolean | CandidateProfile$savedJobsArgs<ExtArgs>
+    companyReviews?: boolean | CandidateProfile$companyReviewsArgs<ExtArgs>
     _count?: boolean | CandidateProfileCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CandidateProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4744,6 +4855,7 @@ export namespace Prisma {
       skills: Prisma.$CandidateSkillPayload<ExtArgs>[]
       applications: Prisma.$ApplicationPayload<ExtArgs>[]
       savedJobs: Prisma.$SavedJobPayload<ExtArgs>[]
+      companyReviews: Prisma.$CompanyReviewPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5156,6 +5268,7 @@ export namespace Prisma {
     skills<T extends CandidateProfile$skillsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CandidateSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     applications<T extends CandidateProfile$applicationsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$applicationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApplicationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     savedJobs<T extends CandidateProfile$savedJobsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$savedJobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SavedJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    companyReviews<T extends CandidateProfile$companyReviewsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$companyReviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5708,6 +5821,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SavedJobScalarFieldEnum | SavedJobScalarFieldEnum[]
+  }
+
+  /**
+   * CandidateProfile.companyReviews
+   */
+  export type CandidateProfile$companyReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    where?: CompanyReviewWhereInput
+    orderBy?: CompanyReviewOrderByWithRelationInput | CompanyReviewOrderByWithRelationInput[]
+    cursor?: CompanyReviewWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompanyReviewScalarFieldEnum | CompanyReviewScalarFieldEnum[]
   }
 
   /**
@@ -11484,6 +11621,7 @@ export namespace Prisma {
     updatedAt?: boolean
     recruiters?: boolean | Company$recruitersArgs<ExtArgs>
     jobs?: boolean | Company$jobsArgs<ExtArgs>
+    reviews?: boolean | Company$reviewsArgs<ExtArgs>
     _count?: boolean | CompanyCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["company"]>
 
@@ -11548,6 +11686,7 @@ export namespace Prisma {
   export type CompanyInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     recruiters?: boolean | Company$recruitersArgs<ExtArgs>
     jobs?: boolean | Company$jobsArgs<ExtArgs>
+    reviews?: boolean | Company$reviewsArgs<ExtArgs>
     _count?: boolean | CompanyCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CompanyIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -11558,6 +11697,7 @@ export namespace Prisma {
     objects: {
       recruiters: Prisma.$RecruiterProfilePayload<ExtArgs>[]
       jobs: Prisma.$JobPayload<ExtArgs>[]
+      reviews: Prisma.$CompanyReviewPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -11972,6 +12112,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     recruiters<T extends Company$recruitersArgs<ExtArgs> = {}>(args?: Subset<T, Company$recruitersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecruiterProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     jobs<T extends Company$jobsArgs<ExtArgs> = {}>(args?: Subset<T, Company$jobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    reviews<T extends Company$reviewsArgs<ExtArgs> = {}>(args?: Subset<T, Company$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12453,6 +12594,30 @@ export namespace Prisma {
   }
 
   /**
+   * Company.reviews
+   */
+  export type Company$reviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    where?: CompanyReviewWhereInput
+    orderBy?: CompanyReviewOrderByWithRelationInput | CompanyReviewOrderByWithRelationInput[]
+    cursor?: CompanyReviewWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompanyReviewScalarFieldEnum | CompanyReviewScalarFieldEnum[]
+  }
+
+  /**
    * Company without action
    */
   export type CompanyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12468,6 +12633,1197 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CompanyInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CompanyReview
+   */
+
+  export type AggregateCompanyReview = {
+    _count: CompanyReviewCountAggregateOutputType | null
+    _avg: CompanyReviewAvgAggregateOutputType | null
+    _sum: CompanyReviewSumAggregateOutputType | null
+    _min: CompanyReviewMinAggregateOutputType | null
+    _max: CompanyReviewMaxAggregateOutputType | null
+  }
+
+  export type CompanyReviewAvgAggregateOutputType = {
+    rating: number | null
+  }
+
+  export type CompanyReviewSumAggregateOutputType = {
+    rating: number | null
+  }
+
+  export type CompanyReviewMinAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    candidateId: string | null
+    rating: number | null
+    title: string | null
+    review: string | null
+    pros: string | null
+    cons: string | null
+    isCurrentEmployee: boolean | null
+    wouldRecommend: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompanyReviewMaxAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    candidateId: string | null
+    rating: number | null
+    title: string | null
+    review: string | null
+    pros: string | null
+    cons: string | null
+    isCurrentEmployee: boolean | null
+    wouldRecommend: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompanyReviewCountAggregateOutputType = {
+    id: number
+    companyId: number
+    candidateId: number
+    rating: number
+    title: number
+    review: number
+    pros: number
+    cons: number
+    isCurrentEmployee: number
+    wouldRecommend: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CompanyReviewAvgAggregateInputType = {
+    rating?: true
+  }
+
+  export type CompanyReviewSumAggregateInputType = {
+    rating?: true
+  }
+
+  export type CompanyReviewMinAggregateInputType = {
+    id?: true
+    companyId?: true
+    candidateId?: true
+    rating?: true
+    title?: true
+    review?: true
+    pros?: true
+    cons?: true
+    isCurrentEmployee?: true
+    wouldRecommend?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompanyReviewMaxAggregateInputType = {
+    id?: true
+    companyId?: true
+    candidateId?: true
+    rating?: true
+    title?: true
+    review?: true
+    pros?: true
+    cons?: true
+    isCurrentEmployee?: true
+    wouldRecommend?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompanyReviewCountAggregateInputType = {
+    id?: true
+    companyId?: true
+    candidateId?: true
+    rating?: true
+    title?: true
+    review?: true
+    pros?: true
+    cons?: true
+    isCurrentEmployee?: true
+    wouldRecommend?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CompanyReviewAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompanyReview to aggregate.
+     */
+    where?: CompanyReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyReviews to fetch.
+     */
+    orderBy?: CompanyReviewOrderByWithRelationInput | CompanyReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CompanyReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyReviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyReviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CompanyReviews
+    **/
+    _count?: true | CompanyReviewCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CompanyReviewAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CompanyReviewSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CompanyReviewMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CompanyReviewMaxAggregateInputType
+  }
+
+  export type GetCompanyReviewAggregateType<T extends CompanyReviewAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompanyReview]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCompanyReview[P]>
+      : GetScalarType<T[P], AggregateCompanyReview[P]>
+  }
+
+
+
+
+  export type CompanyReviewGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompanyReviewWhereInput
+    orderBy?: CompanyReviewOrderByWithAggregationInput | CompanyReviewOrderByWithAggregationInput[]
+    by: CompanyReviewScalarFieldEnum[] | CompanyReviewScalarFieldEnum
+    having?: CompanyReviewScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CompanyReviewCountAggregateInputType | true
+    _avg?: CompanyReviewAvgAggregateInputType
+    _sum?: CompanyReviewSumAggregateInputType
+    _min?: CompanyReviewMinAggregateInputType
+    _max?: CompanyReviewMaxAggregateInputType
+  }
+
+  export type CompanyReviewGroupByOutputType = {
+    id: string
+    companyId: string
+    candidateId: string
+    rating: number
+    title: string | null
+    review: string | null
+    pros: string | null
+    cons: string | null
+    isCurrentEmployee: boolean
+    wouldRecommend: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: CompanyReviewCountAggregateOutputType | null
+    _avg: CompanyReviewAvgAggregateOutputType | null
+    _sum: CompanyReviewSumAggregateOutputType | null
+    _min: CompanyReviewMinAggregateOutputType | null
+    _max: CompanyReviewMaxAggregateOutputType | null
+  }
+
+  type GetCompanyReviewGroupByPayload<T extends CompanyReviewGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CompanyReviewGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CompanyReviewGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CompanyReviewGroupByOutputType[P]>
+            : GetScalarType<T[P], CompanyReviewGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CompanyReviewSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    candidateId?: boolean
+    rating?: boolean
+    title?: boolean
+    review?: boolean
+    pros?: boolean
+    cons?: boolean
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["companyReview"]>
+
+  export type CompanyReviewSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    candidateId?: boolean
+    rating?: boolean
+    title?: boolean
+    review?: boolean
+    pros?: boolean
+    cons?: boolean
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["companyReview"]>
+
+  export type CompanyReviewSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    candidateId?: boolean
+    rating?: boolean
+    title?: boolean
+    review?: boolean
+    pros?: boolean
+    cons?: boolean
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["companyReview"]>
+
+  export type CompanyReviewSelectScalar = {
+    id?: boolean
+    companyId?: boolean
+    candidateId?: boolean
+    rating?: boolean
+    title?: boolean
+    review?: boolean
+    pros?: boolean
+    cons?: boolean
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CompanyReviewOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyId" | "candidateId" | "rating" | "title" | "review" | "pros" | "cons" | "isCurrentEmployee" | "wouldRecommend" | "createdAt" | "updatedAt", ExtArgs["result"]["companyReview"]>
+  export type CompanyReviewInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+  }
+  export type CompanyReviewIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+  }
+  export type CompanyReviewIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $CompanyReviewPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CompanyReview"
+    objects: {
+      company: Prisma.$CompanyPayload<ExtArgs>
+      candidate: Prisma.$CandidateProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      companyId: string
+      candidateId: string
+      rating: number
+      title: string | null
+      review: string | null
+      pros: string | null
+      cons: string | null
+      isCurrentEmployee: boolean
+      wouldRecommend: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["companyReview"]>
+    composites: {}
+  }
+
+  type CompanyReviewGetPayload<S extends boolean | null | undefined | CompanyReviewDefaultArgs> = $Result.GetResult<Prisma.$CompanyReviewPayload, S>
+
+  type CompanyReviewCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CompanyReviewFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CompanyReviewCountAggregateInputType | true
+    }
+
+  export interface CompanyReviewDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompanyReview'], meta: { name: 'CompanyReview' } }
+    /**
+     * Find zero or one CompanyReview that matches the filter.
+     * @param {CompanyReviewFindUniqueArgs} args - Arguments to find a CompanyReview
+     * @example
+     * // Get one CompanyReview
+     * const companyReview = await prisma.companyReview.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CompanyReviewFindUniqueArgs>(args: SelectSubset<T, CompanyReviewFindUniqueArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CompanyReview that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CompanyReviewFindUniqueOrThrowArgs} args - Arguments to find a CompanyReview
+     * @example
+     * // Get one CompanyReview
+     * const companyReview = await prisma.companyReview.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CompanyReviewFindUniqueOrThrowArgs>(args: SelectSubset<T, CompanyReviewFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompanyReview that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyReviewFindFirstArgs} args - Arguments to find a CompanyReview
+     * @example
+     * // Get one CompanyReview
+     * const companyReview = await prisma.companyReview.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CompanyReviewFindFirstArgs>(args?: SelectSubset<T, CompanyReviewFindFirstArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompanyReview that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyReviewFindFirstOrThrowArgs} args - Arguments to find a CompanyReview
+     * @example
+     * // Get one CompanyReview
+     * const companyReview = await prisma.companyReview.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CompanyReviewFindFirstOrThrowArgs>(args?: SelectSubset<T, CompanyReviewFindFirstOrThrowArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CompanyReviews that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyReviewFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CompanyReviews
+     * const companyReviews = await prisma.companyReview.findMany()
+     * 
+     * // Get first 10 CompanyReviews
+     * const companyReviews = await prisma.companyReview.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const companyReviewWithIdOnly = await prisma.companyReview.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CompanyReviewFindManyArgs>(args?: SelectSubset<T, CompanyReviewFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CompanyReview.
+     * @param {CompanyReviewCreateArgs} args - Arguments to create a CompanyReview.
+     * @example
+     * // Create one CompanyReview
+     * const CompanyReview = await prisma.companyReview.create({
+     *   data: {
+     *     // ... data to create a CompanyReview
+     *   }
+     * })
+     * 
+     */
+    create<T extends CompanyReviewCreateArgs>(args: SelectSubset<T, CompanyReviewCreateArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CompanyReviews.
+     * @param {CompanyReviewCreateManyArgs} args - Arguments to create many CompanyReviews.
+     * @example
+     * // Create many CompanyReviews
+     * const companyReview = await prisma.companyReview.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CompanyReviewCreateManyArgs>(args?: SelectSubset<T, CompanyReviewCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CompanyReviews and returns the data saved in the database.
+     * @param {CompanyReviewCreateManyAndReturnArgs} args - Arguments to create many CompanyReviews.
+     * @example
+     * // Create many CompanyReviews
+     * const companyReview = await prisma.companyReview.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CompanyReviews and only return the `id`
+     * const companyReviewWithIdOnly = await prisma.companyReview.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CompanyReviewCreateManyAndReturnArgs>(args?: SelectSubset<T, CompanyReviewCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CompanyReview.
+     * @param {CompanyReviewDeleteArgs} args - Arguments to delete one CompanyReview.
+     * @example
+     * // Delete one CompanyReview
+     * const CompanyReview = await prisma.companyReview.delete({
+     *   where: {
+     *     // ... filter to delete one CompanyReview
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CompanyReviewDeleteArgs>(args: SelectSubset<T, CompanyReviewDeleteArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CompanyReview.
+     * @param {CompanyReviewUpdateArgs} args - Arguments to update one CompanyReview.
+     * @example
+     * // Update one CompanyReview
+     * const companyReview = await prisma.companyReview.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CompanyReviewUpdateArgs>(args: SelectSubset<T, CompanyReviewUpdateArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CompanyReviews.
+     * @param {CompanyReviewDeleteManyArgs} args - Arguments to filter CompanyReviews to delete.
+     * @example
+     * // Delete a few CompanyReviews
+     * const { count } = await prisma.companyReview.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CompanyReviewDeleteManyArgs>(args?: SelectSubset<T, CompanyReviewDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompanyReviews.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyReviewUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CompanyReviews
+     * const companyReview = await prisma.companyReview.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CompanyReviewUpdateManyArgs>(args: SelectSubset<T, CompanyReviewUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompanyReviews and returns the data updated in the database.
+     * @param {CompanyReviewUpdateManyAndReturnArgs} args - Arguments to update many CompanyReviews.
+     * @example
+     * // Update many CompanyReviews
+     * const companyReview = await prisma.companyReview.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CompanyReviews and only return the `id`
+     * const companyReviewWithIdOnly = await prisma.companyReview.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CompanyReviewUpdateManyAndReturnArgs>(args: SelectSubset<T, CompanyReviewUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CompanyReview.
+     * @param {CompanyReviewUpsertArgs} args - Arguments to update or create a CompanyReview.
+     * @example
+     * // Update or create a CompanyReview
+     * const companyReview = await prisma.companyReview.upsert({
+     *   create: {
+     *     // ... data to create a CompanyReview
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CompanyReview we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CompanyReviewUpsertArgs>(args: SelectSubset<T, CompanyReviewUpsertArgs<ExtArgs>>): Prisma__CompanyReviewClient<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CompanyReviews.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyReviewCountArgs} args - Arguments to filter CompanyReviews to count.
+     * @example
+     * // Count the number of CompanyReviews
+     * const count = await prisma.companyReview.count({
+     *   where: {
+     *     // ... the filter for the CompanyReviews we want to count
+     *   }
+     * })
+    **/
+    count<T extends CompanyReviewCountArgs>(
+      args?: Subset<T, CompanyReviewCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CompanyReviewCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CompanyReview.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyReviewAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CompanyReviewAggregateArgs>(args: Subset<T, CompanyReviewAggregateArgs>): Prisma.PrismaPromise<GetCompanyReviewAggregateType<T>>
+
+    /**
+     * Group by CompanyReview.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyReviewGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CompanyReviewGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CompanyReviewGroupByArgs['orderBy'] }
+        : { orderBy?: CompanyReviewGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CompanyReviewGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompanyReviewGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CompanyReview model
+   */
+  readonly fields: CompanyReviewFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CompanyReview.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CompanyReviewClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    company<T extends CompanyDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CompanyDefaultArgs<ExtArgs>>): Prisma__CompanyClient<$Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    candidate<T extends CandidateProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfileDefaultArgs<ExtArgs>>): Prisma__CandidateProfileClient<$Result.GetResult<Prisma.$CandidateProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CompanyReview model
+   */
+  interface CompanyReviewFieldRefs {
+    readonly id: FieldRef<"CompanyReview", 'String'>
+    readonly companyId: FieldRef<"CompanyReview", 'String'>
+    readonly candidateId: FieldRef<"CompanyReview", 'String'>
+    readonly rating: FieldRef<"CompanyReview", 'Int'>
+    readonly title: FieldRef<"CompanyReview", 'String'>
+    readonly review: FieldRef<"CompanyReview", 'String'>
+    readonly pros: FieldRef<"CompanyReview", 'String'>
+    readonly cons: FieldRef<"CompanyReview", 'String'>
+    readonly isCurrentEmployee: FieldRef<"CompanyReview", 'Boolean'>
+    readonly wouldRecommend: FieldRef<"CompanyReview", 'Boolean'>
+    readonly createdAt: FieldRef<"CompanyReview", 'DateTime'>
+    readonly updatedAt: FieldRef<"CompanyReview", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CompanyReview findUnique
+   */
+  export type CompanyReviewFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyReview to fetch.
+     */
+    where: CompanyReviewWhereUniqueInput
+  }
+
+  /**
+   * CompanyReview findUniqueOrThrow
+   */
+  export type CompanyReviewFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyReview to fetch.
+     */
+    where: CompanyReviewWhereUniqueInput
+  }
+
+  /**
+   * CompanyReview findFirst
+   */
+  export type CompanyReviewFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyReview to fetch.
+     */
+    where?: CompanyReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyReviews to fetch.
+     */
+    orderBy?: CompanyReviewOrderByWithRelationInput | CompanyReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompanyReviews.
+     */
+    cursor?: CompanyReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyReviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyReviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompanyReviews.
+     */
+    distinct?: CompanyReviewScalarFieldEnum | CompanyReviewScalarFieldEnum[]
+  }
+
+  /**
+   * CompanyReview findFirstOrThrow
+   */
+  export type CompanyReviewFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyReview to fetch.
+     */
+    where?: CompanyReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyReviews to fetch.
+     */
+    orderBy?: CompanyReviewOrderByWithRelationInput | CompanyReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompanyReviews.
+     */
+    cursor?: CompanyReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyReviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyReviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompanyReviews.
+     */
+    distinct?: CompanyReviewScalarFieldEnum | CompanyReviewScalarFieldEnum[]
+  }
+
+  /**
+   * CompanyReview findMany
+   */
+  export type CompanyReviewFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyReviews to fetch.
+     */
+    where?: CompanyReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyReviews to fetch.
+     */
+    orderBy?: CompanyReviewOrderByWithRelationInput | CompanyReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CompanyReviews.
+     */
+    cursor?: CompanyReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyReviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyReviews.
+     */
+    skip?: number
+    distinct?: CompanyReviewScalarFieldEnum | CompanyReviewScalarFieldEnum[]
+  }
+
+  /**
+   * CompanyReview create
+   */
+  export type CompanyReviewCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CompanyReview.
+     */
+    data: XOR<CompanyReviewCreateInput, CompanyReviewUncheckedCreateInput>
+  }
+
+  /**
+   * CompanyReview createMany
+   */
+  export type CompanyReviewCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CompanyReviews.
+     */
+    data: CompanyReviewCreateManyInput | CompanyReviewCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CompanyReview createManyAndReturn
+   */
+  export type CompanyReviewCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * The data used to create many CompanyReviews.
+     */
+    data: CompanyReviewCreateManyInput | CompanyReviewCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompanyReview update
+   */
+  export type CompanyReviewUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CompanyReview.
+     */
+    data: XOR<CompanyReviewUpdateInput, CompanyReviewUncheckedUpdateInput>
+    /**
+     * Choose, which CompanyReview to update.
+     */
+    where: CompanyReviewWhereUniqueInput
+  }
+
+  /**
+   * CompanyReview updateMany
+   */
+  export type CompanyReviewUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CompanyReviews.
+     */
+    data: XOR<CompanyReviewUpdateManyMutationInput, CompanyReviewUncheckedUpdateManyInput>
+    /**
+     * Filter which CompanyReviews to update
+     */
+    where?: CompanyReviewWhereInput
+    /**
+     * Limit how many CompanyReviews to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompanyReview updateManyAndReturn
+   */
+  export type CompanyReviewUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * The data used to update CompanyReviews.
+     */
+    data: XOR<CompanyReviewUpdateManyMutationInput, CompanyReviewUncheckedUpdateManyInput>
+    /**
+     * Filter which CompanyReviews to update
+     */
+    where?: CompanyReviewWhereInput
+    /**
+     * Limit how many CompanyReviews to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompanyReview upsert
+   */
+  export type CompanyReviewUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CompanyReview to update in case it exists.
+     */
+    where: CompanyReviewWhereUniqueInput
+    /**
+     * In case the CompanyReview found by the `where` argument doesn't exist, create a new CompanyReview with this data.
+     */
+    create: XOR<CompanyReviewCreateInput, CompanyReviewUncheckedCreateInput>
+    /**
+     * In case the CompanyReview was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CompanyReviewUpdateInput, CompanyReviewUncheckedUpdateInput>
+  }
+
+  /**
+   * CompanyReview delete
+   */
+  export type CompanyReviewDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
+    /**
+     * Filter which CompanyReview to delete.
+     */
+    where: CompanyReviewWhereUniqueInput
+  }
+
+  /**
+   * CompanyReview deleteMany
+   */
+  export type CompanyReviewDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompanyReviews to delete
+     */
+    where?: CompanyReviewWhereInput
+    /**
+     * Limit how many CompanyReviews to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompanyReview without action
+   */
+  export type CompanyReviewDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyReview
+     */
+    select?: CompanyReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyReview
+     */
+    omit?: CompanyReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyReviewInclude<ExtArgs> | null
   }
 
 
@@ -27266,6 +28622,24 @@ export namespace Prisma {
   export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeof CompanyScalarFieldEnum]
 
 
+  export const CompanyReviewScalarFieldEnum: {
+    id: 'id',
+    companyId: 'companyId',
+    candidateId: 'candidateId',
+    rating: 'rating',
+    title: 'title',
+    review: 'review',
+    pros: 'pros',
+    cons: 'cons',
+    isCurrentEmployee: 'isCurrentEmployee',
+    wouldRecommend: 'wouldRecommend',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CompanyReviewScalarFieldEnum = (typeof CompanyReviewScalarFieldEnum)[keyof typeof CompanyReviewScalarFieldEnum]
+
+
   export const JobScalarFieldEnum: {
     id: 'id',
     slug: 'slug',
@@ -27580,6 +28954,19 @@ export namespace Prisma {
   };
 
   export type CompanyOrderByRelevanceFieldEnum = (typeof CompanyOrderByRelevanceFieldEnum)[keyof typeof CompanyOrderByRelevanceFieldEnum]
+
+
+  export const CompanyReviewOrderByRelevanceFieldEnum: {
+    id: 'id',
+    companyId: 'companyId',
+    candidateId: 'candidateId',
+    title: 'title',
+    review: 'review',
+    pros: 'pros',
+    cons: 'cons'
+  };
+
+  export type CompanyReviewOrderByRelevanceFieldEnum = (typeof CompanyReviewOrderByRelevanceFieldEnum)[keyof typeof CompanyReviewOrderByRelevanceFieldEnum]
 
 
   export const JobOrderByRelevanceFieldEnum: {
@@ -28047,6 +29434,7 @@ export namespace Prisma {
     skills?: CandidateSkillListRelationFilter
     applications?: ApplicationListRelationFilter
     savedJobs?: SavedJobListRelationFilter
+    companyReviews?: CompanyReviewListRelationFilter
   }
 
   export type CandidateProfileOrderByWithRelationInput = {
@@ -28066,6 +29454,7 @@ export namespace Prisma {
     skills?: CandidateSkillOrderByRelationAggregateInput
     applications?: ApplicationOrderByRelationAggregateInput
     savedJobs?: SavedJobOrderByRelationAggregateInput
+    companyReviews?: CompanyReviewOrderByRelationAggregateInput
     _relevance?: CandidateProfileOrderByRelevanceInput
   }
 
@@ -28089,6 +29478,7 @@ export namespace Prisma {
     skills?: CandidateSkillListRelationFilter
     applications?: ApplicationListRelationFilter
     savedJobs?: SavedJobListRelationFilter
+    companyReviews?: CompanyReviewListRelationFilter
   }, "id" | "userId">
 
   export type CandidateProfileOrderByWithAggregationInput = {
@@ -28473,6 +29863,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Company"> | Date | string
     recruiters?: RecruiterProfileListRelationFilter
     jobs?: JobListRelationFilter
+    reviews?: CompanyReviewListRelationFilter
   }
 
   export type CompanyOrderByWithRelationInput = {
@@ -28494,6 +29885,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     recruiters?: RecruiterProfileOrderByRelationAggregateInput
     jobs?: JobOrderByRelationAggregateInput
+    reviews?: CompanyReviewOrderByRelationAggregateInput
     _relevance?: CompanyOrderByRelevanceInput
   }
 
@@ -28519,6 +29911,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Company"> | Date | string
     recruiters?: RecruiterProfileListRelationFilter
     jobs?: JobListRelationFilter
+    reviews?: CompanyReviewListRelationFilter
   }, "id" | "slug">
 
   export type CompanyOrderByWithAggregationInput = {
@@ -28565,6 +29958,103 @@ export namespace Prisma {
     isVerified?: BoolWithAggregatesFilter<"Company"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Company"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Company"> | Date | string
+  }
+
+  export type CompanyReviewWhereInput = {
+    AND?: CompanyReviewWhereInput | CompanyReviewWhereInput[]
+    OR?: CompanyReviewWhereInput[]
+    NOT?: CompanyReviewWhereInput | CompanyReviewWhereInput[]
+    id?: StringFilter<"CompanyReview"> | string
+    companyId?: StringFilter<"CompanyReview"> | string
+    candidateId?: StringFilter<"CompanyReview"> | string
+    rating?: IntFilter<"CompanyReview"> | number
+    title?: StringNullableFilter<"CompanyReview"> | string | null
+    review?: StringNullableFilter<"CompanyReview"> | string | null
+    pros?: StringNullableFilter<"CompanyReview"> | string | null
+    cons?: StringNullableFilter<"CompanyReview"> | string | null
+    isCurrentEmployee?: BoolFilter<"CompanyReview"> | boolean
+    wouldRecommend?: BoolFilter<"CompanyReview"> | boolean
+    createdAt?: DateTimeFilter<"CompanyReview"> | Date | string
+    updatedAt?: DateTimeFilter<"CompanyReview"> | Date | string
+    company?: XOR<CompanyScalarRelationFilter, CompanyWhereInput>
+    candidate?: XOR<CandidateProfileScalarRelationFilter, CandidateProfileWhereInput>
+  }
+
+  export type CompanyReviewOrderByWithRelationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    candidateId?: SortOrder
+    rating?: SortOrder
+    title?: SortOrderInput | SortOrder
+    review?: SortOrderInput | SortOrder
+    pros?: SortOrderInput | SortOrder
+    cons?: SortOrderInput | SortOrder
+    isCurrentEmployee?: SortOrder
+    wouldRecommend?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    company?: CompanyOrderByWithRelationInput
+    candidate?: CandidateProfileOrderByWithRelationInput
+    _relevance?: CompanyReviewOrderByRelevanceInput
+  }
+
+  export type CompanyReviewWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    companyId_candidateId?: CompanyReviewCompanyIdCandidateIdCompoundUniqueInput
+    AND?: CompanyReviewWhereInput | CompanyReviewWhereInput[]
+    OR?: CompanyReviewWhereInput[]
+    NOT?: CompanyReviewWhereInput | CompanyReviewWhereInput[]
+    companyId?: StringFilter<"CompanyReview"> | string
+    candidateId?: StringFilter<"CompanyReview"> | string
+    rating?: IntFilter<"CompanyReview"> | number
+    title?: StringNullableFilter<"CompanyReview"> | string | null
+    review?: StringNullableFilter<"CompanyReview"> | string | null
+    pros?: StringNullableFilter<"CompanyReview"> | string | null
+    cons?: StringNullableFilter<"CompanyReview"> | string | null
+    isCurrentEmployee?: BoolFilter<"CompanyReview"> | boolean
+    wouldRecommend?: BoolFilter<"CompanyReview"> | boolean
+    createdAt?: DateTimeFilter<"CompanyReview"> | Date | string
+    updatedAt?: DateTimeFilter<"CompanyReview"> | Date | string
+    company?: XOR<CompanyScalarRelationFilter, CompanyWhereInput>
+    candidate?: XOR<CandidateProfileScalarRelationFilter, CandidateProfileWhereInput>
+  }, "id" | "companyId_candidateId">
+
+  export type CompanyReviewOrderByWithAggregationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    candidateId?: SortOrder
+    rating?: SortOrder
+    title?: SortOrderInput | SortOrder
+    review?: SortOrderInput | SortOrder
+    pros?: SortOrderInput | SortOrder
+    cons?: SortOrderInput | SortOrder
+    isCurrentEmployee?: SortOrder
+    wouldRecommend?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CompanyReviewCountOrderByAggregateInput
+    _avg?: CompanyReviewAvgOrderByAggregateInput
+    _max?: CompanyReviewMaxOrderByAggregateInput
+    _min?: CompanyReviewMinOrderByAggregateInput
+    _sum?: CompanyReviewSumOrderByAggregateInput
+  }
+
+  export type CompanyReviewScalarWhereWithAggregatesInput = {
+    AND?: CompanyReviewScalarWhereWithAggregatesInput | CompanyReviewScalarWhereWithAggregatesInput[]
+    OR?: CompanyReviewScalarWhereWithAggregatesInput[]
+    NOT?: CompanyReviewScalarWhereWithAggregatesInput | CompanyReviewScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CompanyReview"> | string
+    companyId?: StringWithAggregatesFilter<"CompanyReview"> | string
+    candidateId?: StringWithAggregatesFilter<"CompanyReview"> | string
+    rating?: IntWithAggregatesFilter<"CompanyReview"> | number
+    title?: StringNullableWithAggregatesFilter<"CompanyReview"> | string | null
+    review?: StringNullableWithAggregatesFilter<"CompanyReview"> | string | null
+    pros?: StringNullableWithAggregatesFilter<"CompanyReview"> | string | null
+    cons?: StringNullableWithAggregatesFilter<"CompanyReview"> | string | null
+    isCurrentEmployee?: BoolWithAggregatesFilter<"CompanyReview"> | boolean
+    wouldRecommend?: BoolWithAggregatesFilter<"CompanyReview"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CompanyReview"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CompanyReview"> | Date | string
   }
 
   export type JobWhereInput = {
@@ -29707,6 +31197,7 @@ export namespace Prisma {
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateInput = {
@@ -29725,6 +31216,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUpdateInput = {
@@ -29743,6 +31235,7 @@ export namespace Prisma {
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateInput = {
@@ -29761,6 +31254,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileCreateManyInput = {
@@ -30155,6 +31649,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     recruiters?: RecruiterProfileCreateNestedManyWithoutCompanyInput
     jobs?: JobCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUncheckedCreateInput = {
@@ -30176,6 +31671,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     recruiters?: RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput
     jobs?: JobUncheckedCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUpdateInput = {
@@ -30197,6 +31693,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUpdateManyWithoutCompanyNestedInput
     jobs?: JobUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyUncheckedUpdateInput = {
@@ -30218,6 +31715,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput
     jobs?: JobUncheckedUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyCreateManyInput = {
@@ -30273,6 +31771,109 @@ export namespace Prisma {
     city?: NullableStringFieldUpdateOperationsInput | string | null
     country?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyReviewCreateInput = {
+    id?: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    company: CompanyCreateNestedOneWithoutReviewsInput
+    candidate: CandidateProfileCreateNestedOneWithoutCompanyReviewsInput
+  }
+
+  export type CompanyReviewUncheckedCreateInput = {
+    id?: string
+    companyId: string
+    candidateId: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompanyReviewUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    company?: CompanyUpdateOneRequiredWithoutReviewsNestedInput
+    candidate?: CandidateProfileUpdateOneRequiredWithoutCompanyReviewsNestedInput
+  }
+
+  export type CompanyReviewUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyReviewCreateManyInput = {
+    id?: string
+    companyId: string
+    candidateId: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompanyReviewUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyReviewUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31600,6 +33201,12 @@ export namespace Prisma {
     none?: SavedJobWhereInput
   }
 
+  export type CompanyReviewListRelationFilter = {
+    every?: CompanyReviewWhereInput
+    some?: CompanyReviewWhereInput
+    none?: CompanyReviewWhereInput
+  }
+
   export type ExperienceOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -31617,6 +33224,10 @@ export namespace Prisma {
   }
 
   export type SavedJobOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CompanyReviewOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -31984,6 +33595,97 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type CompanyReviewOrderByRelevanceInput = {
+    fields: CompanyReviewOrderByRelevanceFieldEnum | CompanyReviewOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type CompanyReviewCompanyIdCandidateIdCompoundUniqueInput = {
+    companyId: string
+    candidateId: string
+  }
+
+  export type CompanyReviewCountOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    candidateId?: SortOrder
+    rating?: SortOrder
+    title?: SortOrder
+    review?: SortOrder
+    pros?: SortOrder
+    cons?: SortOrder
+    isCurrentEmployee?: SortOrder
+    wouldRecommend?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompanyReviewAvgOrderByAggregateInput = {
+    rating?: SortOrder
+  }
+
+  export type CompanyReviewMaxOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    candidateId?: SortOrder
+    rating?: SortOrder
+    title?: SortOrder
+    review?: SortOrder
+    pros?: SortOrder
+    cons?: SortOrder
+    isCurrentEmployee?: SortOrder
+    wouldRecommend?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompanyReviewMinOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    candidateId?: SortOrder
+    rating?: SortOrder
+    title?: SortOrder
+    review?: SortOrder
+    pros?: SortOrder
+    cons?: SortOrder
+    isCurrentEmployee?: SortOrder
+    wouldRecommend?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompanyReviewSumOrderByAggregateInput = {
+    rating?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
   export type EnumJobTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.JobType | EnumJobTypeFieldRefInput<$PrismaModel>
     in?: $Enums.JobType[] | ListEnumJobTypeFieldRefInput<$PrismaModel>
@@ -32014,17 +33716,6 @@ export namespace Prisma {
     in?: $Enums.Currency[] | ListEnumCurrencyFieldRefInput<$PrismaModel>
     notIn?: $Enums.Currency[] | ListEnumCurrencyFieldRefInput<$PrismaModel>
     not?: NestedEnumCurrencyFilter<$PrismaModel> | $Enums.Currency
-  }
-
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
   }
 
   export type RecruiterProfileScalarRelationFilter = {
@@ -32189,22 +33880,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCurrencyFilter<$PrismaModel>
     _max?: NestedEnumCurrencyFilter<$PrismaModel>
-  }
-
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type CategoryOrderByRelevanceInput = {
@@ -33100,6 +34775,13 @@ export namespace Prisma {
     connect?: SavedJobWhereUniqueInput | SavedJobWhereUniqueInput[]
   }
 
+  export type CompanyReviewCreateNestedManyWithoutCandidateInput = {
+    create?: XOR<CompanyReviewCreateWithoutCandidateInput, CompanyReviewUncheckedCreateWithoutCandidateInput> | CompanyReviewCreateWithoutCandidateInput[] | CompanyReviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCandidateInput | CompanyReviewCreateOrConnectWithoutCandidateInput[]
+    createMany?: CompanyReviewCreateManyCandidateInputEnvelope
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+  }
+
   export type ExperienceUncheckedCreateNestedManyWithoutCandidateInput = {
     create?: XOR<ExperienceCreateWithoutCandidateInput, ExperienceUncheckedCreateWithoutCandidateInput> | ExperienceCreateWithoutCandidateInput[] | ExperienceUncheckedCreateWithoutCandidateInput[]
     connectOrCreate?: ExperienceCreateOrConnectWithoutCandidateInput | ExperienceCreateOrConnectWithoutCandidateInput[]
@@ -33133,6 +34815,13 @@ export namespace Prisma {
     connectOrCreate?: SavedJobCreateOrConnectWithoutCandidateInput | SavedJobCreateOrConnectWithoutCandidateInput[]
     createMany?: SavedJobCreateManyCandidateInputEnvelope
     connect?: SavedJobWhereUniqueInput | SavedJobWhereUniqueInput[]
+  }
+
+  export type CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput = {
+    create?: XOR<CompanyReviewCreateWithoutCandidateInput, CompanyReviewUncheckedCreateWithoutCandidateInput> | CompanyReviewCreateWithoutCandidateInput[] | CompanyReviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCandidateInput | CompanyReviewCreateOrConnectWithoutCandidateInput[]
+    createMany?: CompanyReviewCreateManyCandidateInputEnvelope
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
   }
 
   export type UserUpdateOneRequiredWithoutCandidateProfileNestedInput = {
@@ -33213,6 +34902,20 @@ export namespace Prisma {
     deleteMany?: SavedJobScalarWhereInput | SavedJobScalarWhereInput[]
   }
 
+  export type CompanyReviewUpdateManyWithoutCandidateNestedInput = {
+    create?: XOR<CompanyReviewCreateWithoutCandidateInput, CompanyReviewUncheckedCreateWithoutCandidateInput> | CompanyReviewCreateWithoutCandidateInput[] | CompanyReviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCandidateInput | CompanyReviewCreateOrConnectWithoutCandidateInput[]
+    upsert?: CompanyReviewUpsertWithWhereUniqueWithoutCandidateInput | CompanyReviewUpsertWithWhereUniqueWithoutCandidateInput[]
+    createMany?: CompanyReviewCreateManyCandidateInputEnvelope
+    set?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    disconnect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    delete?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    update?: CompanyReviewUpdateWithWhereUniqueWithoutCandidateInput | CompanyReviewUpdateWithWhereUniqueWithoutCandidateInput[]
+    updateMany?: CompanyReviewUpdateManyWithWhereWithoutCandidateInput | CompanyReviewUpdateManyWithWhereWithoutCandidateInput[]
+    deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
+  }
+
   export type ExperienceUncheckedUpdateManyWithoutCandidateNestedInput = {
     create?: XOR<ExperienceCreateWithoutCandidateInput, ExperienceUncheckedCreateWithoutCandidateInput> | ExperienceCreateWithoutCandidateInput[] | ExperienceUncheckedCreateWithoutCandidateInput[]
     connectOrCreate?: ExperienceCreateOrConnectWithoutCandidateInput | ExperienceCreateOrConnectWithoutCandidateInput[]
@@ -33281,6 +34984,20 @@ export namespace Prisma {
     update?: SavedJobUpdateWithWhereUniqueWithoutCandidateInput | SavedJobUpdateWithWhereUniqueWithoutCandidateInput[]
     updateMany?: SavedJobUpdateManyWithWhereWithoutCandidateInput | SavedJobUpdateManyWithWhereWithoutCandidateInput[]
     deleteMany?: SavedJobScalarWhereInput | SavedJobScalarWhereInput[]
+  }
+
+  export type CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput = {
+    create?: XOR<CompanyReviewCreateWithoutCandidateInput, CompanyReviewUncheckedCreateWithoutCandidateInput> | CompanyReviewCreateWithoutCandidateInput[] | CompanyReviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCandidateInput | CompanyReviewCreateOrConnectWithoutCandidateInput[]
+    upsert?: CompanyReviewUpsertWithWhereUniqueWithoutCandidateInput | CompanyReviewUpsertWithWhereUniqueWithoutCandidateInput[]
+    createMany?: CompanyReviewCreateManyCandidateInputEnvelope
+    set?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    disconnect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    delete?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    update?: CompanyReviewUpdateWithWhereUniqueWithoutCandidateInput | CompanyReviewUpdateWithWhereUniqueWithoutCandidateInput[]
+    updateMany?: CompanyReviewUpdateManyWithWhereWithoutCandidateInput | CompanyReviewUpdateManyWithWhereWithoutCandidateInput[]
+    deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutRecruiterProfileInput = {
@@ -33507,6 +35224,13 @@ export namespace Prisma {
     connect?: JobWhereUniqueInput | JobWhereUniqueInput[]
   }
 
+  export type CompanyReviewCreateNestedManyWithoutCompanyInput = {
+    create?: XOR<CompanyReviewCreateWithoutCompanyInput, CompanyReviewUncheckedCreateWithoutCompanyInput> | CompanyReviewCreateWithoutCompanyInput[] | CompanyReviewUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCompanyInput | CompanyReviewCreateOrConnectWithoutCompanyInput[]
+    createMany?: CompanyReviewCreateManyCompanyInputEnvelope
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+  }
+
   export type RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput = {
     create?: XOR<RecruiterProfileCreateWithoutCompanyInput, RecruiterProfileUncheckedCreateWithoutCompanyInput> | RecruiterProfileCreateWithoutCompanyInput[] | RecruiterProfileUncheckedCreateWithoutCompanyInput[]
     connectOrCreate?: RecruiterProfileCreateOrConnectWithoutCompanyInput | RecruiterProfileCreateOrConnectWithoutCompanyInput[]
@@ -33519,6 +35243,13 @@ export namespace Prisma {
     connectOrCreate?: JobCreateOrConnectWithoutCompanyInput | JobCreateOrConnectWithoutCompanyInput[]
     createMany?: JobCreateManyCompanyInputEnvelope
     connect?: JobWhereUniqueInput | JobWhereUniqueInput[]
+  }
+
+  export type CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput = {
+    create?: XOR<CompanyReviewCreateWithoutCompanyInput, CompanyReviewUncheckedCreateWithoutCompanyInput> | CompanyReviewCreateWithoutCompanyInput[] | CompanyReviewUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCompanyInput | CompanyReviewCreateOrConnectWithoutCompanyInput[]
+    createMany?: CompanyReviewCreateManyCompanyInputEnvelope
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -33557,6 +35288,20 @@ export namespace Prisma {
     deleteMany?: JobScalarWhereInput | JobScalarWhereInput[]
   }
 
+  export type CompanyReviewUpdateManyWithoutCompanyNestedInput = {
+    create?: XOR<CompanyReviewCreateWithoutCompanyInput, CompanyReviewUncheckedCreateWithoutCompanyInput> | CompanyReviewCreateWithoutCompanyInput[] | CompanyReviewUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCompanyInput | CompanyReviewCreateOrConnectWithoutCompanyInput[]
+    upsert?: CompanyReviewUpsertWithWhereUniqueWithoutCompanyInput | CompanyReviewUpsertWithWhereUniqueWithoutCompanyInput[]
+    createMany?: CompanyReviewCreateManyCompanyInputEnvelope
+    set?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    disconnect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    delete?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    update?: CompanyReviewUpdateWithWhereUniqueWithoutCompanyInput | CompanyReviewUpdateWithWhereUniqueWithoutCompanyInput[]
+    updateMany?: CompanyReviewUpdateManyWithWhereWithoutCompanyInput | CompanyReviewUpdateManyWithWhereWithoutCompanyInput[]
+    deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
+  }
+
   export type RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput = {
     create?: XOR<RecruiterProfileCreateWithoutCompanyInput, RecruiterProfileUncheckedCreateWithoutCompanyInput> | RecruiterProfileCreateWithoutCompanyInput[] | RecruiterProfileUncheckedCreateWithoutCompanyInput[]
     connectOrCreate?: RecruiterProfileCreateOrConnectWithoutCompanyInput | RecruiterProfileCreateOrConnectWithoutCompanyInput[]
@@ -33583,6 +35328,56 @@ export namespace Prisma {
     update?: JobUpdateWithWhereUniqueWithoutCompanyInput | JobUpdateWithWhereUniqueWithoutCompanyInput[]
     updateMany?: JobUpdateManyWithWhereWithoutCompanyInput | JobUpdateManyWithWhereWithoutCompanyInput[]
     deleteMany?: JobScalarWhereInput | JobScalarWhereInput[]
+  }
+
+  export type CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput = {
+    create?: XOR<CompanyReviewCreateWithoutCompanyInput, CompanyReviewUncheckedCreateWithoutCompanyInput> | CompanyReviewCreateWithoutCompanyInput[] | CompanyReviewUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyReviewCreateOrConnectWithoutCompanyInput | CompanyReviewCreateOrConnectWithoutCompanyInput[]
+    upsert?: CompanyReviewUpsertWithWhereUniqueWithoutCompanyInput | CompanyReviewUpsertWithWhereUniqueWithoutCompanyInput[]
+    createMany?: CompanyReviewCreateManyCompanyInputEnvelope
+    set?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    disconnect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    delete?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+    update?: CompanyReviewUpdateWithWhereUniqueWithoutCompanyInput | CompanyReviewUpdateWithWhereUniqueWithoutCompanyInput[]
+    updateMany?: CompanyReviewUpdateManyWithWhereWithoutCompanyInput | CompanyReviewUpdateManyWithWhereWithoutCompanyInput[]
+    deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
+  }
+
+  export type CompanyCreateNestedOneWithoutReviewsInput = {
+    create?: XOR<CompanyCreateWithoutReviewsInput, CompanyUncheckedCreateWithoutReviewsInput>
+    connectOrCreate?: CompanyCreateOrConnectWithoutReviewsInput
+    connect?: CompanyWhereUniqueInput
+  }
+
+  export type CandidateProfileCreateNestedOneWithoutCompanyReviewsInput = {
+    create?: XOR<CandidateProfileCreateWithoutCompanyReviewsInput, CandidateProfileUncheckedCreateWithoutCompanyReviewsInput>
+    connectOrCreate?: CandidateProfileCreateOrConnectWithoutCompanyReviewsInput
+    connect?: CandidateProfileWhereUniqueInput
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type CompanyUpdateOneRequiredWithoutReviewsNestedInput = {
+    create?: XOR<CompanyCreateWithoutReviewsInput, CompanyUncheckedCreateWithoutReviewsInput>
+    connectOrCreate?: CompanyCreateOrConnectWithoutReviewsInput
+    upsert?: CompanyUpsertWithoutReviewsInput
+    connect?: CompanyWhereUniqueInput
+    update?: XOR<XOR<CompanyUpdateToOneWithWhereWithoutReviewsInput, CompanyUpdateWithoutReviewsInput>, CompanyUncheckedUpdateWithoutReviewsInput>
+  }
+
+  export type CandidateProfileUpdateOneRequiredWithoutCompanyReviewsNestedInput = {
+    create?: XOR<CandidateProfileCreateWithoutCompanyReviewsInput, CandidateProfileUncheckedCreateWithoutCompanyReviewsInput>
+    connectOrCreate?: CandidateProfileCreateOrConnectWithoutCompanyReviewsInput
+    upsert?: CandidateProfileUpsertWithoutCompanyReviewsInput
+    connect?: CandidateProfileWhereUniqueInput
+    update?: XOR<XOR<CandidateProfileUpdateToOneWithWhereWithoutCompanyReviewsInput, CandidateProfileUpdateWithoutCompanyReviewsInput>, CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput>
   }
 
   export type CompanyCreateNestedOneWithoutJobsInput = {
@@ -33671,14 +35466,6 @@ export namespace Prisma {
 
   export type EnumCurrencyFieldUpdateOperationsInput = {
     set?: $Enums.Currency
-  }
-
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
   }
 
   export type CompanyUpdateOneRequiredWithoutJobsNestedInput = {
@@ -34445,6 +36232,33 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
   export type NestedEnumJobTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.JobType | EnumJobTypeFieldRefInput<$PrismaModel>
     in?: $Enums.JobType[] | ListEnumJobTypeFieldRefInput<$PrismaModel>
@@ -34510,33 +36324,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCurrencyFilter<$PrismaModel>
     _max?: NestedEnumCurrencyFilter<$PrismaModel>
-  }
-
-  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type NestedFloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type NestedEnumApplicationStatusFilter<$PrismaModel = never> = {
@@ -34628,6 +36415,7 @@ export namespace Prisma {
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutUserInput = {
@@ -34645,6 +36433,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutUserInput = {
@@ -34791,6 +36580,7 @@ export namespace Prisma {
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutUserInput = {
@@ -34808,6 +36598,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type RecruiterProfileUpsertWithoutUserInput = {
@@ -35108,6 +36899,44 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompanyReviewCreateWithoutCandidateInput = {
+    id?: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    company: CompanyCreateNestedOneWithoutReviewsInput
+  }
+
+  export type CompanyReviewUncheckedCreateWithoutCandidateInput = {
+    id?: string
+    companyId: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompanyReviewCreateOrConnectWithoutCandidateInput = {
+    where: CompanyReviewWhereUniqueInput
+    create: XOR<CompanyReviewCreateWithoutCandidateInput, CompanyReviewUncheckedCreateWithoutCandidateInput>
+  }
+
+  export type CompanyReviewCreateManyCandidateInputEnvelope = {
+    data: CompanyReviewCreateManyCandidateInput | CompanyReviewCreateManyCandidateInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutCandidateProfileInput = {
     update: XOR<UserUpdateWithoutCandidateProfileInput, UserUncheckedUpdateWithoutCandidateProfileInput>
     create: XOR<UserCreateWithoutCandidateProfileInput, UserUncheckedCreateWithoutCandidateProfileInput>
@@ -35305,6 +37134,40 @@ export namespace Prisma {
     savedAt?: DateTimeFilter<"SavedJob"> | Date | string
   }
 
+  export type CompanyReviewUpsertWithWhereUniqueWithoutCandidateInput = {
+    where: CompanyReviewWhereUniqueInput
+    update: XOR<CompanyReviewUpdateWithoutCandidateInput, CompanyReviewUncheckedUpdateWithoutCandidateInput>
+    create: XOR<CompanyReviewCreateWithoutCandidateInput, CompanyReviewUncheckedCreateWithoutCandidateInput>
+  }
+
+  export type CompanyReviewUpdateWithWhereUniqueWithoutCandidateInput = {
+    where: CompanyReviewWhereUniqueInput
+    data: XOR<CompanyReviewUpdateWithoutCandidateInput, CompanyReviewUncheckedUpdateWithoutCandidateInput>
+  }
+
+  export type CompanyReviewUpdateManyWithWhereWithoutCandidateInput = {
+    where: CompanyReviewScalarWhereInput
+    data: XOR<CompanyReviewUpdateManyMutationInput, CompanyReviewUncheckedUpdateManyWithoutCandidateInput>
+  }
+
+  export type CompanyReviewScalarWhereInput = {
+    AND?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
+    OR?: CompanyReviewScalarWhereInput[]
+    NOT?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
+    id?: StringFilter<"CompanyReview"> | string
+    companyId?: StringFilter<"CompanyReview"> | string
+    candidateId?: StringFilter<"CompanyReview"> | string
+    rating?: IntFilter<"CompanyReview"> | number
+    title?: StringNullableFilter<"CompanyReview"> | string | null
+    review?: StringNullableFilter<"CompanyReview"> | string | null
+    pros?: StringNullableFilter<"CompanyReview"> | string | null
+    cons?: StringNullableFilter<"CompanyReview"> | string | null
+    isCurrentEmployee?: BoolFilter<"CompanyReview"> | boolean
+    wouldRecommend?: BoolFilter<"CompanyReview"> | boolean
+    createdAt?: DateTimeFilter<"CompanyReview"> | Date | string
+    updatedAt?: DateTimeFilter<"CompanyReview"> | Date | string
+  }
+
   export type UserCreateWithoutRecruiterProfileInput = {
     id?: string
     email: string
@@ -35368,6 +37231,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     jobs?: JobCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUncheckedCreateWithoutRecruitersInput = {
@@ -35388,6 +37252,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     jobs?: JobUncheckedCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyCreateOrConnectWithoutRecruitersInput = {
@@ -35545,6 +37410,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     jobs?: JobUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyUncheckedUpdateWithoutRecruitersInput = {
@@ -35565,6 +37431,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     jobs?: JobUncheckedUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type JobUpsertWithWhereUniqueWithoutRecruiterInput = {
@@ -35628,6 +37495,7 @@ export namespace Prisma {
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutExperiencesInput = {
@@ -35645,6 +37513,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutExperiencesInput = {
@@ -35678,6 +37547,7 @@ export namespace Prisma {
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutExperiencesInput = {
@@ -35695,6 +37565,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileCreateWithoutEducationsInput = {
@@ -35712,6 +37583,7 @@ export namespace Prisma {
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutEducationsInput = {
@@ -35729,6 +37601,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutEducationsInput = {
@@ -35762,6 +37635,7 @@ export namespace Prisma {
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutEducationsInput = {
@@ -35779,6 +37653,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateSkillCreateWithoutSkillInput = {
@@ -35879,6 +37754,7 @@ export namespace Prisma {
     educations?: EducationCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutSkillsInput = {
@@ -35896,6 +37772,7 @@ export namespace Prisma {
     educations?: EducationUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutSkillsInput = {
@@ -35948,6 +37825,7 @@ export namespace Prisma {
     educations?: EducationUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutSkillsInput = {
@@ -35965,6 +37843,7 @@ export namespace Prisma {
     educations?: EducationUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type SkillUpsertWithoutCandidatesInput = {
@@ -36090,6 +37969,44 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompanyReviewCreateWithoutCompanyInput = {
+    id?: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    candidate: CandidateProfileCreateNestedOneWithoutCompanyReviewsInput
+  }
+
+  export type CompanyReviewUncheckedCreateWithoutCompanyInput = {
+    id?: string
+    candidateId: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompanyReviewCreateOrConnectWithoutCompanyInput = {
+    where: CompanyReviewWhereUniqueInput
+    create: XOR<CompanyReviewCreateWithoutCompanyInput, CompanyReviewUncheckedCreateWithoutCompanyInput>
+  }
+
+  export type CompanyReviewCreateManyCompanyInputEnvelope = {
+    data: CompanyReviewCreateManyCompanyInput | CompanyReviewCreateManyCompanyInput[]
+    skipDuplicates?: boolean
+  }
+
   export type RecruiterProfileUpsertWithWhereUniqueWithoutCompanyInput = {
     where: RecruiterProfileWhereUniqueInput
     update: XOR<RecruiterProfileUpdateWithoutCompanyInput, RecruiterProfileUncheckedUpdateWithoutCompanyInput>
@@ -36134,6 +38051,210 @@ export namespace Prisma {
     data: XOR<JobUpdateManyMutationInput, JobUncheckedUpdateManyWithoutCompanyInput>
   }
 
+  export type CompanyReviewUpsertWithWhereUniqueWithoutCompanyInput = {
+    where: CompanyReviewWhereUniqueInput
+    update: XOR<CompanyReviewUpdateWithoutCompanyInput, CompanyReviewUncheckedUpdateWithoutCompanyInput>
+    create: XOR<CompanyReviewCreateWithoutCompanyInput, CompanyReviewUncheckedCreateWithoutCompanyInput>
+  }
+
+  export type CompanyReviewUpdateWithWhereUniqueWithoutCompanyInput = {
+    where: CompanyReviewWhereUniqueInput
+    data: XOR<CompanyReviewUpdateWithoutCompanyInput, CompanyReviewUncheckedUpdateWithoutCompanyInput>
+  }
+
+  export type CompanyReviewUpdateManyWithWhereWithoutCompanyInput = {
+    where: CompanyReviewScalarWhereInput
+    data: XOR<CompanyReviewUpdateManyMutationInput, CompanyReviewUncheckedUpdateManyWithoutCompanyInput>
+  }
+
+  export type CompanyCreateWithoutReviewsInput = {
+    id?: string
+    name: string
+    slug: string
+    logoUrl?: string | null
+    coverUrl?: string | null
+    website?: string | null
+    description?: string | null
+    industry?: string | null
+    companySize?: string | null
+    foundedYear?: number | null
+    address?: string | null
+    city?: string | null
+    country?: string | null
+    isVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    recruiters?: RecruiterProfileCreateNestedManyWithoutCompanyInput
+    jobs?: JobCreateNestedManyWithoutCompanyInput
+  }
+
+  export type CompanyUncheckedCreateWithoutReviewsInput = {
+    id?: string
+    name: string
+    slug: string
+    logoUrl?: string | null
+    coverUrl?: string | null
+    website?: string | null
+    description?: string | null
+    industry?: string | null
+    companySize?: string | null
+    foundedYear?: number | null
+    address?: string | null
+    city?: string | null
+    country?: string | null
+    isVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    recruiters?: RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput
+    jobs?: JobUncheckedCreateNestedManyWithoutCompanyInput
+  }
+
+  export type CompanyCreateOrConnectWithoutReviewsInput = {
+    where: CompanyWhereUniqueInput
+    create: XOR<CompanyCreateWithoutReviewsInput, CompanyUncheckedCreateWithoutReviewsInput>
+  }
+
+  export type CandidateProfileCreateWithoutCompanyReviewsInput = {
+    id?: string
+    headline?: string | null
+    bio?: string | null
+    website?: string | null
+    linkedin?: string | null
+    github?: string | null
+    cvUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutCandidateProfileInput
+    experiences?: ExperienceCreateNestedManyWithoutCandidateInput
+    educations?: EducationCreateNestedManyWithoutCandidateInput
+    skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
+    applications?: ApplicationCreateNestedManyWithoutCandidateInput
+    savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+  }
+
+  export type CandidateProfileUncheckedCreateWithoutCompanyReviewsInput = {
+    id?: string
+    userId: string
+    headline?: string | null
+    bio?: string | null
+    website?: string | null
+    linkedin?: string | null
+    github?: string | null
+    cvUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
+    educations?: EducationUncheckedCreateNestedManyWithoutCandidateInput
+    skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
+    applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
+    savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+  }
+
+  export type CandidateProfileCreateOrConnectWithoutCompanyReviewsInput = {
+    where: CandidateProfileWhereUniqueInput
+    create: XOR<CandidateProfileCreateWithoutCompanyReviewsInput, CandidateProfileUncheckedCreateWithoutCompanyReviewsInput>
+  }
+
+  export type CompanyUpsertWithoutReviewsInput = {
+    update: XOR<CompanyUpdateWithoutReviewsInput, CompanyUncheckedUpdateWithoutReviewsInput>
+    create: XOR<CompanyCreateWithoutReviewsInput, CompanyUncheckedCreateWithoutReviewsInput>
+    where?: CompanyWhereInput
+  }
+
+  export type CompanyUpdateToOneWithWhereWithoutReviewsInput = {
+    where?: CompanyWhereInput
+    data: XOR<CompanyUpdateWithoutReviewsInput, CompanyUncheckedUpdateWithoutReviewsInput>
+  }
+
+  export type CompanyUpdateWithoutReviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    coverUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    companySize?: NullableStringFieldUpdateOperationsInput | string | null
+    foundedYear?: NullableIntFieldUpdateOperationsInput | number | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    recruiters?: RecruiterProfileUpdateManyWithoutCompanyNestedInput
+    jobs?: JobUpdateManyWithoutCompanyNestedInput
+  }
+
+  export type CompanyUncheckedUpdateWithoutReviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    coverUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    companySize?: NullableStringFieldUpdateOperationsInput | string | null
+    foundedYear?: NullableIntFieldUpdateOperationsInput | number | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    recruiters?: RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput
+    jobs?: JobUncheckedUpdateManyWithoutCompanyNestedInput
+  }
+
+  export type CandidateProfileUpsertWithoutCompanyReviewsInput = {
+    update: XOR<CandidateProfileUpdateWithoutCompanyReviewsInput, CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput>
+    create: XOR<CandidateProfileCreateWithoutCompanyReviewsInput, CandidateProfileUncheckedCreateWithoutCompanyReviewsInput>
+    where?: CandidateProfileWhereInput
+  }
+
+  export type CandidateProfileUpdateToOneWithWhereWithoutCompanyReviewsInput = {
+    where?: CandidateProfileWhereInput
+    data: XOR<CandidateProfileUpdateWithoutCompanyReviewsInput, CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput>
+  }
+
+  export type CandidateProfileUpdateWithoutCompanyReviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    headline?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedin?: NullableStringFieldUpdateOperationsInput | string | null
+    github?: NullableStringFieldUpdateOperationsInput | string | null
+    cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
+    experiences?: ExperienceUpdateManyWithoutCandidateNestedInput
+    educations?: EducationUpdateManyWithoutCandidateNestedInput
+    skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
+    applications?: ApplicationUpdateManyWithoutCandidateNestedInput
+    savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+  }
+
+  export type CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    headline?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedin?: NullableStringFieldUpdateOperationsInput | string | null
+    github?: NullableStringFieldUpdateOperationsInput | string | null
+    cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
+    educations?: EducationUncheckedUpdateManyWithoutCandidateNestedInput
+    skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
+    applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
+    savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+  }
+
   export type CompanyCreateWithoutJobsInput = {
     id?: string
     name: string
@@ -36152,6 +38273,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     recruiters?: RecruiterProfileCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUncheckedCreateWithoutJobsInput = {
@@ -36172,6 +38294,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     recruiters?: RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyCreateOrConnectWithoutJobsInput = {
@@ -36329,6 +38452,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyUncheckedUpdateWithoutJobsInput = {
@@ -36349,6 +38473,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type RecruiterProfileUpsertWithoutJobsPostedInput = {
@@ -36857,6 +38982,7 @@ export namespace Prisma {
     educations?: EducationCreateNestedManyWithoutCandidateInput
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutSavedJobsInput = {
@@ -36874,6 +39000,7 @@ export namespace Prisma {
     educations?: EducationUncheckedCreateNestedManyWithoutCandidateInput
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutSavedJobsInput = {
@@ -36972,6 +39099,7 @@ export namespace Prisma {
     educations?: EducationUpdateManyWithoutCandidateNestedInput
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutSavedJobsInput = {
@@ -36989,6 +39117,7 @@ export namespace Prisma {
     educations?: EducationUncheckedUpdateManyWithoutCandidateNestedInput
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type JobUpsertWithoutSavedByInput = {
@@ -37142,6 +39271,7 @@ export namespace Prisma {
     educations?: EducationCreateNestedManyWithoutCandidateInput
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutApplicationsInput = {
@@ -37159,6 +39289,7 @@ export namespace Prisma {
     educations?: EducationUncheckedCreateNestedManyWithoutCandidateInput
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutApplicationsInput = {
@@ -37367,6 +39498,7 @@ export namespace Prisma {
     educations?: EducationUpdateManyWithoutCandidateNestedInput
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutApplicationsInput = {
@@ -37384,6 +39516,7 @@ export namespace Prisma {
     educations?: EducationUncheckedUpdateManyWithoutCandidateNestedInput
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type InterviewUpsertWithWhereUniqueWithoutApplicationInput = {
@@ -38325,6 +40458,20 @@ export namespace Prisma {
     savedAt?: Date | string
   }
 
+  export type CompanyReviewCreateManyCandidateInput = {
+    id?: string
+    companyId: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type ExperienceUpdateWithoutCandidateInput = {
     id?: StringFieldUpdateOperationsInput | string
     companyName?: StringFieldUpdateOperationsInput | string
@@ -38467,6 +40614,48 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     jobId?: StringFieldUpdateOperationsInput | string
     savedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyReviewUpdateWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    company?: CompanyUpdateOneRequiredWithoutReviewsNestedInput
+  }
+
+  export type CompanyReviewUncheckedUpdateWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyReviewUncheckedUpdateManyWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type JobCreateManyRecruiterInput = {
@@ -38659,6 +40848,20 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CompanyReviewCreateManyCompanyInput = {
+    id?: string
+    candidateId: string
+    rating: number
+    title?: string | null
+    review?: string | null
+    pros?: string | null
+    cons?: string | null
+    isCurrentEmployee?: boolean
+    wouldRecommend?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type RecruiterProfileUpdateWithoutCompanyInput = {
     id?: StringFieldUpdateOperationsInput | string
     position?: NullableStringFieldUpdateOperationsInput | string | null
@@ -38767,6 +40970,48 @@ export namespace Prisma {
     clicksCount?: IntFieldUpdateOperationsInput | number
     publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyReviewUpdateWithoutCompanyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidate?: CandidateProfileUpdateOneRequiredWithoutCompanyReviewsNestedInput
+  }
+
+  export type CompanyReviewUncheckedUpdateWithoutCompanyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyReviewUncheckedUpdateManyWithoutCompanyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    review?: NullableStringFieldUpdateOperationsInput | string | null
+    pros?: NullableStringFieldUpdateOperationsInput | string | null
+    cons?: NullableStringFieldUpdateOperationsInput | string | null
+    isCurrentEmployee?: BoolFieldUpdateOperationsInput | boolean
+    wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

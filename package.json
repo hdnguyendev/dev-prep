@@ -41,5 +41,8 @@
   },
   "module": "index.ts",
   "type": "module",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@radix-ui/react-tabs": "^1.1.13"
+  }
 }

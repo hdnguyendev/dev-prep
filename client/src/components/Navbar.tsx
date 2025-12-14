@@ -1,121 +1,210 @@
+import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { Link, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
 import logo from "@/assets/logo.svg";
-import { Button } from "@/components/ui/button";
-import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
-import {
-  Home as HomeIcon,
-  BriefcaseBusiness,
-  Building2,
-  ClipboardList,
-  Mic,
-  ShieldCheck,
-  Sun,
-  Moon,
-  Sparkles,
+import { getCurrentUser, logout } from "@/lib/auth";
+import { 
+  Briefcase, 
+  Building2, 
+  ClipboardList, 
+  Calendar, 
+  LayoutDashboard,
+  Shield,
   Users,
+  Home,
+  FileText,
+  LogOut,
+  Heart
 } from "lucide-react";
-
-const applyThemeClass = (theme: "light" | "dark") => {
-  const root = document.documentElement;
-  if (theme === "dark") {
-    root.classList.add("dark");
-  } else {
-    root.classList.remove("dark");
-  }
-};
-
-const getInitialTheme = (): "light" | "dark" => {
-  const saved = localStorage.getItem("theme");
-  if (saved === "light" || saved === "dark") return saved;
-  return "light";
-};
+import { Button } from "./ui/button";
 
 const Navbar = () => {
-  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme());
-  const { user } = useUser();
-  const displayName = user?.fullName || user?.emailAddresses[0]?.emailAddress || 'User';
+  const navigate = useNavigate();
+  
+  // Use state to force re-render when auth changes
+  const [customUser, setCustomUser] = useState(getCurrentUser());
+  const isStaffLoggedIn = customUser !== null;
+  const isAdmin = customUser?.role === "ADMIN";
+  const isRecruiter = customUser?.role === "RECRUITER"; // Only RECRUITER, not ADMIN
 
+  // Listen for auth changes
   useEffect(() => {
-    applyThemeClass(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    const checkAuth = () => {
+      setCustomUser(getCurrentUser());
+    };
 
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+    // Check auth on mount
+    checkAuth();
+
+    // Listen for custom auth change event (same-tab updates)
+    window.addEventListener("auth_changed", checkAuth);
+    
+    // Listen for storage events (cross-tab updates)
+    window.addEventListener("storage", checkAuth);
+
+    return () => {
+      window.removeEventListener("auth_changed", checkAuth);
+      window.removeEventListener("storage", checkAuth);
+    };
+  }, []);
+
+  // Handle staff logout
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center gap-4 px-4">
-        <div className="flex items-center gap-2">
-            <img src={logo} alt="Logo" className="h-6 w-6" />
-            <Link to="/" className="text-sm font-semibold tracking-tight">Dev Prep</Link>
+    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition">
+          <img src={logo} alt="Logo" className="h-8 w-8" />
+          <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
+            DevPrep
+          </span>
+        </Link>
+
+        {/* Navigation Links - Adaptive based on role */}
+        <div className="flex items-center gap-1">
+          {/* Public Links (Everyone can see) */}
+          <Link to="/">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+          </Link>
+
+          <Link to="/jobs">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Briefcase className="h-4 w-4" />
+              Jobs
+            </Button>
+          </Link>
+
+          <Link to="/companies">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Companies
+            </Button>
+          </Link>
+
+          {/* Candidate-only Links (Clerk authenticated) */}
+          <SignedIn>
+            <Link to="/saved-jobs">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Heart className="h-4 w-4" />
+                Saved
+              </Button>
+            </Link>
+
+            <Link to="/interview">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Prep
+              </Button>
+            </Link>
+
+            <Link to="/applications">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ClipboardList className="h-4 w-4" />
+                Applications
+              </Button>
+            </Link>
+
+            <Link to="/interviews">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                Interviews
+              </Button>
+            </Link>
+
+            <Link to="/dashboard">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+          </SignedIn>
+
+          {/* Recruiter Links (Custom auth) */}
+          {isRecruiter && (
+            <Link to="/recruiter">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Users className="h-4 w-4" />
+                Recruiter
+              </Button>
+            </Link>
+          )}
+
+          {/* Admin Links (Custom auth) */}
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Shield className="h-4 w-4" />
+                Admin
+              </Button>
+            </Link>
+          )}
         </div>
 
-        <nav className="flex items-center gap-3 text-sm">
-          <Link to="/" className="flex items-center gap-1 hover:underline">
-            <HomeIcon className="h-4 w-4" /> Home
-          </Link>
-          <Link to="/jobs" className="flex items-center gap-1 hover:underline">
-            <BriefcaseBusiness className="h-4 w-4" /> Jobs
-          </Link>
-          <Link to="/companies" className="flex items-center gap-1 hover:underline">
-            <Building2 className="h-4 w-4" /> Companies
-          </Link>
-          <Link to="/applications" className="flex items-center gap-1 hover:underline">
-            <ClipboardList className="h-4 w-4" /> Applications
-          </Link>
-          <Link to="/interviews" className="flex items-center gap-1 hover:underline">
-            <Mic className="h-4 w-4" /> Interviews
-          </Link>
-          <Link to="/interview" className="flex items-center gap-1 hover:underline">
-            <Sparkles className="h-4 w-4" /> Prep
-          </Link>
-          {user && (
-            <>
-              <Link to="/recruiter" className="flex items-center gap-1 hover:underline">
-                <Users className="h-4 w-4" /> Recruiter
-              </Link>
-              <Link to="/admin" className="flex items-center gap-1 hover:underline">
-                <ShieldCheck className="h-4 w-4" /> Admin
-              </Link>
-            </>
+        {/* Auth Section */}
+        <div className="flex items-center gap-3">
+          {/* Clerk User (Candidate) */}
+          <SignedIn>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Candidate</span>
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </SignedIn>
+
+          {/* Staff User (Admin/Recruiter) */}
+          {isStaffLoggedIn && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 bg-primary/5">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs font-medium">{customUser.firstName} {customUser.lastName}</span>
+                  <span className="text-xs text-muted-foreground">{customUser.role}</span>
+                </div>
+                {customUser.avatarUrl ? (
+                  <img 
+                    src={customUser.avatarUrl} 
+                    alt="Avatar" 
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-semibold">
+                      {customUser.firstName?.[0]}{customUser.lastName?.[0]}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleLogout}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           )}
-        </nav>
 
-
-        <div className="ml-auto flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="px-2" aria-label="Toggle theme" onClick={toggleTheme}>
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          {
-            user ?
-              (<>
-                <span className="text-sm">Hello, {displayName}!</span>
-                <UserButton 
-                  appearance={{
-                    elements: {
-                      avatarBox: "w-8 h-8",
-                      userButtonPopoverCard: "shadow-lg border",
-                    }
-                  }}
-                />
-              </>)
-            : (<>
-                <SignInButton mode="modal">
-                  <Button variant="ghost" size="sm">
-                    Sign In
-                  </Button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <Button size="sm">
-                    Sign Up
-                  </Button>
-                </SignUpButton>
-              </>)
-          }
+          {/* Login Button (Guests) */}
+          <SignedOut>
+            {!isStaffLoggedIn && (
+              <Link to="/login">
+                <Button size="sm" variant="default">
+                  Login
+                </Button>
+              </Link>
+            )}
+          </SignedOut>
         </div>
       </div>
-    </header>
+    </nav>
   );
 };
 

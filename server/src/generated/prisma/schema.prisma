@@ -107,11 +107,12 @@ model CandidateProfile {
   updatedAt DateTime @updatedAt
 
   // Relations
-  experiences  Experience[]
-  educations   Education[]
-  skills       CandidateSkill[]
-  applications Application[]
-  savedJobs    SavedJob[]
+  experiences    Experience[]
+  educations     Education[]
+  skills         CandidateSkill[]
+  applications   Application[]
+  savedJobs      SavedJob[]
+  companyReviews CompanyReview[]
 }
 
 // Profile dành cho nhà tuyển dụng
@@ -219,6 +220,39 @@ model Company {
   // Relations
   recruiters RecruiterProfile[]
   jobs       Job[]
+  reviews    CompanyReview[]
+}
+
+// Đánh giá công ty từ candidate
+model CompanyReview {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  rating Int // 1-5 stars
+  title  String? @db.VarChar(255) // Tiêu đề review (optional)
+  review String? @db.Text // Nội dung review
+
+  // Thông tin chi tiết (optional)
+  pros String? @db.Text // Ưu điểm
+  cons String? @db.Text // Nhược điểm
+
+  // Có đang làm việc tại công ty này không
+  isCurrentEmployee Boolean @default(false)
+
+  // Có recommend công ty này không
+  wouldRecommend Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, candidateId]) // Mỗi candidate chỉ review 1 lần cho mỗi công ty
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([rating])
 }
 
 model Job {

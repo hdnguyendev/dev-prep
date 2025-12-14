@@ -2,45 +2,85 @@ import { Hono } from "hono";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
-const uploadDir = join(process.cwd(), "public", "uploads");
-
-const ensureDir = async () => {
-  await mkdir(uploadDir, { recursive: true });
-};
-
 const uploadRoutes = new Hono();
 
-uploadRoutes.post("/upload", async (c) => {
-  const form = await c.req.formData();
-  const file = form.get("file");
-  if (!(file instanceof File)) {
-    return c.json({ success: false, message: "file is required" }, 400);
+// Ensure upload directories exist
+const UPLOAD_DIR = join(process.cwd(), "public", "uploads");
+const RESUME_DIR = join(UPLOAD_DIR, "resumes");
+
+async function ensureUploadDirs() {
+  try {
+    await mkdir(RESUME_DIR, { recursive: true });
+  } catch (error) {
+    console.error("Failed to create upload directories:", error);
   }
+}
 
-  await ensureDir();
-  const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-  const filename = `${crypto.randomUUID()}${ext}`;
-  const filepath = join(uploadDir, filename);
-  await Bun.write(filepath, file);
+ensureUploadDirs();
 
-  const origin = new URL(c.req.url).origin;
-  const url = `${origin}/uploads/${filename}`;
-  return c.json({ success: true, url });
-});
+// Upload resume/CV
+uploadRoutes.post("/resume", async (c) => {
+  try {
+    const body = await c.req.parseBody();
+    const file = body["file"];
 
-uploadRoutes.get("/uploads/:file", async (c) => {
-  const fileParam = c.req.param("file");
-  const filepath = join(uploadDir, fileParam);
-  const file = Bun.file(filepath);
-  if (!(await file.exists())) {
-    return c.notFound();
+    if (!file || !(file instanceof File)) {
+      return c.json({ success: false, message: "No file uploaded" }, 400);
+    }
+
+    // Validate file type (PDF, DOC, DOCX)
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    
+    if (!allowedTypes.includes(file.type)) {
+      return c.json({ 
+        success: false, 
+        message: "Invalid file type. Only PDF, DOC, and DOCX are allowed" 
+      }, 400);
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      return c.json({ 
+        success: false, 
+        message: "File too large. Maximum size is 5MB" 
+      }, 400);
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 10);
+    const ext = file.name.split(".").pop();
+    const filename = `resume_${timestamp}_${randomStr}.${ext}`;
+    const filepath = join(RESUME_DIR, filename);
+
+    // Save file
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    await Bun.write(filepath, buffer);
+
+    // Return public URL
+    const baseUrl = process.env.API_URL || "http://localhost:9999";
+    const fileUrl = `${baseUrl}/uploads/resumes/${filename}`;
+
+    return c.json({
+      success: true,
+      url: fileUrl,
+      filename,
+      size: file.size,
+      type: file.type,
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    return c.json({ 
+      success: false, 
+      message: "Failed to upload file" 
+    }, 500);
   }
-  return new Response(file, {
-    headers: {
-      "Content-Type": file.type || "application/octet-stream",
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-  });
 });
 
 export default uploadRoutes;

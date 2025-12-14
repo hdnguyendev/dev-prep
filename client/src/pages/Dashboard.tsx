@@ -91,7 +91,7 @@ const Dashboard = () => {
       .slice(0, 8);
   }, [applications]);
 
-  const StatCard = ({ label, value, accent, icon }: { label: string; value: number | string; accent?: string; icon?: JSX.Element }) => (
+  const StatCard = ({ label, value, accent, icon }: { label: string; value: number | string; accent?: string; icon?: React.JSX.Element }) => (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

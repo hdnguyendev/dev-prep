@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import { adminResources, type AdminResource } from "@/lib/adminResources";
 import { adminClient, useAdminToken } from "@/lib/adminClient";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router";
+import { isAdminLoggedIn, logout, getCurrentUser } from "@/lib/auth";
 import {
   Blocks,
   BriefcaseBusiness,
@@ -49,6 +49,159 @@ const formatLabel = (field: string) => {
     .replace(/^\w/, (c) => c.toUpperCase());
 };
 
+// Admin Dashboard Component
+const AdminDashboard = () => {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCompanies: 0,
+    totalJobs: 0,
+    totalApplications: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+        
+        const [users, companies, jobs, applications] = await Promise.all([
+          fetch(`${API_BASE}/users?pageSize=1`).then(r => r.json()),
+          fetch(`${API_BASE}/companies?pageSize=1`).then(r => r.json()),
+          fetch(`${API_BASE}/jobs?pageSize=1`).then(r => r.json()),
+          fetch(`${API_BASE}/applications?pageSize=1`).then(r => r.json()),
+        ]);
+
+        setStats({
+          totalUsers: users.meta?.total || 0,
+          totalCompanies: companies.meta?.total || 0,
+          totalJobs: jobs.meta?.total || 0,
+          totalApplications: applications.meta?.total || 0,
+        });
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+        <p className="text-sm text-muted-foreground">Platform overview and statistics</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <UserRound className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            <p className="text-xs text-muted-foreground">Candidates, Recruiters, Admins</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalCompanies}</div>
+            <p className="text-xs text-muted-foreground">Registered companies</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
+            <BriefcaseBusiness className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalJobs}</div>
+            <p className="text-xs text-muted-foreground">Active and inactive jobs</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalApplications}</div>
+            <p className="text-xs text-muted-foreground">All application submissions</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Access */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Access</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
+              <UserRound className="h-5 w-5" />
+              <span className="text-sm">Manage Users</span>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
+              <Building2 className="h-5 w-5" />
+              <span className="text-sm">Verify Companies</span>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
+              <BriefcaseBusiness className="h-5 w-5" />
+              <span className="text-sm">Review Jobs</span>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
+              <ShieldCheck className="h-5 w-5" />
+              <span className="text-sm">System Settings</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* System Health */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Platform Health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">System Status</span>
+              <Badge variant="success">Healthy</Badge>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Database</span>
+              <Badge variant="success">Connected</Badge>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">API Response Time</span>
+              <span className="font-medium">~120ms</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const Admin = () => {
   const [resource, setResource] = useState<AdminResource>(adminResources[0]);
   const [state, setState] = useState<AdminState>({ loading: true, error: null, data: [] });
@@ -68,6 +221,24 @@ const Admin = () => {
   const [showFilters, setShowFilters] = useState(true);
   const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true); // Start with dashboard view
+
+  useEffect(() => {
+    if (!isAdminLoggedIn()) {
+      navigate("/login");
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const currentUser = getCurrentUser();
+
   const resourceIcons: Record<string, React.ReactNode> = {
     users: <UserRound className="h-4 w-4" />,
     companies: <Building2 className="h-4 w-4" />,
@@ -458,48 +629,57 @@ const Admin = () => {
     return "text";
   };
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
-    <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-        <main className="min-h-dvh bg-muted/40">
-          <div className="mx-auto grid min-h-dvh max-w-7xl grid-cols-1 lg:grid-cols-[260px_1fr]">
-            <aside className="border-r bg-background/80 backdrop-blur px-4 py-6 flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-primary" />
-                <div>
-                  <h1 className="text-xl font-semibold">Admin</h1>
-                  <p className="text-xs text-muted-foreground">Quản lý resource CRUD</p>
-                </div>
-              </div>
+    <main className="min-h-dvh bg-muted/40">
+      <div className="mx-auto grid min-h-dvh max-w-7xl grid-cols-1 lg:grid-cols-[260px_1fr]">
+        <aside className="border-r bg-background/80 backdrop-blur px-4 py-6 flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div>
+              <h1 className="text-xl font-semibold">Admin</h1>
+              <p className="text-xs text-muted-foreground">{currentUser?.email || "Admin"}</p>
+            </div>
+          </div>
               <div className="space-y-1">
                 <Button
                   key="dashboard-tab"
-                  variant="ghost"
+                  variant={showDashboard ? "default" : "ghost"}
                   size="sm"
                   className="w-full justify-start gap-2"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => setShowDashboard(true)}
                 >
                   <LayoutPanelLeft className="h-4 w-4" /> Dashboard
                 </Button>
                 {adminResources.map((r) => (
                   <Button
                     key={r.key}
-                    variant={resource.key === r.key ? "default" : "ghost"}
+                    variant={!showDashboard && resource.key === r.key ? "default" : "ghost"}
                     size="sm"
                     className="w-full justify-start gap-2"
-                    onClick={() => setResource(r)}
+                    onClick={() => {
+                      setShowDashboard(false);
+                      setResource(r);
+                    }}
                   >
                     {resourceIcons[r.key] ?? <Blocks className="h-4 w-4" />} {r.label}
                   </Button>
                 ))}
               </div>
               <Button size="sm" onClick={() => openModal("create")}>+ New {resource.label}</Button>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="mt-auto">
+                Logout
+              </Button>
             </aside>
 
             <div className="px-4 py-6">
+              {showDashboard ? (
+                <AdminDashboard />
+              ) : (
+                <>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-semibold">{resource.label}</h2>
@@ -728,9 +908,10 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </div>
+                </>
+              )}
             </div>
           </div>
-        </main>
 
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
@@ -931,8 +1112,7 @@ const Admin = () => {
             </div>
           </div>
         )}
-      </SignedIn>
-    </>
+    </main>
   );
 };
 

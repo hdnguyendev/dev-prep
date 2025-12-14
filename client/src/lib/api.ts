@@ -27,8 +27,33 @@ export interface Company {
   city?: string | null;
   country?: string | null;
   isVerified: boolean;
+  averageRating?: number;
+  totalReviews?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CompanyReview {
+  id: string;
+  companyId: string;
+  candidateId: string;
+  rating: number;
+  title?: string | null;
+  review?: string | null;
+  pros?: string | null;
+  cons?: string | null;
+  isCurrentEmployee: boolean;
+  wouldRecommend: boolean;
+  createdAt: string;
+  updatedAt: string;
+  candidate?: {
+    id: string;
+    user: {
+      firstName: string;
+      lastName: string;
+      avatarUrl?: string | null;
+    };
+  };
 }
 
 export interface Skill {
@@ -213,7 +238,15 @@ class ApiClient {
 
   listCompanies(params?: ListParams, token?: string) {
     return this.request<Company[]>(`/companies${buildQuery(params)}`, {}, token);
-    }
+  }
+
+  getCompanyBySlug(slug: string, token?: string) {
+    return this.request<Company>(`/companies/slug/${slug}`, {}, token);
+  }
+
+  getCompanyJobs(companyId: string, params?: ListParams, token?: string) {
+    return this.request<Job[]>(`/companies/${companyId}/jobs${buildQuery(params)}`, {}, token);
+  }
 
   listApplications(params?: ListParams, token?: string) {
     return this.request<Application[]>(`/applications${buildQuery(params)}`, {}, token);
@@ -221,6 +254,58 @@ class ApiClient {
 
   listInterviews(params?: ListParams, token?: string) {
     return this.request<Interview[]>(`/interviews${buildQuery(params)}`, {}, token);
+  }
+
+  // Review endpoints
+  getCompanyReviews(companyId: string, params?: ListParams, token?: string) {
+    return this.request<CompanyReview[]>(`/reviews/companies/${companyId}${buildQuery(params)}`, {}, token);
+  }
+
+  getCompanyReviewStats(companyId: string, token?: string) {
+    return this.request<{
+      averageRating: number;
+      totalReviews: number;
+      ratingDistribution: Record<number, number>;
+      recommendPercentage: number;
+    }>(`/reviews/companies/${companyId}/stats`, {}, token);
+  }
+
+  getMyReview(companyId: string, token?: string) {
+    return this.request<CompanyReview | null>(`/reviews/my-review/${companyId}`, {}, token);
+  }
+
+  createOrUpdateReview(data: {
+    companyId: string;
+    rating: number;
+    title?: string;
+    review?: string;
+    pros?: string;
+    cons?: string;
+    isCurrentEmployee?: boolean;
+    wouldRecommend?: boolean;
+  }, token?: string) {
+    return this.request<CompanyReview>(`/reviews`, { method: "POST", body: JSON.stringify(data) }, token);
+  }
+
+  deleteReview(reviewId: string, token?: string) {
+    return this.request<{ message: string }>(`/reviews/${reviewId}`, { method: "DELETE" }, token);
+  }
+
+  // Saved Jobs endpoints
+  getSavedJobs(params?: ListParams, token?: string) {
+    return this.request<Job[]>(`/saved-jobs${buildQuery(params)}`, {}, token);
+  }
+
+  checkIfJobSaved(jobId: string, token?: string) {
+    return this.request<{ isSaved: boolean }>(`/saved-jobs/check/${jobId}`, {}, token);
+  }
+
+  saveJob(jobId: string, token?: string) {
+    return this.request<{ message: string }>(`/saved-jobs/${jobId}`, { method: "POST" }, token);
+  }
+
+  unsaveJob(jobId: string, token?: string) {
+    return this.request<{ message: string }>(`/saved-jobs/${jobId}`, { method: "DELETE" }, token);
   }
 }
 

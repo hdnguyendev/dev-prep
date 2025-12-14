@@ -2,7 +2,7 @@
 generator client {
   provider        = "prisma-client-js"
   output          = "../src/generated/prisma"
-  previewFeatures = ["fullTextSearch", "fullTextIndex"] 
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
 datasource db {
@@ -47,7 +47,6 @@ enum ApplicationStatus {
   WITHDRAWN
 }
 
-
 enum Currency {
   VND
   USD
@@ -60,30 +59,30 @@ enum Currency {
 // --------------------------------------
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String
-  
-  firstName     String
-  lastName      String
-  phone         String?
-  avatarUrl     String?
-  
-  role          UserRole  @default(CANDIDATE)
-  
-  isVerified    Boolean   @default(false) // Email đã verify chưa
-  isActive      Boolean   @default(true)  // Có bị Admin ban không
-  lastLoginAt   DateTime?
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String
+
+  firstName String
+  lastName  String
+  phone     String?
+  avatarUrl String?
+
+  role UserRole @default(CANDIDATE)
+
+  isVerified  Boolean   @default(false) // Email đã verify chưa
+  isActive    Boolean   @default(true) // Có bị Admin ban không
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   candidateProfile CandidateProfile?
   recruiterProfile RecruiterProfile?
-  
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
+
+  sentMessages     Message[]      @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
   notifications    Notification[]
 
   @@index([email])
@@ -91,46 +90,47 @@ model User {
 
 // Profile dành cho ứng viên
 model CandidateProfile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  headline    String?  @db.VarChar(255) // VD: "Senior Backend Developer | Node.js"
-  bio         String?  @db.Text
-  website     String?
-  linkedin    String?
-  github      String?
-  
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  headline String? @db.VarChar(255) // VD: "Senior Backend Developer | Node.js"
+  bio      String? @db.Text
+  website  String?
+  linkedin String?
+  github   String?
+
   // Thông tin CV structured (Để search tốt hơn là chỉ lưu file PDF)
-  cvUrl       String?  // Link file gốc (PDF/Word)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  cvUrl String? // Link file gốc (PDF/Word)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  experiences Experience[]
-  educations  Education[]
-  skills      CandidateSkill[]
-  applications Application[]
-  savedJobs    SavedJob[]
+  experiences    Experience[]
+  educations     Education[]
+  skills         CandidateSkill[]
+  applications   Application[]
+  savedJobs      SavedJob[]
+  companyReviews CompanyReview[]
 }
 
 // Profile dành cho nhà tuyển dụng
 model RecruiterProfile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
-  position    String?  // Chức vụ trong cty (VD: Talent Acquisition Manager)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  position String? // Chức vụ trong cty (VD: Talent Acquisition Manager)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  jobsPosted  Job[]    // Các job do recruiter này đăng
+  jobsPosted Job[] // Các job do recruiter này đăng
 }
 
 // --------------------------------------
@@ -138,56 +138,56 @@ model RecruiterProfile {
 // --------------------------------------
 
 model Experience {
-  id              String   @id @default(uuid())
-  candidateId     String
-  candidate       CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  
-  companyName     String
-  position        String
-  location        String?
-  startDate       DateTime
-  endDate         DateTime? // Null = Hiện tại đang làm
-  isCurrent       Boolean   @default(false)
-  description     String?   @db.Text
-  
-  createdAt       DateTime @default(now())
+  id          String           @id @default(uuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  companyName String
+  position    String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime? // Null = Hiện tại đang làm
+  isCurrent   Boolean   @default(false)
+  description String?   @db.Text
+
+  createdAt DateTime @default(now())
 }
 
 model Education {
-  id              String   @id @default(uuid())
-  candidateId     String
-  candidate       CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  
-  institution     String   // Tên trường
-  degree          String?  // Bằng cấp
-  fieldOfStudy    String?  // Ngành học
-  startDate       DateTime
-  endDate         DateTime?
-  grade           String?  // GPA hoặc xếp loại
-  
-  createdAt       DateTime @default(now())
+  id          String           @id @default(uuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  institution  String // Tên trường
+  degree       String? // Bằng cấp
+  fieldOfStudy String? // Ngành học
+  startDate    DateTime
+  endDate      DateTime?
+  grade        String? // GPA hoặc xếp loại
+
+  createdAt DateTime @default(now())
 }
 
 model Skill {
-  id          String           @id @default(uuid())
-  name        String           @unique // Java, Python, SQL...
-  iconUrl     String?
-  
+  id      String  @id @default(uuid())
+  name    String  @unique // Java, Python, SQL...
+  iconUrl String?
+
   // Relations
-  candidates  CandidateSkill[]
-  jobs        JobSkill[]
+  candidates CandidateSkill[]
+  jobs       JobSkill[]
 }
 
 // Bảng trung gian để lưu level của Skill ứng viên
 model CandidateSkill {
-  id           String           @id @default(uuid())
-  candidateId  String
-  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  skillId      String
-  skill        Skill            @relation(fields: [skillId], references: [id])
-  
-  level        String?          // Beginner, Intermediate, Expert
-  
+  id          String           @id @default(uuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  skillId     String
+  skill       Skill            @relation(fields: [skillId], references: [id])
+
+  level String? // Beginner, Intermediate, Expert
+
   @@unique([candidateId, skillId])
 }
 
@@ -196,79 +196,112 @@ model CandidateSkill {
 // --------------------------------------
 
 model Company {
-  id            String   @id @default(uuid())
-  name          String
-  slug          String   @unique // URL friendly name
-  logoUrl       String?
-  coverUrl      String?
-  website       String?
-  
-  description   String?  @db.Text
-  industry      String?  // Ngành nghề
-  companySize   String?  // 1-10, 11-50, etc.
-  foundedYear   Int?
-  
-  address       String?
-  city          String?
-  country       String?
-  
-  isVerified    Boolean  @default(false)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id       String  @id @default(uuid())
+  name     String
+  slug     String  @unique // URL friendly name
+  logoUrl  String?
+  coverUrl String?
+  website  String?
+
+  description String? @db.Text
+  industry    String? // Ngành nghề
+  companySize String? // 1-10, 11-50, etc.
+  foundedYear Int?
+
+  address String?
+  city    String?
+  country String?
+
+  isVerified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  recruiters    RecruiterProfile[]
-  jobs          Job[]
+  recruiters RecruiterProfile[]
+  jobs       Job[]
+  reviews    CompanyReview[]
+}
+
+// Đánh giá công ty từ candidate
+model CompanyReview {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  rating Int // 1-5 stars
+  title  String? @db.VarChar(255) // Tiêu đề review (optional)
+  review String? @db.Text // Nội dung review
+
+  // Thông tin chi tiết (optional)
+  pros String? @db.Text // Ưu điểm
+  cons String? @db.Text // Nhược điểm
+
+  // Có đang làm việc tại công ty này không
+  isCurrentEmployee Boolean @default(false)
+
+  // Có recommend công ty này không
+  wouldRecommend Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, candidateId]) // Mỗi candidate chỉ review 1 lần cho mỗi công ty
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([rating])
 }
 
 model Job {
-  id              String    @id @default(uuid())
-  slug            String    @unique
-  title           String
-  
-  companyId       String
-  company         Company   @relation(fields: [companyId], references: [id])
-  
-  recruiterId     String
-  recruiter       RecruiterProfile @relation(fields: [recruiterId], references: [id])
-  
+  id    String @id @default(uuid())
+  slug  String @unique
+  title String
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  recruiterId String
+  recruiter   RecruiterProfile @relation(fields: [recruiterId], references: [id])
+
   // Job Details
-  description     String    @db.Text // Rich Text HTML
-  requirements    String?   @db.Text
-  benefits        String?   @db.Text
-  
-  type            JobType   @default(FULL_TIME)
-  status          JobStatus @default(DRAFT)
-  
+  description  String  @db.Text // Rich Text HTML
+  requirements String? @db.Text
+  benefits     String? @db.Text
+
+  type   JobType   @default(FULL_TIME)
+  status JobStatus @default(DRAFT)
+
   // Location
-  location        String?
-  isRemote        Boolean   @default(false)
-  
+  location String?
+  isRemote Boolean @default(false)
+
   // Salary
-  salaryMin       Float?
-  salaryMax       Float?
-  currency        Currency  @default(VND)
-  isSalaryNegotiable Boolean @default(false)
-  
+  salaryMin          Float?
+  salaryMax          Float?
+  currency           Currency @default(VND)
+  isSalaryNegotiable Boolean  @default(false)
+
   // Metadata
-  experienceLevel String?   // Junior, Senior, Lead...
-  quantity        Int       @default(1) // Số lượng tuyển
-  
-  viewsCount      Int       @default(0)
-  clicksCount     Int       @default(0)
-  
-  publishedAt     DateTime?
-  deadline        DateTime?
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  experienceLevel String? // Junior, Senior, Lead...
+  quantity        Int     @default(1) // Số lượng tuyển
+
+  viewsCount  Int @default(0)
+  clicksCount Int @default(0)
+
+  publishedAt DateTime?
+  deadline    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  skills          JobSkill[]
-  applications    Application[]
-  savedBy         SavedJob[]
-  categories      JobCategory[]
+  skills       JobSkill[]
+  applications Application[]
+  savedBy      SavedJob[]
+  categories   JobCategory[]
 
   @@index([title, description])
 }
@@ -281,11 +314,11 @@ model Category {
 }
 
 model JobCategory {
-  jobId       String
-  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
+  jobId      String
+  job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
   @@id([jobId, categoryId])
 }
 
@@ -294,9 +327,9 @@ model JobSkill {
   job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
   skillId String
   skill   Skill  @relation(fields: [skillId], references: [id])
-  
+
   isRequired Boolean @default(true) // Skill bắt buộc hay ưu tiên
-  
+
   @@id([jobId, skillId])
 }
 
@@ -306,8 +339,8 @@ model SavedJob {
   candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   jobId       String
   job         Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  
-  savedAt     DateTime         @default(now())
+
+  savedAt DateTime @default(now())
 
   @@unique([candidateId, jobId])
 }
@@ -317,52 +350,52 @@ model SavedJob {
 // --------------------------------------
 
 model Application {
-  id              String            @id @default(uuid())
-  
-  jobId           String
-  job             Job               @relation(fields: [jobId], references: [id])
-  
-  candidateId     String
-  candidate       CandidateProfile  @relation(fields: [candidateId], references: [id])
-  
-  resumeUrl       String?           // Snapshot CV tại thời điểm apply
-  coverLetter     String?           @db.Text
-  
+  id String @id @default(uuid())
+
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id])
+
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id])
+
+  resumeUrl   String? // Snapshot CV tại thời điểm apply
+  coverLetter String? @db.Text
+
   status          ApplicationStatus @default(APPLIED)
   rejectionReason String?           @db.Text // Lý do từ chối (nếu có)
-  
-  appliedAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  interviews      Interview[]
-  history         ApplicationHistory[] // Log lịch sử thay đổi trạng thái
-  notes           ApplicationNote[]    // Ghi chú nội bộ của team tuyển dụng
-  
+  interviews Interview[]
+  history    ApplicationHistory[] // Log lịch sử thay đổi trạng thái
+  notes      ApplicationNote[] // Ghi chú nội bộ của team tuyển dụng
+
   @@unique([jobId, candidateId]) // Một người chỉ apply 1 lần cho 1 job
 }
 
 model ApplicationHistory {
-  id            String            @id @default(uuid())
+  id            String      @id @default(uuid())
   applicationId String
-  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  
-  status        ApplicationStatus // Trạng thái đã thay đổi
-  changedBy     String?           // User ID của người thực hiện đổi (Recruiter)
-  note          String?           // Ghi chú thay đổi
-  
-  createdAt     DateTime          @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  status    ApplicationStatus // Trạng thái đã thay đổi
+  changedBy String? // User ID của người thực hiện đổi (Recruiter)
+  note      String? // Ghi chú thay đổi
+
+  createdAt DateTime @default(now())
 }
 
 model ApplicationNote {
   id            String      @id @default(uuid())
   applicationId String
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  
-  authorId      String      // Recruiter ID
-  content       String      @db.Text
-  
-  createdAt     DateTime    @default(now())
+
+  authorId String // Recruiter ID
+  content  String @db.Text
+
+  createdAt DateTime @default(now())
 }
 
 // --------------------------------------
@@ -374,19 +407,19 @@ model ApplicationNote {
 // --------------------------------------
 
 enum InterviewType {
-  AI_VIDEO      // AI hiện hình/video phỏng vấn
-  AI_VOICE      // Chỉ thoại
-  AI_CHAT       // Chat bot phỏng vấn
-  CODING_TEST   // Bài test code tự động
+  AI_VIDEO // AI hiện hình/video phỏng vấn
+  AI_VOICE // Chỉ thoại
+  AI_CHAT // Chat bot phỏng vấn
+  CODING_TEST // Bài test code tự động
 }
 
 enum InterviewStatus {
-  PENDING       // Đã tạo link, chưa bắt đầu
-  IN_PROGRESS   // Đang phỏng vấn
-  PROCESSING    // Phỏng vấn xong, AI đang phân tích
-  COMPLETED     // Đã có kết quả
-  FAILED        // Lỗi kỹ thuật
-  EXPIRED       // Ứng viên không tham gia quá hạn
+  PENDING // Đã tạo link, chưa bắt đầu
+  IN_PROGRESS // Đang phỏng vấn
+  PROCESSING // Phỏng vấn xong, AI đang phân tích
+  COMPLETED // Đã có kết quả
+  FAILED // Lỗi kỹ thuật
+  EXPIRED // Ứng viên không tham gia quá hạn
 }
 
 // --------------------------------------
@@ -394,83 +427,83 @@ enum InterviewStatus {
 // --------------------------------------
 
 model Interview {
-  id              String          @id @default(uuid())
-  
-  applicationId   String
-  application     Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  
+  id String @id @default(uuid())
+
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
   // Cấu hình phỏng vấn
-  title           String          // VD: "Vòng 1: AI Screening"
-  type            InterviewType   @default(AI_VIDEO)
-  status          InterviewStatus @default(PENDING)
-  
+  title  String // VD: "Vòng 1: AI Screening"
+  type   InterviewType   @default(AI_VIDEO)
+  status InterviewStatus @default(PENDING)
+
   // Link & Token truy cập
-  accessCode      String          @unique // Mã để ứng viên nhập vào phòng p/v
-  sessionUrl      String?         // Link phòng họp ảo (nếu dùng 3rd party)
-  expiresAt       DateTime        // Hạn chót để thực hiện phỏng vấn
-  
+  accessCode String   @unique // Mã để ứng viên nhập vào phòng p/v
+  sessionUrl String? // Link phòng họp ảo (nếu dùng 3rd party)
+  expiresAt  DateTime // Hạn chót để thực hiện phỏng vấn
+
   // Kết quả tổng quan (AI Summary)
-  startedAt       DateTime?       // Thời điểm ứng viên bắt đầu
-  endedAt         DateTime?       // Thời điểm kết thúc
-  durationSeconds Int?            // Tổng thời lượng (giây)
-  
-  overallScore    Float?          // Điểm trung bình (thang 10 hoặc 100)
-  summary         String?         @db.Text // Tóm tắt đánh giá chung của AI
-  recommendation  String?         // AI gợi ý: "Nên tuyển", "Cân nhắc", "Loại"
-  
+  startedAt       DateTime? // Thời điểm ứng viên bắt đầu
+  endedAt         DateTime? // Thời điểm kết thúc
+  durationSeconds Int? // Tổng thời lượng (giây)
+
+  overallScore   Float? // Điểm trung bình (thang 10 hoặc 100)
+  summary        String? @db.Text // Tóm tắt đánh giá chung của AI
+  recommendation String? // AI gợi ý: "Nên tuyển", "Cân nhắc", "Loại"
+
   // Dữ liệu thô
-  recordingUrl    String?         // Link file ghi âm/ghi hình (S3/Cloudinary)
-  fullTranscript  String?         @db.Text // Toàn bộ nội dung hội thoại dạng text
-  
+  recordingUrl   String? // Link file ghi âm/ghi hình (S3/Cloudinary)
+  fullTranscript String? @db.Text // Toàn bộ nội dung hội thoại dạng text
+
   // Dữ liệu phân tích sâu (Dùng JSONB của Postgres cực mạnh)
   // Lưu: Tone giọng, Cảm xúc (Nervous, Confident), Keywords, Soft skills detected
-  aiAnalysisData  Json?           
-  
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  aiAnalysisData Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  exchanges       InterviewExchange[] // Chi tiết từng câu hỏi - đáp
+  exchanges InterviewExchange[] // Chi tiết từng câu hỏi - đáp
 }
 
 // Lưu chi tiết từng lượt Hỏi - Đáp (Turn-by-turn)
 // Để sau này replay lại xem ứng viên trả lời câu 3 như thế nào
 model InterviewExchange {
-  id            String    @id @default(uuid())
-  interviewId   String
-  interview     Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
-  
-  orderIndex    Int       // Câu hỏi số mấy (1, 2, 3...)
-  
+  id          String    @id @default(uuid())
+  interviewId String
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  orderIndex Int // Câu hỏi số mấy (1, 2, 3...)
+
   // Phần câu hỏi của AI
-  questionText  String    @db.Text
+  questionText     String  @db.Text
   questionCategory String? // VD: "Introduction", "Technical", "Behavioral"
-  
+
   // Phần trả lời của Ứng viên
-  answerText    String?   @db.Text // Text sau khi Speech-to-Text
-  answerAudioUrl String?  // Audio đoạn trả lời đó (nếu muốn nghe lại từng câu)
-  
+  answerText     String? @db.Text // Text sau khi Speech-to-Text
+  answerAudioUrl String? // Audio đoạn trả lời đó (nếu muốn nghe lại từng câu)
+
   // AI chấm điểm từng câu
-  score         Float?    // Điểm cho câu trả lời này
-  feedback      String?   @db.Text // Nhận xét: "Trả lời đúng trọng tâm nhưng thiếu ví dụ"
-  
-  durationSeconds Int?    // Thời gian suy nghĩ + trả lời
-  
-  createdAt     DateTime  @default(now())
-  
+  score    Float? // Điểm cho câu trả lời này
+  feedback String? @db.Text // Nhận xét: "Trả lời đúng trọng tâm nhưng thiếu ví dụ"
+
+  durationSeconds Int? // Thời gian suy nghĩ + trả lời
+
+  createdAt DateTime @default(now())
+
   @@index([interviewId, orderIndex]) // Index để query sắp xếp nhanh
 }
 
 // (Optional) Ngân hàng câu hỏi để AI bốc ngẫu nhiên
 model QuestionBank {
-  id            String   @id @default(uuid())
-  content       String   @db.Text
-  category      String   // Java, React, Communication...
-  difficulty    String   // Easy, Medium, Hard
-  
+  id         String @id @default(uuid())
+  content    String @db.Text
+  category   String // Java, React, Communication...
+  difficulty String // Easy, Medium, Hard
+
   expectedKeywords String[] // Các từ khóa AI nên tìm trong câu trả lời
-  
-  createdAt     DateTime @default(now())
+
+  createdAt DateTime @default(now())
 }
 
 // --------------------------------------
@@ -478,35 +511,35 @@ model QuestionBank {
 // --------------------------------------
 
 model Message {
-  id          String   @id @default(uuid())
-  
-  senderId    String
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
-  
-  receiverId  String
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  
-  content     String   @db.Text
-  isRead      Boolean  @default(false)
-  
+  id String @id @default(uuid())
+
+  senderId String
+  sender   User   @relation("SentMessages", fields: [senderId], references: [id])
+
+  receiverId String
+  receiver   User   @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  content String  @db.Text
+  isRead  Boolean @default(false)
+
   // Context (Optional): Tin nhắn này liên quan đến Job/Application nào
-  jobId       String?
+  jobId         String?
   applicationId String?
-  
-  createdAt   DateTime @default(now())
+
+  createdAt DateTime @default(now())
 }
 
 model Notification {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  title       String
-  message     String
-  type        String   // SYSTEM, APPLICATION_UPDATE, INTERVIEW_REMINDER...
-  isRead      Boolean  @default(false)
-  
-  link        String?  // Link điều hướng khi click
-  
-  createdAt   DateTime @default(now())
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title   String
+  message String
+  type    String // SYSTEM, APPLICATION_UPDATE, INTERVIEW_REMINDER...
+  isRead  Boolean @default(false)
+
+  link String? // Link điều hướng khi click
+
+  createdAt DateTime @default(now())
 }
