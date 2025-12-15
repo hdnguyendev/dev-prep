@@ -44,72 +44,78 @@ authRoutes.post("/register", async (c) => {
     // For now, we'll store it as-is (NOT SECURE - for demo only)
     const passwordHash = password; // TODO: Use bcrypt.hash(password, 10)
 
-    // Create user and recruiter profile in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      let finalCompanyId = companyId;
+    // Create user and recruiter profile
+    // Note: Using sequential operations instead of transaction for Cloudflare Workers compatibility
+    // Transactions can timeout or lose connection in serverless environments
+    let finalCompanyId = companyId;
 
-      // If creating new company
-      if (newCompany && !companyId) {
-        const { name, website, industry, city, country } = newCompany;
-        
-        if (!name) {
-          throw new Error("Company name is required");
-        }
-
-        // Generate slug from company name
-        const slug = name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "");
-
-        const company = await tx.company.create({
-          data: {
-            name,
-            slug: `${slug}-${Date.now()}`, // Add timestamp to ensure uniqueness
-            website: website || null,
-            industry: industry || null,
-            city: city || null,
-            country: country || null,
-            isVerified: false, // New companies need verification
-          },
-        });
-
-        finalCompanyId = company.id;
-      } else if (companyId) {
-        // Check if company exists
-        const company = await tx.company.findUnique({
-          where: { id: companyId },
-        });
-
-        if (!company) {
-          throw new Error("Selected company not found");
-        }
+    // If creating new company
+    if (newCompany && !companyId) {
+      const { name, website, industry, city, country } = newCompany;
+      
+      if (!name) {
+        return c.json({ 
+          success: false, 
+          message: "Company name is required" 
+        }, 400);
       }
 
-      // Create user
-      const user = await tx.user.create({
+      // Generate slug from company name
+      const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+      const company = await prisma.company.create({
         data: {
-          email,
-          passwordHash,
-          firstName,
-          lastName,
-          role: "RECRUITER",
-          isVerified: true, // Auto-verify for demo
-          isActive: true,
+          name,
+          slug: `${slug}-${Date.now()}`, // Add timestamp to ensure uniqueness
+          website: website || null,
+          industry: industry || null,
+          city: city || null,
+          country: country || null,
+          isVerified: false, // New companies need verification
         },
       });
 
-      // Create recruiter profile
-      const recruiterProfile = await tx.recruiterProfile.create({
-        data: {
-          userId: user.id,
-          companyId: finalCompanyId!,
-          position: position || null,
-        },
+      finalCompanyId = company.id;
+    } else if (companyId) {
+      // Check if company exists
+      const company = await prisma.company.findUnique({
+        where: { id: companyId },
       });
 
-      return { user, recruiterProfile, companyId: finalCompanyId };
+      if (!company) {
+        return c.json({ 
+          success: false, 
+          message: "Selected company not found" 
+        }, 404);
+      }
+    }
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        firstName,
+        lastName,
+        role: "RECRUITER",
+        isVerified: true, // Auto-verify for demo
+        isActive: true,
+      },
     });
+
+    // Create recruiter profile
+    const recruiterProfile = await prisma.recruiterProfile.create({
+      data: {
+        userId: user.id,
+        companyId: finalCompanyId!,
+        position: position || null,
+      },
+    });
+
+    const result = { user, recruiterProfile, companyId: finalCompanyId };
 
     return c.json({
       success: true,

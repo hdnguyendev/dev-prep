@@ -93,7 +93,8 @@ reviewRoutes.get("/companies/:companyId/stats", async (c) => {
       );
     }
 
-    const [stats, ratingDistribution] = await Promise.all([
+    // Use Promise.all instead of transaction for better Cloudflare Workers compatibility
+    const [stats, rating5, rating4, rating3, rating2, rating1] = await Promise.all([
       prisma.companyReview.aggregate({
         where: { companyId },
         _avg: {
@@ -103,15 +104,15 @@ reviewRoutes.get("/companies/:companyId/stats", async (c) => {
           rating: true,
         },
       }),
-      // Get count for each rating (1-5)
-      prisma.$transaction([
-        prisma.companyReview.count({ where: { companyId, rating: 5 } }),
-        prisma.companyReview.count({ where: { companyId, rating: 4 } }),
-        prisma.companyReview.count({ where: { companyId, rating: 3 } }),
-        prisma.companyReview.count({ where: { companyId, rating: 2 } }),
-        prisma.companyReview.count({ where: { companyId, rating: 1 } }),
-      ]),
+      // Get count for each rating (1-5) - parallel queries instead of transaction
+      prisma.companyReview.count({ where: { companyId, rating: 5 } }),
+      prisma.companyReview.count({ where: { companyId, rating: 4 } }),
+      prisma.companyReview.count({ where: { companyId, rating: 3 } }),
+      prisma.companyReview.count({ where: { companyId, rating: 2 } }),
+      prisma.companyReview.count({ where: { companyId, rating: 1 } }),
     ]);
+
+    const ratingDistribution = [rating5, rating4, rating3, rating2, rating1];
 
     const recommendCount = await prisma.companyReview.count({
       where: {
