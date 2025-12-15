@@ -48,9 +48,12 @@ const JobDetail = () => {
 
   // Fetch job details
   useEffect(() => {
+    if (!jobId) return;
+    
+    let isMounted = true;
+    const abortController = new AbortController();
+    
     const fetchJob = async () => {
-      if (!jobId) return;
-      
       try {
         setLoading(true);
         setError(null);
@@ -58,7 +61,12 @@ const JobDetail = () => {
         
         const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:9999"}/jobs/${jobId}?include=company,recruiter,skills,categories`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: abortController.signal,
         });
+        
+        if (!isMounted || abortController.signal.aborted) {
+          return;
+        }
         
         const data = await response.json();
         
@@ -67,21 +75,33 @@ const JobDetail = () => {
           
           // Fetch related jobs
           const relatedResponse = await apiClient.listJobs({ page: 1, pageSize: 3 }, token ?? undefined);
-          if (relatedResponse.success) {
+          if (relatedResponse.success && isMounted && !abortController.signal.aborted) {
             setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 3));
           }
         } else {
           setError(data.message || "Job not found");
         }
       } catch (err) {
-        console.error("Failed to fetch job:", err);
-        setError("Failed to load job details");
+        if (!isMounted || abortController.signal.aborted) {
+          return;
+        }
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error("Failed to fetch job:", err);
+          setError("Failed to load job details");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted && !abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchJob();
+    
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [jobId, getToken]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

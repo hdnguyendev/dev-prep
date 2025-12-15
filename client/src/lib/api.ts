@@ -184,6 +184,16 @@ const buildQuery = (params?: Record<string, string | number | undefined>) => {
   return qs ? `?${qs}` : "";
 };
 
+// Global request cache to prevent duplicate calls
+const requestCache = new Map<string, Promise<any>>();
+
+// Generate cache key from request details
+function getCacheKey(url: string, method: string, body?: string, token?: string): string {
+  // Include query params in URL for proper cache key
+  const urlKey = url.split('?')[0] + (url.includes('?') ? '?' + url.split('?')[1] : '');
+  return `${method}:${urlKey}:${body || ''}:${token ? token.substring(0, 20) : 'no-auth'}`;
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -211,23 +221,65 @@ class ApiClient {
       },
     };
 
-      const response = await fetch(url, config);
-      if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
-      }
+    // Generate cache key for GET requests (only cache GET to avoid stale data)
+    const method = options.method || 'GET';
+    const cacheKey = method === 'GET' 
+      ? getCacheKey(url, method, options.body as string, token)
+      : null;
 
-      const raw = await response.json();
-      const normalized: ApiResponse<T> =
-      raw && typeof raw === "object" && "ok" in raw
-        ? {
-            success: Boolean((raw as any).ok),
-            data: (raw as any).data as T,
-            message: (raw as any).message as string | undefined,
-            meta: (raw as any).meta,
-          }
-          : (raw as ApiResponse<T>);
-      return normalized;
+    // Check if same request is already in flight (deduplication)
+    if (cacheKey && requestCache.has(cacheKey)) {
+      const cachedRequest = requestCache.get(cacheKey);
+      if (cachedRequest) {
+        // Return the existing promise - this prevents duplicate network calls
+        return cachedRequest as Promise<ApiResponse<T>>;
+      }
+    }
+
+    // Create new request promise
+    const requestPromise = (async () => {
+      try {
+        const response = await fetch(url, config);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
+        }
+
+        const raw = await response.json();
+        const normalized: ApiResponse<T> =
+          raw && typeof raw === "object" && "ok" in raw
+            ? {
+                success: Boolean((raw as any).ok),
+                data: (raw as any).data as T,
+                message: (raw as any).message as string | undefined,
+                meta: (raw as any).meta,
+              }
+            : (raw as ApiResponse<T>);
+        return normalized;
+      } catch (error) {
+        // Remove from cache on error so retry can happen
+        if (cacheKey) {
+          requestCache.delete(cacheKey);
+        }
+        throw error;
+      } finally {
+        // Remove from cache after request completes (success or error)
+        // Use setTimeout to allow other components to use the same promise
+        if (cacheKey) {
+          setTimeout(() => {
+            requestCache.delete(cacheKey);
+          }, 100); // Small delay to allow concurrent requests to share the promise
+        }
+      }
+    })();
+
+    // Cache the request promise for GET requests BEFORE making the request
+    // This ensures that if StrictMode calls twice, the second call gets the same promise
+    if (cacheKey) {
+      requestCache.set(cacheKey, requestPromise);
+    }
+
+    return requestPromise;
   }
 
   listJobs(params?: ListParams, token?: string) {

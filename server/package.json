@@ -23,6 +23,7 @@
   "dependencies": {
     "@clerk/backend": "^2.19.0",
     "@hono/clerk-auth": "^3.0.3",
+    "@neondatabase/serverless": "^1.0.2",
     "@prisma/adapter-neon": "^7.1.0",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
@@ -30,6 +31,7 @@
     "dotenv": "^17.2.3",
     "hono": "^4.10.3",
     "nanoid": "^5.1.6",
+    "pg": "^8.16.3",
     "uuid": "^9.0.1"
   }
 }

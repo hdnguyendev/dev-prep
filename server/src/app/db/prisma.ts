@@ -1,40 +1,92 @@
 import "dotenv/config";
 import { PrismaClient } from '../../generated/prisma/client';
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { PrismaNeon } from '@prisma/adapter-neon';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-// Enable WebSocket for Cloudflare Workers
-neonConfig.webSocketConstructor = WebSocket;
+// ⚠️ Using pg (PostgreSQL) with PrismaPg adapter for Hyperdrive compatibility
+// Hyperdrive provides a connection string that works with standard pg driver
 
-// Get connection string from environment
-// In Workers, this comes from wrangler secrets
-// In local dev, from .env file
-const getConnectionString = () => {
-  // @ts-ignore - globalThis.DATABASE_URL is set by Workers
-  return globalThis.DATABASE_URL || process.env.DATABASE_URL;
+// ⚠️ CRITICAL: In Cloudflare Workers, DO NOT cache Prisma instances between requests
+// Each request is isolated - I/O objects from one request cannot be used in another
+// We create a new Prisma client for each request
+
+// Get connection string from multiple sources
+const getConnectionString = (): string | undefined => {
+  // 1. Try globalThis (set by Workers middleware)
+  // @ts-ignore
+  if (globalThis.DATABASE_URL) return globalThis.DATABASE_URL;
+  
+  // 2. Try process.env (local dev)
+  if (typeof process !== 'undefined' && process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+  
+  return undefined;
 };
 
-let prisma: PrismaClient;
-
 // Initialize Prisma with Neon adapter
-const initPrisma = () => {
-  if (!prisma) {
-    const connectionString = getConnectionString();
+const createPrismaClient = (connectionString: string): PrismaClient => {
+  // Validate connection string (minimal logging for performance)
+  if (!connectionString || typeof connectionString !== 'string' || connectionString.trim() === '') {
+    throw new Error("[DB] ❌ Invalid connection string");
+  }
+  
+  if (!connectionString.startsWith('postgres://') && !connectionString.startsWith('postgresql://')) {
+    throw new Error(`[DB] ❌ Invalid connection string format`);
+  }
+  
+  try {
+    // Create Pool with connectionString (from Hyperdrive or DATABASE_URL)
+    const dbUrl = connectionString.trim();
+    console.log("[DB] Creating Pool with connection string (length:", dbUrl.length, ")");
     
-    if (!connectionString) {
-      console.error("[DB] DATABASE_URL not found in environment");
-      throw new Error("DATABASE_URL is required");
+    const pool = new Pool({ 
+      connectionString: dbUrl,
+      max: 1, // Single connection for serverless
+    });
+    
+    if (!pool) {
+      throw new Error("[DB] ❌ Pool creation failed");
     }
     
-    const pool = new Pool({ connectionString });
-    const adapter = new PrismaNeon(pool);
+    console.log("[DB] ✅ Pool created");
     
-    prisma = new PrismaClient({ 
+    // Create adapter and client (using PrismaPg for standard pg driver)
+    const adapter = new PrismaPg(pool);
+    console.log("[DB] ✅ Adapter created");
+    
+    const client = new PrismaClient({ 
       adapter,
-      log: process.env.NODE_ENV === 'development' ? ['error'] : [],
+      log: ['error'],
     });
+    
+    console.log("[DB] ✅ PrismaClient created");
+    return client;
+  } catch (error: any) {
+    console.error("[DB] ❌ Fatal error creating Prisma client");
+    console.error("[DB] Error type:", error?.constructor?.name);
+    console.error("[DB] Error message:", error?.message);
+    if (error?.stack) {
+      console.error("[DB] Error stack (first 500 chars):", error.stack.substring(0, 500));
+    }
+    throw error;
   }
-  return prisma;
+};
+
+// Get or create Prisma instance
+// ⚠️ CRITICAL: In Workers, create NEW instance per request (no caching)
+// This prevents "Cannot perform I/O on behalf of a different request" errors
+const initPrisma = (): PrismaClient => {
+  // Get connection string
+  const connectionString = getConnectionString();
+  
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is required. Check Wrangler secrets.");
+  }
+  
+  // ⚠️ CRITICAL: Create NEW client for each request in Workers
+  // Do NOT cache - Workers isolate requests and cached I/O objects fail
+  return createPrismaClient(connectionString);
 };
 
 // Removed blocking testConnection() - causes Workers to hang
@@ -64,11 +116,8 @@ export const getPrisma = () => {
   return initPrisma();
 };
 
-// Initialize on import for non-Workers environments
-if (typeof process !== 'undefined' && process.env.DATABASE_URL) {
-  initPrisma();
-}
-
+// Don't initialize eagerly - let it happen on first use
+// This allows Workers middleware to set env vars first
 export default new Proxy({} as PrismaClient, {
   get(target, prop) {
     return initPrisma()[prop as keyof PrismaClient];

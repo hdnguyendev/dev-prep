@@ -14,6 +14,11 @@ NODE_ENV = "production"
 # - CLERK_SECRET_KEY
 # - JWT_SECRET
 
+# Hyperdrive Configuration (Recommended for Cloudflare Workers + Neon)
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "0649b0dceee14c3ca11c88bc066e7297"
+
 # Worker settings
 workers_dev = true
 route = { pattern = "api.dev-prep.com/*", zone_name = "dev-prep.com" }

@@ -45,46 +45,89 @@ const Jobs = () => {
 
   // Fetch jobs
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+    let requestId = 0;
+    
     const fetchJobs = async () => {
+      const currentRequestId = ++requestId;
+      
       try {
         setLoading(true);
         setError(null);
         const token = await getToken();
         const response = await apiClient.listJobs({ page, pageSize: 100 }, token ?? undefined);
+        
+        // Only update state if this is still the latest request and component is mounted
+        if (currentRequestId !== requestId || !isMounted || abortController.signal.aborted) {
+          return;
+        }
+        
         if (response.success) {
           setJobs(response.data);
         } else {
           setError(response.message || "Failed to fetch jobs");
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        if (currentRequestId !== requestId || !isMounted || abortController.signal.aborted) {
+          return;
+        }
+        if (err instanceof Error && err.name !== 'AbortError') {
+          setError(err.message || "An error occurred");
+        }
       } finally {
-        setLoading(false);
+        if (currentRequestId === requestId && isMounted && !abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchJobs();
+    
+    return () => {
+      isMounted = false;
+      requestId++; // Invalidate any pending requests
+      abortController.abort();
+    };
   }, [getToken, page]);
 
   // Fetch saved jobs status
   useEffect(() => {
     if (!isSignedIn || jobs.length === 0) return;
 
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const fetchSavedStatus = async () => {
       try {
         const token = await getToken();
         const savedJobsResponse = await apiClient.getSavedJobs({ page: 1, pageSize: 100 }, token ?? undefined);
+        
+        // Only update state if component is still mounted and request wasn't aborted
+        if (!isMounted || abortController.signal.aborted) {
+          return;
+        }
         
         if (savedJobsResponse.success) {
           const savedJobIds = new Set(savedJobsResponse.data.map(job => job.id));
           setSavedJobs(savedJobIds);
         }
       } catch (err) {
-        console.error("Error fetching saved jobs:", err);
+        if (!isMounted || abortController.signal.aborted) {
+          return;
+        }
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error("Error fetching saved jobs:", err);
+        }
       }
     };
 
     fetchSavedStatus();
+    
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [isSignedIn, jobs, getToken]);
 
   // Toggle save job
