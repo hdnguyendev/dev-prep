@@ -7,35 +7,21 @@ const savedJobRoutes = new Hono();
 // Get saved jobs for authenticated candidate
 savedJobRoutes.get("/", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return c.json({ success: false, message: "Not authenticated" }, 401);
+    // Use Clerk authentication helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
     }
+    const user = result.user;
 
     // Parse pagination
     const query = c.req.query();
     const take = Math.min(Math.max(Number(query.pageSize) || 20, 1), 100);
     const page = Math.max(Number(query.page) || 1, 1);
     const skip = (page - 1) * take;
-
-    // Find user by ID (custom auth) or get/create from Clerk
-    let user = await prisma.user.findUnique({
-      where: { id: token },
-      include: { candidateProfile: true },
-    });
-
-    if (!user) {
-      const result = await getOrCreateClerkUser(c);
-      if (!result.success || !result.user) {
-        return c.json({
-          success: false,
-          message: result.error || "Authentication failed"
-        }, 401);
-      }
-      user = result.user;
-    }
 
     if (!user || !user.candidateProfile) {
       return c.json(
@@ -99,12 +85,15 @@ savedJobRoutes.get("/", async (c) => {
 // Check if job is saved by candidate
 savedJobRoutes.get("/check/:jobId", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return c.json({ success: false, message: "Not authenticated" }, 401);
+    // Use Clerk authentication helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
     }
+    const user = result.user;
 
     const { jobId } = c.req.param();
 
@@ -113,19 +102,6 @@ savedJobRoutes.get("/check/:jobId", async (c) => {
         { success: false, message: "Job ID is required" },
         400
       );
-    }
-
-    // Find candidate profile
-    let user = await prisma.user.findUnique({
-      where: { id: token },
-      include: { candidateProfile: true },
-    });
-
-    if (!user) {
-      const result = await getOrCreateClerkUser(c);
-      if (result.success && result.user) {
-        user = result.user;
-      }
     }
 
     if (!user || !user.candidateProfile) {
@@ -164,12 +140,15 @@ savedJobRoutes.get("/check/:jobId", async (c) => {
 // Save a job
 savedJobRoutes.post("/:jobId", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return c.json({ success: false, message: "Not authenticated" }, 401);
+    // Use Clerk authentication helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
     }
+    const user = result.user;
 
     const { jobId } = c.req.param();
 
@@ -178,51 +157,6 @@ savedJobRoutes.post("/:jobId", async (c) => {
         { success: false, message: "Job ID is required" },
         400
       );
-    }
-
-    // Find or create candidate profile
-    let user = await prisma.user.findUnique({
-      where: { id: token },
-      include: { candidateProfile: true },
-    });
-
-    if (!user) {
-      const clerkUserId = token.substring(0, 20);
-      user = await prisma.user.findFirst({
-        where: { email: { contains: clerkUserId } },
-        include: { candidateProfile: true },
-      });
-
-      if (!user) {
-        try {
-          const newUser = await prisma.user.create({
-            data: {
-              email: `clerk_${clerkUserId}@candidate.temp`,
-              passwordHash: "",
-              firstName: "Candidate",
-              lastName: clerkUserId.substring(0, 8),
-              role: "CANDIDATE",
-              isVerified: true,
-              isActive: true,
-            },
-          });
-
-          await prisma.candidateProfile.create({
-            data: { userId: newUser.id },
-          });
-
-          user = await prisma.user.findUnique({
-            where: { id: newUser.id },
-            include: { candidateProfile: true },
-          });
-        } catch (createError) {
-          console.error("Failed to create candidate user:", createError);
-          return c.json(
-            { success: false, message: "Failed to initialize user profile" },
-            500
-          );
-        }
-      }
     }
 
     if (!user || !user.candidateProfile) {
@@ -283,12 +217,15 @@ savedJobRoutes.post("/:jobId", async (c) => {
 // Unsave a job
 savedJobRoutes.delete("/:jobId", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return c.json({ success: false, message: "Not authenticated" }, 401);
+    // Use Clerk authentication helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
     }
+    const user = result.user;
 
     const { jobId } = c.req.param();
 
@@ -297,19 +234,6 @@ savedJobRoutes.delete("/:jobId", async (c) => {
         { success: false, message: "Job ID is required" },
         400
       );
-    }
-
-    // Find candidate profile
-    let user = await prisma.user.findUnique({
-      where: { id: token },
-      include: { candidateProfile: true },
-    });
-
-    if (!user) {
-      const result = await getOrCreateClerkUser(c);
-      if (result.success && result.user) {
-        user = result.user;
-      }
     }
 
     if (!user || !user.candidateProfile) {

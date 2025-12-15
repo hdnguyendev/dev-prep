@@ -19,6 +19,17 @@ NODE_ENV = "production"
 binding = "HYPERDRIVE"
 id = "0649b0dceee14c3ca11c88bc066e7297"
 
+# R2 Bucket for file uploads (resumes, etc.)
+# 
+# SETUP INSTRUCTIONS:
+# 1. Enable R2 in Cloudflare Dashboard: https://dash.cloudflare.com → R2 → Get Started
+# 2. Create bucket: wrangler r2 bucket create dev-prep-uploads
+# 3. Uncomment the binding below:
+#
+# [[r2_buckets]]
+# binding = "R2_STORAGE"
+# bucket_name = "dev-prep-uploads"
+
 # Worker settings
 workers_dev = true
 route = { pattern = "api.dev-prep.com/*", zone_name = "dev-prep.com" }

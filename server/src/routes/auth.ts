@@ -187,15 +187,18 @@ authRoutes.post("/login", async (c) => {
 // Check session endpoint
 authRoutes.get("/me", async (c) => {
   try {
+    // For Clerk users, use getOrCreateClerkUser
+    // For custom auth (recruiters/admins), check Authorization header
     const authHeader = c.req.header("Authorization");
-    const userId = authHeader?.replace("Bearer ", "");
+    const token = authHeader?.replace("Bearer ", "");
 
-    if (!userId) {
+    if (!token) {
       return c.json({ success: false, message: "Not authenticated" }, 401);
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    // Try to find user by ID (for custom auth - recruiters/admins)
+    let user = await prisma.user.findUnique({
+      where: { id: token },
       include: {
         recruiterProfile: {
           include: {
@@ -205,6 +208,28 @@ authRoutes.get("/me", async (c) => {
         candidateProfile: true,
       },
     });
+
+    // If not found by ID, try Clerk authentication
+    if (!user) {
+      // Import here to avoid circular dependency
+      const { getOrCreateClerkUser } = await import("../utils/clerkAuth");
+      const result = await getOrCreateClerkUser(c);
+      if (result.success && result.user) {
+        user = result.user;
+        // Re-fetch with all includes
+        user = await prisma.user.findUnique({
+          where: { id: user.id },
+          include: {
+            recruiterProfile: {
+              include: {
+                company: true,
+              },
+            },
+            candidateProfile: true,
+          },
+        });
+      }
+    }
 
     if (!user) {
       return c.json({ success: false, message: "User not found" }, 404);

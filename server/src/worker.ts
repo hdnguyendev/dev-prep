@@ -32,6 +32,7 @@ type Env = {
   CLERK_SECRET_KEY: string;
   JWT_SECRET: string;
   NODE_ENV?: string;
+  R2_STORAGE?: R2Bucket; // Optional R2 bucket for file uploads
 };
 
 const app = new Hono<{ Bindings: Env }>();
@@ -156,7 +157,7 @@ app.get("/debug/db", async (c) => {
   }
 });
 
-// Mount routes (upload routes excluded for Workers)
+// Mount routes
 app.route("/auth", authRoutes);
 app.route("/api", filteredRoutes);
 app.route("/applications", applicationRoutes);
@@ -165,6 +166,116 @@ app.route("/reviews", reviewRoutes);
 app.route("/saved-jobs", savedJobRoutes);
 app.route("/", crudRoutes);
 app.route("/", swaggerRoutes);
+
+// Upload routes (using R2 for Cloudflare Workers)
+app.post("/upload/resume", async (c) => {
+  try {
+    // Check if R2 is configured
+    if (!c.env.R2_STORAGE) {
+      // Fallback: Return error with setup instructions
+      return c.json({ 
+        success: false, 
+        message: "File storage not configured. R2 bucket required.",
+        setup: {
+          step1: "Enable R2 in Cloudflare Dashboard: https://dash.cloudflare.com → R2 → Get Started",
+          step2: "Create bucket: wrangler r2 bucket create dev-prep-uploads",
+          step3: "Uncomment R2 binding in wrangler.toml and redeploy"
+        }
+      }, 503);
+    }
+
+    const body = await c.req.parseBody();
+    const file = body["file"] as File | undefined;
+
+    if (!file || !(file instanceof File)) {
+      return c.json({ success: false, message: "No file uploaded" }, 400);
+    }
+
+    // Validate file type (PDF, DOC, DOCX)
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    
+    if (!allowedTypes.includes(file.type)) {
+      return c.json({ 
+        success: false, 
+        message: "Invalid file type. Only PDF, DOC, and DOCX are allowed" 
+      }, 400);
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      return c.json({ 
+        success: false, 
+        message: "File too large. Maximum size is 5MB" 
+      }, 400);
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 10);
+    const ext = file.name.split(".").pop() || "pdf";
+    const filename = `resumes/resume_${timestamp}_${randomStr}.${ext}`;
+
+    // Upload to R2
+    const arrayBuffer = await file.arrayBuffer();
+    await c.env.R2_STORAGE.put(filename, arrayBuffer, {
+      httpMetadata: {
+        contentType: file.type,
+      },
+    });
+
+    // Generate public URL using R2 public bucket or custom domain
+    // Option 1: If R2 bucket is public, use: https://<account-id>.r2.cloudflarestorage.com/<bucket-name>/<filename>
+    // Option 2: Use custom domain if configured
+    // For now, return a proxy URL through the Worker
+    const baseUrl = c.req.url.split('/upload')[0]; // Get base API URL
+    const fileUrl = `${baseUrl}/files/${filename}`;
+
+    return c.json({
+      success: true,
+      url: fileUrl,
+      filename,
+      key: filename, // R2 key for reference
+      size: file.size,
+      type: file.type,
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    return c.json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : "Failed to upload file" 
+    }, 500);
+  }
+});
+
+// Serve uploaded files from R2
+app.get("/files/*", async (c) => {
+  try {
+    if (!c.env.R2_STORAGE) {
+      return c.json({ success: false, message: "File storage not configured" }, 503);
+    }
+
+    const path = c.req.path.replace("/files/", "");
+    const object = await c.env.R2_STORAGE.get(path);
+
+    if (!object) {
+      return c.json({ success: false, message: "File not found" }, 404);
+    }
+
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set("etag", object.httpEtag);
+
+    return new Response(object.body, { headers });
+  } catch (error) {
+    console.error("File serve error:", error);
+    return c.json({ success: false, message: "Failed to serve file" }, 500);
+  }
+});
 
 // Error handlers
 app.notFound((c) => c.json({ ok: false, error: "NOT_FOUND", path: c.req.path }, 404));

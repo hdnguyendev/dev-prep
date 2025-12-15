@@ -154,12 +154,15 @@ reviewRoutes.get("/companies/:companyId/stats", async (c) => {
 // Create or update a review
 reviewRoutes.post("/", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return c.json({ success: false, message: "Not authenticated" }, 401);
+    // Use Clerk authentication helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
     }
+    const user = result.user;
 
     const body = await c.req.json();
     const {
@@ -186,23 +189,6 @@ reviewRoutes.post("/", async (c) => {
         { success: false, message: "Rating must be between 1 and 5" },
         400
       );
-    }
-
-    // Find user by ID (custom auth) or get/create from Clerk
-    let user = await prisma.user.findUnique({
-      where: { id: token },
-      include: { candidateProfile: true },
-    });
-
-    if (!user) {
-      const result = await getOrCreateClerkUser(c);
-      if (!result.success || !result.user) {
-        return c.json({
-          success: false,
-          message: result.error || "Authentication failed"
-        }, 401);
-      }
-      user = result.user;
     }
 
     if (!user || !user.candidateProfile) {
@@ -291,12 +277,15 @@ reviewRoutes.post("/", async (c) => {
 // Delete a review
 reviewRoutes.delete("/:reviewId", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return c.json({ success: false, message: "Not authenticated" }, 401);
+    // Use Clerk authentication helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
     }
+    const user = result.user;
 
     const { reviewId } = c.req.param();
 
@@ -305,19 +294,6 @@ reviewRoutes.delete("/:reviewId", async (c) => {
         { success: false, message: "Review ID is required" },
         400
       );
-    }
-
-    // Find user and candidate profile
-    let user = await prisma.user.findUnique({
-      where: { id: token },
-      include: { candidateProfile: true },
-    });
-
-    if (!user) {
-      const result = await getOrCreateClerkUser(c);
-      if (result.success && result.user) {
-        user = result.user;
-      }
     }
 
     if (!user || !user.candidateProfile) {
@@ -368,12 +344,15 @@ reviewRoutes.delete("/:reviewId", async (c) => {
 // Get candidate's review for a specific company
 reviewRoutes.get("/my-review/:companyId", async (c) => {
   try {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return c.json({ success: false, message: "Not authenticated" }, 401);
+    // Use Clerk authentication helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
     }
+    const user = result.user;
 
     const { companyId } = c.req.param();
 
@@ -382,19 +361,6 @@ reviewRoutes.get("/my-review/:companyId", async (c) => {
         { success: false, message: "Company ID is required" },
         400
       );
-    }
-
-    // Find user and candidate profile
-    let user = await prisma.user.findUnique({
-      where: { id: token },
-      include: { candidateProfile: true },
-    });
-
-    if (!user) {
-      const result = await getOrCreateClerkUser(c);
-      if (result.success && result.user) {
-        user = result.user;
-      }
     }
 
     if (!user || !user.candidateProfile) {

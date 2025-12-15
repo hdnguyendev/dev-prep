@@ -15,6 +15,7 @@ const filteredRoutes = new Hono();
  */
 filteredRoutes.get("/applications", async (c) => {
   try {
+    // Try custom auth first (for recruiter/admin - user ID in token)
     const authHeader = c.req.header("Authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -31,8 +32,7 @@ filteredRoutes.get("/applications", async (c) => {
       },
     });
 
-    // If not found by ID, this might be a Clerk token (candidate)
-    // For Clerk users, we need to find or create a candidate profile
+    // If not found by ID, try Clerk authentication (for candidates)
     if (!user) {
       const result = await getOrCreateClerkUser(c);
       if (!result.success || !result.user) {
@@ -130,6 +130,7 @@ filteredRoutes.get("/applications", async (c) => {
  */
 filteredRoutes.get("/interviews", async (c) => {
   try {
+    // Try custom auth first (for recruiter/admin - user ID in token)
     const authHeader = c.req.header("Authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -146,7 +147,7 @@ filteredRoutes.get("/interviews", async (c) => {
       },
     });
 
-    // If not found by ID, this might be a Clerk token (candidate)
+    // If not found by ID, try Clerk authentication (for candidates)
     if (!user) {
       const result = await getOrCreateClerkUser(c);
       if (!result.success || !result.user) {
@@ -254,6 +255,7 @@ filteredRoutes.get("/interviews", async (c) => {
  */
 filteredRoutes.get("/jobs", async (c) => {
   try {
+    // Try custom auth first (for recruiter/admin - user ID in token)
     const authHeader = c.req.header("Authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -261,7 +263,7 @@ filteredRoutes.get("/jobs", async (c) => {
       return c.json({ success: false, message: "Not authenticated" }, 401);
     }
 
-    // Try to find user by ID first
+    // Try to find user by ID first (for custom auth - recruiter/admin)
     let user = await prisma.user.findUnique({
       where: { id: token },
       include: {
@@ -269,20 +271,19 @@ filteredRoutes.get("/jobs", async (c) => {
       },
     });
 
-    // If not found, might be a Clerk token
+    // If not found by ID, try Clerk authentication (for candidates)
     if (!user) {
-      const clerkUserId = token.substring(0, 20);
-      
-      user = await prisma.user.findFirst({
-        where: {
-          email: {
-            contains: clerkUserId,
+      const result = await getOrCreateClerkUser(c);
+      if (result.success && result.user) {
+        user = result.user;
+        // Re-fetch with recruiterProfile include
+        user = await prisma.user.findUnique({
+          where: { id: user.id },
+          include: {
+            recruiterProfile: true,
           },
-        },
-        include: {
-          recruiterProfile: true,
-        },
-      });
+        });
+      }
     }
 
     if (!user) {
