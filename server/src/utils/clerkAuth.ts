@@ -3,7 +3,7 @@
  * Provides consistent user lookup/creation logic across all routes
  */
 
-import { Context } from "hono";
+import type { Context } from "hono";
 import { getAuth } from "@hono/clerk-auth";
 import prisma from "../app/db/prisma";
 

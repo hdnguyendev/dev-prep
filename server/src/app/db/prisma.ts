@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from '../../generated/prisma/client';
+import { PrismaClient } from "../../generated/prisma/client";
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -25,7 +25,7 @@ const getConnectionString = (): string | undefined => {
 };
 
 // Initialize Prisma with Neon adapter
-const createPrismaClient = (connectionString: string): PrismaClient => {
+const createPrismaClient = (connectionString: string, pool?: Pool): PrismaClient => {
   // Validate connection string (minimal logging for performance)
   if (!connectionString || typeof connectionString !== 'string' || connectionString.trim() === '') {
     throw new Error("[DB] ❌ Invalid connection string");
@@ -36,31 +36,21 @@ const createPrismaClient = (connectionString: string): PrismaClient => {
   }
   
   try {
-    // Create Pool with connectionString (from Hyperdrive or DATABASE_URL)
     const dbUrl = connectionString.trim();
-    console.log("[DB] Creating Pool with connection string (length:", dbUrl.length, ")");
-    
-    const pool = new Pool({ 
-      connectionString: dbUrl,
-      max: 1, // Single connection for serverless
-    });
-    
-    if (!pool) {
-      throw new Error("[DB] ❌ Pool creation failed");
-    }
-    
-    console.log("[DB] ✅ Pool created");
-    
-    // Create adapter and client (using PrismaPg for standard pg driver)
-    const adapter = new PrismaPg(pool);
-    console.log("[DB] ✅ Adapter created");
-    
-    const client = new PrismaClient({ 
+    const poolInstance =
+      pool ||
+      new Pool({
+        connectionString: dbUrl,
+        max: 5, // small pool for local/long-lived server
+      });
+
+    const adapter = new PrismaPg(poolInstance);
+
+    const client = new PrismaClient({
       adapter,
       log: ['error'],
     });
-    
-    console.log("[DB] ✅ PrismaClient created");
+
     return client;
   } catch (error: any) {
     console.error("[DB] ❌ Fatal error creating Prisma client");
@@ -74,19 +64,41 @@ const createPrismaClient = (connectionString: string): PrismaClient => {
 };
 
 // Get or create Prisma instance
-// ⚠️ CRITICAL: In Workers, create NEW instance per request (no caching)
-// This prevents "Cannot perform I/O on behalf of a different request" errors
+// Edge/Workers: new per request. Local/Node/Bun: reuse singleton.
 const initPrisma = (): PrismaClient => {
-  // Get connection string
   const connectionString = getConnectionString();
   
   if (!connectionString) {
     throw new Error("DATABASE_URL is required. Check Wrangler secrets.");
   }
-  
-  // ⚠️ CRITICAL: Create NEW client for each request in Workers
-  // Do NOT cache - Workers isolate requests and cached I/O objects fail
-  return createPrismaClient(connectionString);
+
+  const isEdgeRuntime =
+    typeof EdgeRuntime !== "undefined" ||
+    typeof WebSocketPair !== "undefined" ||
+    process.env.CF_PAGES === "1" ||
+    process.env.WORKERS === "1";
+
+  if (isEdgeRuntime) {
+    return createPrismaClient(connectionString);
+  }
+
+  const g = globalThis as unknown as {
+    __PRISMA_SINGLETON__?: PrismaClient;
+    __PRISMA_POOL__?: Pool;
+  };
+
+  if (!g.__PRISMA_SINGLETON__) {
+    const pool =
+      g.__PRISMA_POOL__ ||
+      new Pool({
+        connectionString: connectionString.trim(),
+        max: 5,
+      });
+    g.__PRISMA_POOL__ = pool;
+    g.__PRISMA_SINGLETON__ = createPrismaClient(connectionString, pool);
+  }
+
+  return g.__PRISMA_SINGLETON__!;
 };
 
 export const getPrisma = () => {

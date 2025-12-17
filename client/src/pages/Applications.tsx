@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { APPLICATION_STATUS_META } from "@/constants/applications";
 import { type Application, type Interview } from "@/lib/api";
-import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
 import { getCurrentUser } from "@/lib/auth";
-import { Briefcase, Calendar, Mail, FileText, ExternalLink, Sparkles } from "lucide-react";
+import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { Briefcase, ExternalLink, FileText, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 
 const statusVariants: Record<Application["status"], "default" | "outline" | "success"> = {
   APPLIED: "outline",
@@ -234,8 +235,6 @@ const ApplicationsList = ({ applications, interviews = [], page, pageSize, total
     });
   }, [applications, searchTerm, statusFilters, dateFrom, dateTo]);
 
-  const colTemplate = "minmax(260px,1.2fr) minmax(140px,0.8fr) minmax(220px,1fr) minmax(140px,0.7fr) minmax(120px,0.6fr)";
-
   const totalFiltered = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -355,73 +354,83 @@ const ApplicationsList = ({ applications, interviews = [], page, pageSize, total
       ) : (
         <>
           <section className="rounded-xl border bg-card shadow-sm overflow-hidden">
-            <div className="max-h-[70vh] overflow-auto" role="table">
-              <div
-                className="grid items-center gap-3 px-5 py-3 text-xs font-semibold uppercase text-muted-foreground sticky top-0 bg-card border-b min-w-[1080px]"
-                style={{ gridTemplateColumns: colTemplate }}
-                role="row"
-              >
-                <div role="columnheader">Job / Company</div>
-                <div className="text-center" role="columnheader">Status</div>
-                <div className="text-center" role="columnheader">Interviews</div>
-                <div className="text-right" role="columnheader">Applied</div>
-                <div className="text-right" role="columnheader">Interview</div>
-              </div>
-              <div className="divide-y min-w-[1080px]">
-                {paged.map((app) => (
-                  <button
-                    key={app.id}
-                    onClick={() => onSelect(app)}
-                    className="grid gap-3 px-5 py-3 text-left hover:bg-muted/60 transition items-center"
-                    style={{ gridTemplateColumns: colTemplate }}
-                  >
-                    <div className="space-y-1 min-w-0">
-                      <div className="font-semibold text-foreground truncate">{app.job?.title || "Job"}</div>
-                      <div className="text-sm text-muted-foreground truncate">
-                        {app.job?.company?.name || app.job?.slug || "Company not set"}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <Badge variant={statusVariants[app.status] || "default"}>{app.status}</Badge>
-                    </div>
-                    <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground min-w-0">
-                      {(interviewsByApp[app.id] || []).length === 0 ? (
-                        <span>None</span>
-                      ) : (
-                        interviewsByApp[app.id].slice(0, 3).map((iv) => (
-                          <Badge key={iv.id} variant="outline" className="gap-1">
-                            {iv.type} • {iv.status}
-                          </Badge>
-                        ))
-                      )}
-                    </div>
-                    <div className="text-right text-sm text-muted-foreground whitespace-nowrap">
-                      {new Date(app.appliedAt).toLocaleDateString()}
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const questions = app.job?.interviewQuestions?.filter((q) => q && q.trim().length > 0) || [];
-                          navigate("/interview", {
-                            state: {
-                              questions,
-                              jobTitle: app.job?.title,
-                            },
-                          });
-                        }}
-                        disabled={!app.job?.interviewQuestions || app.job.interviewQuestions.length === 0}
+            <div className="max-h-[70vh] overflow-auto">
+              <table className="w-full table-fixed">
+                <thead className="sticky top-0 z-10 bg-card">
+                  <tr className="border-b text-xs font-semibold uppercase text-muted-foreground">
+                    <th className="w-[44%] px-5 py-3 text-left">Job / Company</th>
+                    <th className="w-[16%] px-5 py-3 text-center">Status</th>
+                    <th className="w-[22%] px-5 py-3 text-center">Practice</th>
+                    <th className="w-[18%] px-5 py-3 text-right">Applied</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {paged.map((app) => {
+                    const questions =
+                      app.job?.interviewQuestions?.filter((q) => q && q.trim().length > 0) || [];
+
+                    return (
+                      <tr
+                        key={app.id}
+                        className="align-top hover:bg-muted/60 transition cursor-pointer"
+                        onClick={() => onSelect(app)}
                       >
-                        <Sparkles className="h-4 w-4" />
-                        Practice
-                      </Button>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                        <td className="px-5 py-3">
+                          <div className="space-y-1">
+                            <div className="font-semibold text-foreground break-words">
+                              {app.job?.title || "Job"}
+                            </div>
+                            <div className="text-sm text-muted-foreground break-words">
+                              {app.job?.company?.name || app.job?.slug || "Company not set"}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-start justify-center">
+                            {(() => {
+                              const meta = APPLICATION_STATUS_META[app.status];
+                              const Icon = meta.Icon;
+                              return (
+                                <Badge
+                                  variant={statusVariants[app.status] || "default"}
+                                  className="inline-flex h-8 items-center gap-2 px-3 text-sm font-medium"
+                                >
+                                  <Icon className="h-4 w-4" />
+                                  <span>{meta.label}</span>
+                                </Badge>
+                              );
+                            })()}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex justify-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate("/interview", {
+                                  state: {
+                                    questions,
+                                    jobTitle: app.job?.title,
+                                  },
+                                });
+                              }}
+                            >
+                              <Sparkles className="h-4 w-4" />
+                              Practice
+                            </Button>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-right text-sm text-muted-foreground whitespace-nowrap">
+                          {new Date(app.appliedAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </section>
 
@@ -456,7 +465,19 @@ const ApplicationsList = ({ applications, interviews = [], page, pageSize, total
             </CardHeader>
             <CardContent className="space-y-4 pt-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Badge variant={statusVariants[selected.status] || "default"}>{selected.status}</Badge>
+                {(() => {
+                  const meta = APPLICATION_STATUS_META[selected.status];
+                  const Icon = meta.Icon;
+                  return (
+                    <Badge
+                      variant={statusVariants[selected.status] || "default"}
+                      className="inline-flex h-8 items-center gap-2 px-3 text-sm font-medium"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{meta.label}</span>
+                    </Badge>
+                  );
+                })()}
                 <span>Applied {new Date(selected.appliedAt).toLocaleString()}</span>
               </div>
 

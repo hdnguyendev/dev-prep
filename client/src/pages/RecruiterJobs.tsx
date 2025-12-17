@@ -622,7 +622,7 @@ const RecruiterJobs = () => {
                   <div className="space-y-2 rounded-md border border-dashed border-muted p-3">
                     {formData.interviewQuestions.map((question, index) => (
                       <div key={index} className="flex items-start gap-2">
-                        <Badge variant="secondary" className="mt-0.5">
+                        <Badge variant="default" className="mt-0.5">
                           #{index + 1}
                         </Badge>
                         <div className="flex-1 text-sm leading-5">{question}</div>

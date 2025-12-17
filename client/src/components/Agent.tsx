@@ -1,17 +1,37 @@
-import React, { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-// Giả sử đường dẫn ảnh vẫn đúng
-import clerkFallback from "../assets/clerk.svg";
 import logo from "@/assets/logo.svg";
+import clerkFallback from "../assets/clerk.svg";
 
-import { vapi } from "@/lib/vapi.sdk";
-import { interviewer, interviewer_generate } from "@/constants";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  createFeedback,
-  createInterview,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AGENT_UI_TEXT,
+  DEFAULT_INTERVIEW_WORKFLOW_VALUES,
+  DEFAULT_QUESTION_COUNT,
+  INTERVIEW_LEVEL_OPTIONS,
+  INTERVIEW_TYPE_OPTIONS,
+  OTHER_OPTION_VALUE,
+  interviewer_unified,
+  type InterviewWorkflowValues,
+  type QuestionMode,
+} from "@/constants";
+import {
   SavedMessage,
 } from "@/lib/actions/general.action";
+import { vapi } from "@/lib/vapi.sdk";
 
 // --- Types & Interfaces ---
 
@@ -42,11 +62,15 @@ type VapiMessage = VapiTranscriptMessage | VapiMessageBase;
 
 // --- Participant Card UI (Giữ nguyên vì đã đẹp) ---
 
-const ParticipantCard: React.FC<{
+function ParticipantCard({
+  p,
+  active = false,
+  index = 0,
+}: {
   p: Participant;
   active?: boolean;
   index?: number;
-}> = ({ p, active = false, index = 0 }) => {
+}) {
   const isAI = p.role === "ai";
   const initials = p.name
     .split(" ")
@@ -55,8 +79,8 @@ const ParticipantCard: React.FC<{
     .join("")
     .toUpperCase();
 
-  const [visible, setVisible] = React.useState(false);
-  React.useEffect(() => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
     const t: number = window.setTimeout(
       () => setVisible(true),
       index * 120 + 80
@@ -66,7 +90,7 @@ const ParticipantCard: React.FC<{
 
   return (
     <div
-      className={`w-full md:w-1/2 p-4 transition-all duration-500 ${
+      className={`w-full md:w-1/2 p-3 transition-all duration-500 ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
       }`}
     >
@@ -81,14 +105,14 @@ const ParticipantCard: React.FC<{
         />
 
         <div
-          className={`relative h-[320px] rounded-2xl p-10 flex flex-col items-center justify-center gap-5 transition-transform transform hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(2,6,23,0.65)] ${
+          className={`relative h-[260px] rounded-2xl p-6 flex flex-col items-center justify-center gap-3 transition-transform transform hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(2,6,23,0.60)] ${
             isAI
               ? "bg-gradient-to-b from-[#0f1728] via-[#0b1220] to-[#02040a]"
               : "bg-gradient-to-b from-[#070708] via-[#0b0b0c] to-[#030303]"
           } ${active ? "ring-4 ring-indigo-600/20" : ""}`}
         >
           <div
-            className={`relative w-36 h-36 rounded-full flex items-center justify-center overflow-hidden shadow-2xl ${
+            className={`relative w-24 h-24 rounded-full flex items-center justify-center overflow-hidden shadow-2xl ${
               isAI
                 ? "bg-gradient-to-br from-indigo-400 to-black-100"
                 : "bg-white/5"
@@ -102,11 +126,11 @@ const ParticipantCard: React.FC<{
                 draggable={false}
               />
             ) : isAI ? (
-              <div className="w-28 h-28 rounded-full bg-white/95 flex items-center justify-center">
-                <img src={logo} alt="AI avatar" />
+              <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center">
+                <img src={logo} alt={AGENT_UI_TEXT.participants.aiAvatarAlt} />
               </div>
             ) : (
-              <div className="w-28 h-28 rounded-full bg-white/10 flex items-center justify-center text-2xl font-bold text-white tracking-wide">
+              <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-xl font-bold text-white tracking-wide">
                 {initials}
               </div>
             )}
@@ -119,7 +143,7 @@ const ParticipantCard: React.FC<{
                   } animate-pulse`}
                 />
                 <span className="absolute -inset-4 rounded-full border border-white/10 opacity-40 animate-[pulse_1.8s_infinite]" />
-                <div className="absolute bottom-2 right-2 w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
+                <div className="absolute bottom-1.5 right-1.5 w-9 h-9 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -135,32 +159,28 @@ const ParticipantCard: React.FC<{
             )}
           </div>
 
-          <div className="text-2xl font-semibold text-gray-100 mt-2 text-center drop-shadow-sm tracking-tight">
+          <div className="text-lg font-semibold text-gray-100 mt-2 text-center drop-shadow-sm tracking-tight">
             {p.name}
           </div>
 
-          <div className="absolute left-8 right-8 bottom-6 h-0.5 bg-white/5 rounded-full" />
+          <div className="absolute left-6 right-6 bottom-4 h-0.5 bg-white/5 rounded-full" />
         </div>
       </div>
     </div>
   );
-};
+}
 
 // --- Agent Component Main ---
 
 interface AgentProps {
-  mode?: "generate" | "feedback";
-  interviewId?: string;
-  feedbackId?: string;
-  questions?: string[];
+  initialQuestions?: string[];
+  jobTitle?: string;
 }
 
-const Agent: React.FC<AgentProps> = ({
-  mode = "generate",
-  interviewId,
-  feedbackId,
-  questions,
-}) => {
+function Agent({
+  initialQuestions,
+  jobTitle,
+}: AgentProps) {
   const { user } = useUser();
 
   const [isCalling, setIsCalling] = useState(false);
@@ -169,6 +189,88 @@ const Agent: React.FC<AgentProps> = ({
   const [callSeconds, setCallSeconds] = useState(0);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+
+  const messagesRef = useRef<SavedMessage[]>([]);
+
+  const [workflow, setWorkflow] = useState<InterviewWorkflowValues>(() => ({
+    ...DEFAULT_INTERVIEW_WORKFLOW_VALUES,
+    ...(jobTitle ? { role: jobTitle } : null),
+  }));
+
+  const initialTypeChoice = useMemo(() => {
+    const match = INTERVIEW_TYPE_OPTIONS.some((o) => o.value === workflow.type);
+    return match ? workflow.type : OTHER_OPTION_VALUE;
+  }, [workflow.type]);
+  const [typeChoice, setTypeChoice] = useState<string>(initialTypeChoice);
+  const [customType, setCustomType] = useState<string>(() =>
+    initialTypeChoice === OTHER_OPTION_VALUE ? workflow.type : ""
+  );
+
+  const initialLevelChoice = useMemo(() => {
+    const match = INTERVIEW_LEVEL_OPTIONS.some((o) => o.value === workflow.level);
+    return match ? workflow.level : OTHER_OPTION_VALUE;
+  }, [workflow.level]);
+  const [levelChoice, setLevelChoice] = useState<string>(initialLevelChoice);
+  const [customLevel, setCustomLevel] = useState<string>(() =>
+    initialLevelChoice === OTHER_OPTION_VALUE ? workflow.level : ""
+  );
+
+  const resolvedType = typeChoice === OTHER_OPTION_VALUE ? customType : typeChoice;
+  const resolvedLevel =
+    levelChoice === OTHER_OPTION_VALUE ? customLevel : levelChoice;
+
+  useEffect(() => {
+    setWorkflow((prev) => ({ ...prev, type: resolvedType }));
+  }, [resolvedType]);
+
+  useEffect(() => {
+    setWorkflow((prev) => ({ ...prev, level: resolvedLevel }));
+  }, [resolvedLevel]);
+  const [questionsText, setQuestionsText] = useState(() =>
+    (initialQuestions ?? []).join("\n")
+  );
+  const [questionMode, setQuestionMode] = useState<QuestionMode>(() =>
+    (initialQuestions ?? []).length > 0 ? "provided" : "generated"
+  );
+  const [questionCount, setQuestionCount] = useState<number>(DEFAULT_QUESTION_COUNT);
+  const [isSetupOpen, setIsSetupOpen] = useState<boolean>(false);
+
+  const normalizedQuestions = useMemo(() => {
+    return questionsText
+      .split("\n")
+      .map((q) => q.trim())
+      .filter((q) => q.length > 0);
+  }, [questionsText]);
+
+  const effectiveQuestionCount =
+    questionMode === "provided" ? normalizedQuestions.length : questionCount;
+
+  const isWorkflowValid =
+    workflow.role.trim().length > 0 &&
+    workflow.type.trim().length > 0 &&
+    workflow.level.trim().length > 0 &&
+    workflow.techstack.trim().length > 0;
+
+  const isStartDisabled =
+    !isWorkflowValid ||
+    (questionMode === "provided"
+      ? normalizedQuestions.length === 0
+      : effectiveQuestionCount <= 0);
+
+  const setupSummary = useMemo(() => {
+    const parts = [
+      workflow.role.trim(),
+      workflow.type.trim(),
+      workflow.level.trim(),
+      workflow.techstack.trim(),
+    ].filter((x) => x.length > 0);
+
+    return parts.join(" · ");
+  }, [workflow.level, workflow.role, workflow.techstack, workflow.type]);
+
+  const formattedQuestions = useMemo(() => {
+    return normalizedQuestions.map((q, idx) => `${idx + 1}. ${q}`).join("\n");
+  }, [normalizedQuestions]);
 
   // Lấy tin nhắn cuối cùng để hiển thị
   const lastMessage = useMemo(() => {
@@ -180,9 +282,9 @@ const Agent: React.FC<AgentProps> = ({
       user?.fullName ||
       user?.username ||
       user?.primaryEmailAddress?.emailAddress ||
-      "You";
+      AGENT_UI_TEXT.participants.youFallback;
     return [
-      { id: 1, role: "ai", name: "AI Interviewer" },
+      { id: 1, role: "ai", name: AGENT_UI_TEXT.participants.aiName },
       {
         id: 2,
         role: "user",
@@ -199,9 +301,10 @@ const Agent: React.FC<AgentProps> = ({
       setIsCalling(true);
       setActiveRole("ai");
       setMessages([]);
+      messagesRef.current = [];
     };
 
-    const onCallEnd = () => {
+    const onCallEnd = async () => {
       console.log("[Vapi] call-end");
       setIsCalling(false);
       setActiveRole(null);
@@ -217,7 +320,11 @@ const Agent: React.FC<AgentProps> = ({
           role: m.role,
           content: m.transcript ?? "",
         };
-        setMessages((prev) => [...prev, newMessage]);
+        setMessages((prev) => {
+          const next = [...prev, newMessage];
+          messagesRef.current = next;
+          return next;
+        });
       }
     };
 
@@ -285,25 +392,24 @@ const Agent: React.FC<AgentProps> = ({
     }
 
     try {
-      if (mode === "generate") {
-        await vapi.start(interviewer_generate, {
-          variableValues: {
-            username: user?.fullName || user?.username || "You",
-            userid: user?.id,
-          },
-        });
-      } else {
-        let formattedQuestions = "";
-        if (questions && questions.length > 0) {
-          formattedQuestions = questions.map((q) => `- ${q}`).join("\n");
-        }
+      if (isStartDisabled) return;
 
-        await vapi.start(interviewer, {
-          variableValues: {
-            questions: formattedQuestions,
-          },
-        });
-      }
+      await vapi.start(interviewer_unified, {
+        variableValues: {
+          username:
+            user?.fullName ||
+            user?.username ||
+            AGENT_UI_TEXT.participants.youFallback,
+          userid: user?.id,
+          role: workflow.role,
+          type: workflow.type,
+          level: workflow.level,
+          techstack: workflow.techstack,
+          questionMode,
+          questionCount: effectiveQuestionCount,
+          questions: questionMode === "provided" ? formattedQuestions : "",
+        },
+      });
     } catch (err) {
       console.error("Error starting Vapi call:", err);
     }
@@ -319,50 +425,193 @@ const Agent: React.FC<AgentProps> = ({
     }
   };
 
-  const handleSaveFeedback = async () => {
-    if (!user?.id || !interviewId) return;
-    const { success } = await createFeedback({
-      interviewId,
-      userId: user.id,
-      transcript: messages,
-      feedbackId,
-    });
-    console.log("createFeedback:", success);
-  };
-
-  const handleGenerateInterview = async () => {
-    if (!user?.id) return;
-    const res = await createInterview({
-      userid: user.id,
-      role: "Software Engineer",
-      type: "technical",
-      level: "entry",
-      techstack: "JavaScript, HTML, CSS",
-      amount: 5,
-    });
-    console.log("createInterview:", res);
-  };
-
   return (
     <>
-      {/* Định nghĩa animation keyframes ngay trong component */}
-      <style>{`
-        @keyframes fadeInSlideUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeInSlideUp {
-          animation: fadeInSlideUp 0.5s ease-out forwards;
-        }
-      `}</style>
-
       <div className="w-full max-w-6xl mx-auto p-6">
         <h2 className="text-2xl font-semibold mb-6">
-          {mode === "generate" ? "Interview Generation" : "Mock Interview"}
+          {AGENT_UI_TEXT.headings.unified}
         </h2>
 
+        {/* Setup: toggleable modal */}
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border bg-card p-4 shadow-sm">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">
+              {AGENT_UI_TEXT.workflow.setupSummaryLabel}
+            </div>
+            <div className="text-sm text-muted-foreground truncate">
+              {setupSummary || AGENT_UI_TEXT.workflow.title}
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsSetupOpen(true)}
+            disabled={isCalling}
+          >
+            {AGENT_UI_TEXT.workflow.setupButton}
+          </Button>
+        </div>
+
+        <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
+          <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-[80rem] max-h-[96vh] overflow-y-auto gap-6 p-6 sm:p-10 shadow-2xl sm:rounded-2xl break-words">
+            <DialogHeader>
+              <DialogTitle className="break-words">
+                {AGENT_UI_TEXT.workflow.setupModalTitle}
+              </DialogTitle>
+              <DialogDescription className="break-words">
+                {AGENT_UI_TEXT.workflow.setupModalDescription}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="agent-role">{AGENT_UI_TEXT.workflow.roleLabel}</Label>
+                <Input
+                  id="agent-role"
+                  value={workflow.role}
+                  onChange={(e) =>
+                    setWorkflow((prev) => ({ ...prev, role: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="agent-type">{AGENT_UI_TEXT.workflow.typeLabel}</Label>
+                <Tabs
+                  value={typeChoice}
+                  onValueChange={(v) => setTypeChoice(v)}
+                >
+                  <TabsList className="w-full justify-start flex-wrap h-auto">
+                    {INTERVIEW_TYPE_OPTIONS.map((o) => (
+                      <TabsTrigger key={o.value} value={o.value}>
+                        {o.label}
+                      </TabsTrigger>
+                    ))}
+                    <TabsTrigger value={OTHER_OPTION_VALUE}>
+                      {AGENT_UI_TEXT.workflow.otherOptionLabel}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value={OTHER_OPTION_VALUE}>
+                    <div className="mt-2 space-y-2">
+                      <Label htmlFor="agent-custom-type">
+                        {AGENT_UI_TEXT.workflow.customTypeLabel}
+                      </Label>
+                      <Input
+                        id="agent-custom-type"
+                        value={customType}
+                        placeholder={AGENT_UI_TEXT.workflow.customTypePlaceholder}
+                        onChange={(e) => setCustomType(e.target.value)}
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="agent-level">{AGENT_UI_TEXT.workflow.levelLabel}</Label>
+                <Tabs
+                  value={levelChoice}
+                  onValueChange={(v) => setLevelChoice(v)}
+                >
+                  <TabsList className="w-full justify-start flex-wrap h-auto">
+                    {INTERVIEW_LEVEL_OPTIONS.map((o) => (
+                      <TabsTrigger key={o.value} value={o.value}>
+                        {o.label}
+                      </TabsTrigger>
+                    ))}
+                    <TabsTrigger value={OTHER_OPTION_VALUE}>
+                      {AGENT_UI_TEXT.workflow.otherOptionLabel}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value={OTHER_OPTION_VALUE}>
+                    <div className="mt-2 space-y-2">
+                      <Label htmlFor="agent-custom-level">
+                        {AGENT_UI_TEXT.workflow.customLevelLabel}
+                      </Label>
+                      <Input
+                        id="agent-custom-level"
+                        value={customLevel}
+                        placeholder={AGENT_UI_TEXT.workflow.customLevelPlaceholder}
+                        onChange={(e) => setCustomLevel(e.target.value)}
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="agent-techstack">
+                  {AGENT_UI_TEXT.workflow.techstackLabel}
+                </Label>
+                <Input
+                  id="agent-techstack"
+                  value={workflow.techstack}
+                  onChange={(e) =>
+                    setWorkflow((prev) => ({
+                      ...prev,
+                      techstack: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>{AGENT_UI_TEXT.workflow.questionModeLabel}</Label>
+                <Tabs
+                  value={questionMode}
+                  onValueChange={(v) => setQuestionMode(v as QuestionMode)}
+                >
+                  <TabsList className="w-full justify-start flex-wrap h-auto">
+                    <TabsTrigger value="provided">
+                      {AGENT_UI_TEXT.workflow.questionModeProvided}
+                    </TabsTrigger>
+                    <TabsTrigger value="generated">
+                      {AGENT_UI_TEXT.workflow.questionModeGenerated}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="provided">
+                    <div className="space-y-2">
+                      <Label htmlFor="agent-questions">
+                        {AGENT_UI_TEXT.workflow.questionsLabel}
+                      </Label>
+                      <div className="text-xs text-muted-foreground">
+                        {AGENT_UI_TEXT.workflow.questionsHelper}
+                      </div>
+                      <Textarea
+                        id="agent-questions"
+                        value={questionsText}
+                        placeholder={AGENT_UI_TEXT.workflow.questionsPlaceholder}
+                        onChange={(e) => setQuestionsText(e.target.value)}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="generated">
+                    <div className="space-y-2">
+                      <Label htmlFor="agent-question-count">
+                        {AGENT_UI_TEXT.workflow.questionCountLabel}
+                      </Label>
+                      <Input
+                        id="agent-question-count"
+                        inputMode="numeric"
+                        value={String(questionCount)}
+                        onChange={(e) =>
+                          setQuestionCount(Number(e.target.value || 0))
+                        }
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" onClick={() => setIsSetupOpen(false)}>
+                {AGENT_UI_TEXT.workflow.setupModalClose}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Participant Cards */}
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-4">
           {participants.map((p, i) => (
             <ParticipantCard
               key={p.id}
@@ -377,7 +626,7 @@ const Agent: React.FC<AgentProps> = ({
           ))}
         </div>
 
-        <div className="flex flex-col items-center mt-8 gap-4">
+        <div className="flex flex-col items-center mt-6 gap-4">
           {/* Call Controls & Status */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/5">
@@ -388,21 +637,23 @@ const Agent: React.FC<AgentProps> = ({
                 aria-hidden="true"
               />
               <div className="text-sm font-medium text-gray-200">
-                {isCalling ? "Live" : "Ready"}
+                {isCalling ? AGENT_UI_TEXT.status.live : AGENT_UI_TEXT.status.ready}
               </div>
               <div className="px-3 text-sm font-mono text-gray-400 border-l border-white/10">
                 {isCalling ? formatTime(callSeconds) : "00:00"}
               </div>
             </div>
 
-            <button
+            <Button
               onClick={handleMuteClick}
               className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-200 border ${
                 muted
                   ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
                   : "bg-white/5 border-white/5 hover:bg-white/10 text-gray-300"
               }`}
-              title={muted ? "Unmute" : "Mute"}
+              title={muted ? AGENT_UI_TEXT.controls.unmute : AGENT_UI_TEXT.controls.mute}
+              type="button"
+              variant="ghost"
             >
               {muted ? (
                 <svg
@@ -431,11 +682,11 @@ const Agent: React.FC<AgentProps> = ({
                   <path d="M5 9v6h4l5 4V5L9 9H5z" />
                 </svg>
               )}
-            </button>
+            </Button>
           </div>
 
           {/* --- LIVE TRANSCRIPT SECTION (NEW) --- */}
-          <div className="mt-8 w-full max-w-3xl mx-auto min-h-[160px] flex flex-col justify-end">
+          <div className="mt-6 w-full max-w-3xl mx-auto min-h-[140px] flex flex-col justify-end">
             {lastMessage ? (
               <div className="relative group">
                 {/* Viền phát sáng mờ (Giữ lại để tạo điểm nhấn cho nền đen) */}
@@ -451,8 +702,8 @@ const Agent: React.FC<AgentProps> = ({
                     {/* Label nhỏ phía trên: Màu xám để không tranh chấp với nội dung chính */}
                     <span className="block text-[10px] uppercase tracking-widest text-gray-400 mb-3 font-bold">
                       {lastMessage.role === "assistant"
-                        ? "AI Assistant"
-                        : "You"}
+                        ? AGENT_UI_TEXT.transcript.aiLabel
+                        : AGENT_UI_TEXT.transcript.youLabel}
                     </span>
 
                     {lastMessage.content}
@@ -464,8 +715,8 @@ const Agent: React.FC<AgentProps> = ({
               <div className="flex flex-col items-center justify-center h-32 text-gray-400 border border-white/10 rounded-xl bg-black">
                 <p className="text-sm italic">
                   {isCalling
-                    ? "Listening..."
-                    : "Start the call to begin interview"}
+                    ? AGENT_UI_TEXT.status.listening
+                    : AGENT_UI_TEXT.status.startToBegin}
                 </p>
               </div>
             )}
@@ -473,13 +724,16 @@ const Agent: React.FC<AgentProps> = ({
 
           {/* Call Buttons */}
           <div className="flex justify-center gap-4 mt-6">
-            <button
+            <Button
               onClick={handleCallClick}
               className={`px-10 py-3 rounded-full text-white font-semibold shadow-2xl transition-all transform active:scale-95 flex items-center gap-3 ${
                 isCalling
                   ? "bg-red-500/80 hover:bg-red-600 border border-red-400/50"
                   : "bg-emerald-600/80 hover:bg-emerald-600 border border-emerald-500/50"
               }`}
+              type="button"
+              variant="ghost"
+              disabled={!isCalling && isStartDisabled}
             >
               {isCalling ? (
                 <>
@@ -491,7 +745,7 @@ const Agent: React.FC<AgentProps> = ({
                   >
                     <path d="M6 6h12v12H6z" />
                   </svg>
-                  End Session
+                  {AGENT_UI_TEXT.controls.endSession}
                 </>
               ) : (
                 <>
@@ -503,35 +757,16 @@ const Agent: React.FC<AgentProps> = ({
                   >
                     <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5V13h2v3.5zM11 6h2v6h-2z" />
                   </svg>
-                  Start Call
+                  {AGENT_UI_TEXT.controls.startCall}
                 </>
               )}
-            </button>
-
-            {/* Development Buttons (Feedback/Generate) */}
-            {mode === "feedback" && (
-              <button
-                type="button"
-                onClick={handleSaveFeedback}
-                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
-              >
-                Save Feedback
-              </button>
-            )}
-            {mode === "generate" && (
-              <button
-                type="button"
-                onClick={handleGenerateInterview}
-                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
-              >
-                Gen Interview
-              </button>
-            )}
+            </Button>
           </div>
+
         </div>
       </div>
     </>
   );
-};
+}
 
 export default Agent;

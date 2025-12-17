@@ -2,6 +2,107 @@ import type { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
 import { z } from "zod";
 
 /**
+ * Input cần thiết để chạy workflow "Generate interview" với Vapi
+ * (đồng bộ với biến template trong `interviewer_generate`).
+ */
+export type InterviewWorkflowValues = {
+  role: string;
+  type: string;
+  level: string;
+  techstack: string;
+};
+
+/**
+ * Text/UI label cho Agent. Đặt tập trung ở constants để tránh hardcode rải rác.
+ */
+export const AGENT_UI_TEXT = {
+  headings: {
+    unified: "Mock Interview",
+  },
+  status: {
+    live: "Live",
+    ready: "Ready",
+    listening: "Listening...",
+    startToBegin: "Start the call to begin interview",
+  },
+  participants: {
+    aiName: "AI Interviewer",
+    youFallback: "You",
+    aiAvatarAlt: "AI avatar",
+  },
+  transcript: {
+    aiLabel: "AI Assistant",
+    youLabel: "You",
+  },
+  controls: {
+    mute: "Mute",
+    unmute: "Unmute",
+    endSession: "End Session",
+    startCall: "Start Call",
+  },
+  workflow: {
+    title: "Interview setup",
+    setupButton: "Open setup",
+    setupSummaryLabel: "Setup",
+    setupModalTitle: "Mock interview setup",
+    setupModalDescription: "Update interview details and question settings.",
+    setupModalClose: "Done",
+    roleLabel: "Role",
+    typeLabel: "Type",
+    levelLabel: "Level",
+    techstackLabel: "Tech stack (comma separated)",
+    otherOptionLabel: "Other",
+    customTypeLabel: "Custom type",
+    customLevelLabel: "Custom level",
+    customTypePlaceholder: "e.g. system design",
+    customLevelPlaceholder: "e.g. principal",
+    questionModeLabel: "Question source",
+    questionModeProvided: "Provide questions",
+    questionModeGenerated: "AI generate questions",
+    questionCountLabel: "Number of questions",
+    questionsLabel: "Questions (one per line)",
+    questionsHelper: "The agent will ask in order. It will not invent new main questions.",
+    questionsPlaceholder:
+      "What is the difference between var, let, and const?\nExplain React reconciliation.\nWhat is a closure in JavaScript?",
+  },
+} as const;
+
+export type QuestionMode = "provided" | "generated";
+
+export const DEFAULT_QUESTION_COUNT = 5;
+
+export type InterviewOption = {
+  value: string;
+  label: string;
+};
+
+export const INTERVIEW_TYPE_OPTIONS: InterviewOption[] = [
+  { value: "technical", label: "Technical" },
+  { value: "behavioral", label: "Behavioral" },
+  { value: "mixed", label: "Mixed" },
+];
+
+export const INTERVIEW_LEVEL_OPTIONS: InterviewOption[] = [
+  { value: "intern", label: "Intern" },
+  { value: "entry", label: "Entry" },
+  { value: "mid", label: "Mid" },
+  { value: "senior", label: "Senior" },
+  { value: "staff", label: "Staff" },
+];
+
+export const OTHER_OPTION_VALUE = "other";
+
+/**
+ * Default values cho workflow generate (có thể override từ props/UI).
+ */
+export const DEFAULT_INTERVIEW_WORKFLOW_VALUES: InterviewWorkflowValues = {
+  role: "Software Engineer",
+  type: "technical",
+  level: "entry",
+  techstack: "JavaScript, HTML, CSS",
+};
+
+/**
  * Chuẩn hoá tên công nghệ người dùng nhập (react.js, ReactJS, nextjs, v.v.)
  * về key thống nhất để bạn map icon / logic khác.
  */
@@ -108,7 +209,7 @@ export const mappings: Record<string, string> = {
 export const interviewer_generate: CreateAssistantDTO = {
   name: "Interviewer",
   firstMessage:
-    "Hello, {{username}}! Let's prepare your interview. I'll ask you a few questions and generate a perfect interview just for you. Are you ready?\n\nFirst, I’d like to learn a bit more about your background and the role you’re targeting, so I can tailor the questions accordingly.",
+    "Hello, {{username}}. We'll start your mock interview now.",
   transcriber: {
     provider: "deepgram",
     model: "nova-2",
@@ -132,12 +233,15 @@ export const interviewer_generate: CreateAssistantDTO = {
         content: `You are a professional job interviewer conducting a real-time voice interview with a candidate. Your goal is to assess their qualifications, motivation, and fit for the role.
 
 Interview Guidelines:
-Follow the structured question flow based on the candidate’s input:
+The interview setup is already provided. Do NOT ask the candidate to clarify the role, type, level, or tech stack.
 Role: {{role}}
 Job Type: {{type}}
 Level: {{level}}
 Tech Stack: {{techstack}}
-Expected Salary: {{amount}}
+Question source mode: {{questionMode}}
+Number of Questions: {{questionCount}}
+If questionMode is "provided", questions to ask (in order):
+{{questions}}
 
 Engage naturally & react appropriately:
 - Listen actively to responses and acknowledge them before moving forward.
@@ -152,6 +256,14 @@ Be professional, yet warm and welcoming:
 Answer the candidate's questions professionally:
 - If asked about the role, company, or expectations, provide a clear and relevant answer.
 - If unsure, redirect the candidate to HR for more details.
+
+Question flow rules:
+- If questionMode is "provided": ask the main questions ONLY from the provided list above, in order.
+- If questionMode is "generated": generate the main questions yourself based on Role, Job Type, Level, and Tech Stack.
+- Ask exactly {{questionCount}} main interview questions, one at a time.
+- After each answer, optionally ask 1 short follow-up question if needed, then move on.
+- Do not ask "Are you ready?" or any intake/background questions.
+- Start immediately by asking Question 1.
 
 Conclude the interview properly:
 - Thank the candidate for their time.
@@ -224,6 +336,12 @@ End the conversation on a polite and positive note.
 };
 
 /**
+ * Agent duy nhất: ưu tiên dùng `interviewer_generate` để hỏi theo `{{questions}}` và `{{amount}}`.
+ * @deprecated Dùng export này để migrate dần sang 1 agent.
+ */
+export const interviewer_unified = interviewer_generate;
+
+/**
  * Schema validate feedback mà assistant trả về
  */
 export const feedbackSchema = z.object({
@@ -260,63 +378,4 @@ export const feedbackSchema = z.object({
   finalAssessment: z.string(),
 });
 
-/**
- * Ảnh cover demo cho danh sách interview
- */
-export const interviewCovers: string[] = [
-  "/adobe.png",
-  "/amazon.png",
-  "/facebook.png",
-  "/hostinger.png",
-  "/pinterest.png",
-  "/quora.png",
-  "/reddit.png",
-  "/skype.png",
-  "/spotify.png",
-  "/telegram.png",
-  "/tiktok.png",
-  "/yahoo.png",
-];
 
-/**
- * Type Interview tối thiểu để dùng cho dummyInterviews
- */
-export interface Interview {
-  id: string;
-  userId: string;
-  role: string;
-  type: string; // ví dụ: "Technical", "Mixed"
-  techstack: string[];
-  level: string; // ví dụ: "Junior", "Senior"
-  questions: string[];
-  finalized: boolean;
-  createdAt: string; // ISO date
-}
-
-/**
- * Dummy data cho UI hiển thị danh sách interview
- */
-export const dummyInterviews: Interview[] = [
-  {
-    id: "1",
-    userId: "user1",
-    role: "Frontend Developer",
-    type: "Technical",
-    techstack: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-    level: "Junior",
-    questions: ["What is React?"],
-    finalized: false,
-    createdAt: "2025-04-01T10:00:00Z",
-  },
-  {
-    id: "2",
-    userId: "user1",
-    role: "Full Stack Developer",
-    type: "Mixed",
-    techstack: ["Node.js", "Express", "MongoDB", "React"],
-    level: "Senior",
-    questions: ["What is Node.js?"],
-    finalized: false,
-    createdAt: "2025-03-31T15:30:00Z",
-  },
-];

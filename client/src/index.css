@@ -135,3 +135,12 @@
 }
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-float-delayed { animation: float 7.5s ease-in-out infinite; animation-delay: .6s; }
+
+/* Agent transcript animation (moved from inline <style> to global CSS) */
+@keyframes fadeInSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInSlideUp {
+  animation: fadeInSlideUp 0.5s ease-out forwards;
+}

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import prisma from "../app/db/prisma"; 
+import { getOrCreateClerkUser } from "../utils/clerkAuth";
 
 const authRoutes = new Hono();
 
@@ -249,6 +250,54 @@ authRoutes.get("/me", async (c) => {
   } catch (error) {
     console.error("Auth check error:", error);
     return c.json({ success: false, message: "Authentication check failed" }, 500);
+  }
+});
+
+/**
+ * Sync candidate info from Clerk token (frontend passes Authorization: Bearer <clerk_token>)
+ * - Creates user + candidateProfile if missing
+ * - Returns basic user/candidate info
+ */
+authRoutes.post("/sync-candidate", async (c) => {
+  try {
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.error || "Authentication failed" }, 401);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: result.user.id },
+      include: { candidateProfile: true },
+    });
+
+    if (!user) {
+      return c.json({ success: false, message: "User not found after sync" }, 404);
+    }
+
+    // Ensure candidate profile exists
+    if (!user.candidateProfile) {
+      await prisma.candidateProfile.create({ data: { userId: user.id } });
+    }
+
+    const refreshed = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { candidateProfile: true },
+    });
+
+    return c.json({
+      success: true,
+      user: {
+        id: refreshed?.id,
+        email: refreshed?.email,
+        firstName: refreshed?.firstName,
+        lastName: refreshed?.lastName,
+        role: refreshed?.role,
+        candidateProfile: refreshed?.candidateProfile,
+      },
+    });
+  } catch (error) {
+    console.error("sync-candidate error:", error);
+    return c.json({ success: false, message: "Failed to sync candidate" }, 500);
   }
 });
 

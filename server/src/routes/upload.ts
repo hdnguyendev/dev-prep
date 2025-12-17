@@ -64,7 +64,7 @@ uploadRoutes.post("/resume", async (c) => {
     await Bun.write(filepath, buffer);
 
     // Return public URL
-    const baseUrl = process.env.API_URL || "http://localhost:9999";
+    const baseUrl = process.env.VITE_API_URL || "http://localhost:9999";
     const fileUrl = `${baseUrl}/uploads/resumes/${filename}`;
 
     return c.json({

@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, UserButton, useAuth } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import logo from "@/assets/logo.svg";
@@ -23,6 +23,7 @@ import { Button } from "./ui/button";
 const Navbar = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { getToken, isSignedIn } = useAuth();
   
   // Use state to force re-render when auth changes
   const [customUser, setCustomUser] = useState(getCurrentUser());
@@ -50,6 +51,30 @@ const Navbar = () => {
       window.removeEventListener("storage", checkAuth);
     };
   }, []);
+
+  // Sync candidate profile when Clerk user signs in (run once per sessionStorage flag)
+  useEffect(() => {
+    const syncClerkCandidate = async () => {
+      if (!isSignedIn) return;
+      const syncedKey = "clerk_candidate_synced";
+      if (sessionStorage.getItem(syncedKey)) return;
+      try {
+        const token = await getToken();
+        if (!token) return;
+        await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:9999"}/auth/sync-candidate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        sessionStorage.setItem(syncedKey, "1");
+      } catch (err) {
+        console.error("Failed to sync candidate", err);
+      }
+    };
+    syncClerkCandidate();
+  }, [getToken, isSignedIn]);
 
   // Handle staff logout
   const handleLogout = () => {
