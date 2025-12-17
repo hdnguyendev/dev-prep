@@ -11,7 +11,7 @@ const Interview = () => {
   const { getToken } = useAuth();
   const location = useLocation();
   const state =
-    (location.state as { questions?: string[]; jobTitle?: string } | undefined) ||
+    (location.state as { questions?: string[]; jobTitle?: string; applicationId?: string } | undefined) ||
     {};
   const questions =
     state.questions?.filter((q) => q && q.trim().length > 0) ?? [];
@@ -58,6 +58,7 @@ const Interview = () => {
         <Agent
           initialQuestions={questions}
           jobTitle={state.jobTitle}
+          applicationId={state.applicationId}
         />
       </SignedIn>
     </>

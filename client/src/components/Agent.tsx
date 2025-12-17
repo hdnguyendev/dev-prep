@@ -1,4 +1,5 @@
 import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import logo from "@/assets/logo.svg";
@@ -32,6 +33,9 @@ import {
   SavedMessage,
 } from "@/lib/actions/general.action";
 import { vapi } from "@/lib/vapi.sdk";
+import { createPracticeInterview, updatePracticeInterview } from "@/lib/actions/interviews.action";
+import type { Interview } from "@/lib/api";
+import { createInterviewExchange } from "@/lib/actions/interviews.action";
 
 // --- Types & Interfaces ---
 
@@ -59,6 +63,100 @@ interface VapiTranscriptMessage extends VapiMessageBase {
 }
 
 type VapiMessage = VapiTranscriptMessage | VapiMessageBase;
+
+type FeedbackJson = {
+  totalScore: number;
+  categoryScores: Array<{ name: string; score: number; comment: string }>;
+  strengths: string[];
+  areasForImprovement: string[];
+  finalAssessment: string;
+};
+
+/**
+ * Build plain-text transcript from the collected Vapi transcript messages.
+ */
+function buildFullTranscript(messages: SavedMessage[]): string {
+  return messages
+    .map((m) => `${m.role}: ${m.content}`.trim())
+    .filter((line) => line.length > 0)
+    .join("\n");
+}
+
+/**
+ * Extract FEEDBACK_JSON payload from transcript (if assistant emitted it).
+ * Expected format: `FEEDBACK_JSON: {...valid json...}`
+ */
+function extractFeedbackJson(messages: SavedMessage[]): FeedbackJson | null {
+  const marker = "FEEDBACK_JSON:";
+  const haystack = messages.map((m) => m.content).join("\n");
+  const idx = haystack.lastIndexOf(marker);
+  if (idx < 0) return null;
+
+  const jsonText = haystack.slice(idx + marker.length).trim();
+  if (!jsonText) return null;
+
+  try {
+    return JSON.parse(jsonText) as FeedbackJson;
+  } catch {
+    return null;
+  }
+}
+
+type InterviewTurn = {
+  orderIndex: number;
+  questionText: string;
+  questionCategory: string;
+  answerText: string;
+};
+
+/**
+ * Parse ALL interview turns from transcript messages.
+ * Expects assistant questions formatted as:
+ * - Main: `Q{n}: ...`
+ * - Follow-up: `F{n}: ...`
+ */
+function extractInterviewTurns(messages: SavedMessage[]): InterviewTurn[] {
+  const turnRegex = /^(Q|F)(\d+)\s*:\s*(.+)$/i;
+  const turns: InterviewTurn[] = [];
+
+  let current: InterviewTurn | null = null;
+  let orderCounter = 0;
+
+  for (const m of messages) {
+    if (m.role === "assistant") {
+      const match = m.content.trim().match(turnRegex);
+      if (match) {
+        if (current) turns.push(current);
+
+        orderCounter += 1;
+        const prefix = (match[1] || "Q").toUpperCase();
+        const num = (match[2] || "").trim();
+        const questionText = (match[3] || "").trim();
+        const questionCategory = `${prefix}${num || ""}`.trim();
+
+        current = {
+          orderIndex: orderCounter,
+          questionText,
+          questionCategory: questionCategory || prefix,
+          answerText: "",
+        };
+        continue;
+      }
+    }
+
+    if (m.role === "user" && current) {
+      const chunk = m.content.trim();
+      if (!chunk) continue;
+      current.answerText = current.answerText
+        ? `${current.answerText}\n${chunk}`
+        : chunk;
+    }
+  }
+
+  if (current) turns.push(current);
+
+  return turns.filter((t) => t.questionText.length > 0);
+}
 
 // --- Participant Card UI (Giữ nguyên vì đã đẹp) ---
 
@@ -175,13 +273,16 @@ function ParticipantCard({
 interface AgentProps {
   initialQuestions?: string[];
   jobTitle?: string;
+  applicationId?: string;
 }
 
 function Agent({
   initialQuestions,
   jobTitle,
+  applicationId,
 }: AgentProps) {
   const { user } = useUser();
+  const { getToken } = useAuth();
 
   const [isCalling, setIsCalling] = useState(false);
   const [activeRole, setActiveRole] = useState<Role | null>(null);
@@ -191,6 +292,8 @@ function Agent({
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
 
   const messagesRef = useRef<SavedMessage[]>([]);
+  const persistedInterviewRef = useRef<Interview | null>(null);
+  const didPersistOnEndRef = useRef(false);
 
   const [workflow, setWorkflow] = useState<InterviewWorkflowValues>(() => ({
     ...DEFAULT_INTERVIEW_WORKFLOW_VALUES,
@@ -302,12 +405,114 @@ function Agent({
       setActiveRole("ai");
       setMessages([]);
       messagesRef.current = [];
+      didPersistOnEndRef.current = false;
+
+      // Create Interview record when practice is started from an Application
+      (async () => {
+        try {
+          if (!applicationId) return;
+          const token = await getToken().catch(() => undefined);
+          const now = new Date();
+          const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          const accessCode = crypto.randomUUID().slice(0, 8);
+          const title = `Practice: ${jobTitle || workflow.role}`;
+
+          const created = await createPracticeInterview(
+            {
+              applicationId,
+              title,
+              type: "AI_VOICE",
+              status: "IN_PROGRESS",
+              accessCode,
+              expiresAt: expiresAt.toISOString(),
+              startedAt: now.toISOString(),
+            },
+            token ?? undefined
+          );
+
+          persistedInterviewRef.current = created;
+        } catch (err) {
+          console.warn("[Interview] failed to create practice interview:", err);
+          persistedInterviewRef.current = null;
+        }
+      })();
     };
 
     const onCallEnd = async () => {
       console.log("[Vapi] call-end");
       setIsCalling(false);
       setActiveRole(null);
+
+      // Persist transcript + feedback (if any)
+      (async () => {
+        try {
+          if (didPersistOnEndRef.current) return;
+          didPersistOnEndRef.current = true;
+
+          let persisted = persistedInterviewRef.current;
+
+          const token = await getToken().catch(() => undefined);
+          const transcript = buildFullTranscript(messagesRef.current);
+          const feedback = extractFeedbackJson(messagesRef.current);
+          const turns = extractInterviewTurns(messagesRef.current);
+
+          // Fallback: nếu call-start chưa tạo được interview thì tạo ngay ở call-end
+          if (!persisted) {
+            if (!applicationId) return;
+            const now = new Date();
+            const startedAt = new Date(now.getTime() - callSeconds * 1000);
+            const expiresAt = new Date(startedAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const accessCode = crypto.randomUUID().slice(0, 8);
+            const title = `Practice: ${jobTitle || workflow.role}`;
+
+            persisted = await createPracticeInterview(
+              {
+                applicationId,
+                title,
+                type: "AI_VOICE",
+                status: "IN_PROGRESS",
+                accessCode,
+                expiresAt: expiresAt.toISOString(),
+                startedAt: startedAt.toISOString(),
+              },
+              token ?? undefined
+            );
+            persistedInterviewRef.current = persisted;
+          }
+
+          await updatePracticeInterview(
+            {
+              id: persisted.id,
+              status: "COMPLETED",
+              endedAt: new Date().toISOString(),
+              durationSeconds: callSeconds,
+              fullTranscript: transcript,
+              aiAnalysisData: feedback ?? undefined,
+              overallScore: typeof feedback?.totalScore === "number" ? feedback.totalScore : undefined,
+              summary: typeof feedback?.finalAssessment === "string" ? feedback.finalAssessment : undefined,
+            },
+            token ?? undefined
+          );
+
+          // Save Q/A pairs as InterviewExchange (turn-by-turn)
+          await Promise.allSettled(
+            turns.map((t) =>
+              createInterviewExchange(
+                {
+                  interviewId: persisted.id,
+                  orderIndex: t.orderIndex,
+                  questionText: t.questionText,
+                  questionCategory: t.questionCategory,
+                  answerText: t.answerText,
+                },
+                token ?? undefined
+              )
+            )
+          );
+        } catch (err) {
+          console.warn("[Interview] failed to persist transcript/feedback:", err);
+        }
+      })();
     };
 
     const onMessage = (message: VapiMessage) => {
@@ -359,7 +564,7 @@ function Agent({
       vapi.off("speech-end", onSpeechEnd);
       vapi.off("error", onError);
     };
-  }, []);
+  }, [applicationId, callSeconds, getToken, jobTitle, workflow.role]);
 
   /* ----- Call timer ----- */
   useEffect(() => {

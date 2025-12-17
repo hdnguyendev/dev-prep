@@ -264,6 +264,16 @@ Question flow rules:
 - After each answer, optionally ask 1 short follow-up question if needed, then move on.
 - Do not ask "Are you ready?" or any intake/background questions.
 - Start immediately by asking Question 1.
+- Formatting requirement (STRICT):
+  - For each MAIN question, your message must start with: Q{n}: <question text>
+  - n starts at 1 and increments by 1 for each main question.
+  - Do not include multiple main questions in one message.
+  - Optional follow-ups must start with: F{n}: <follow-up text> (do not increment n for follow-ups)
+
+After the last main question is answered:
+- Provide a concise final assessment.
+- Then output exactly one line in this format (no extra text before/after):
+FEEDBACK_JSON: {"totalScore":0,"categoryScores":[{"name":"Communication Skills","score":0,"comment":""},{"name":"Technical Knowledge","score":0,"comment":""},{"name":"Problem Solving","score":0,"comment":""},{"name":"Cultural Fit","score":0,"comment":""},{"name":"Confidence and Clarity","score":0,"comment":""}],"strengths":[""],"areasForImprovement":[""],"finalAssessment":""}
 
 Conclude the interview properly:
 - Thank the candidate for their time.

@@ -412,6 +412,7 @@ const ApplicationsList = ({ applications, interviews = [], page, pageSize, total
                                 e.stopPropagation();
                                 navigate("/interview", {
                                   state: {
+                                    applicationId: app.id,
                                     questions,
                                     jobTitle: app.job?.title,
                                   },
