@@ -1,29 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `address` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `city` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `company_id` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `country` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `created_at` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `department_id` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `employment_type` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `experience_max_years` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `experience_min_years` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `job_level` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `max_salary` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `min_salary` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `nice_to_have` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `responsibilities` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `skills` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `updated_at` on the `Job` table. All the data in the column will be lost.
-  - You are about to drop the column `work_model` on the `Job` table. All the data in the column will be lost.
-  - The `currency` column on the `Job` table would be dropped and recreated. This will lead to data loss if there is data in the column.
-  - Added the required column `companyId` to the `Job` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `recruiterId` to the `Job` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `updatedAt` to the `Job` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'CANDIDATE', 'RECRUITER');
 
@@ -44,55 +18,6 @@ CREATE TYPE "InterviewType" AS ENUM ('AI_VIDEO', 'AI_VOICE', 'AI_CHAT', 'CODING_
 
 -- CreateEnum
 CREATE TYPE "InterviewStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'PROCESSING', 'COMPLETED', 'FAILED', 'EXPIRED');
-
--- AlterTable
-ALTER TABLE "Job" DROP COLUMN "address",
-DROP COLUMN "city",
-DROP COLUMN "company_id",
-DROP COLUMN "country",
-DROP COLUMN "created_at",
-DROP COLUMN "department_id",
-DROP COLUMN "employment_type",
-DROP COLUMN "experience_max_years",
-DROP COLUMN "experience_min_years",
-DROP COLUMN "job_level",
-DROP COLUMN "max_salary",
-DROP COLUMN "min_salary",
-DROP COLUMN "nice_to_have",
-DROP COLUMN "responsibilities",
-DROP COLUMN "skills",
-DROP COLUMN "updated_at",
-DROP COLUMN "work_model",
-ADD COLUMN     "benefits" TEXT,
-ADD COLUMN     "clicksCount" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "companyId" TEXT NOT NULL,
-ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "deadline" TIMESTAMP(3),
-ADD COLUMN     "experienceLevel" TEXT,
-ADD COLUMN     "isRemote" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isSalaryNegotiable" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "location" TEXT,
-ADD COLUMN     "publishedAt" TIMESTAMP(3),
-ADD COLUMN     "quantity" INTEGER NOT NULL DEFAULT 1,
-ADD COLUMN     "recruiterId" TEXT NOT NULL,
-ADD COLUMN     "salaryMax" DOUBLE PRECISION,
-ADD COLUMN     "salaryMin" DOUBLE PRECISION,
-ADD COLUMN     "status" "JobStatus" NOT NULL DEFAULT 'DRAFT',
-ADD COLUMN     "type" "JobType" NOT NULL DEFAULT 'FULL_TIME',
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL,
-ADD COLUMN     "viewsCount" INTEGER NOT NULL DEFAULT 0,
-DROP COLUMN "currency",
-ADD COLUMN     "currency" "Currency" NOT NULL DEFAULT 'VND',
-ALTER COLUMN "requirements" DROP NOT NULL;
-
--- DropEnum
-DROP TYPE "EmploymentType";
-
--- DropEnum
-DROP TYPE "JobLevel";
-
--- DropEnum
-DROP TYPE "WorkModel";
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -176,6 +101,7 @@ CREATE TABLE "Education" (
 CREATE TABLE "Skill" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "iconUrl" TEXT,
 
     CONSTRAINT "Skill_pkey" PRIMARY KEY ("id")
 );
@@ -213,9 +139,59 @@ CREATE TABLE "Company" (
 );
 
 -- CreateTable
+CREATE TABLE "CompanyReview" (
+    "id" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
+    "candidateId" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "title" VARCHAR(255),
+    "review" TEXT,
+    "pros" TEXT,
+    "cons" TEXT,
+    "isCurrentEmployee" BOOLEAN NOT NULL DEFAULT false,
+    "wouldRecommend" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CompanyReview_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Job" (
+    "id" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
+    "recruiterId" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "requirements" TEXT,
+    "benefits" TEXT,
+    "interviewQuestions" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "type" "JobType" NOT NULL DEFAULT 'FULL_TIME',
+    "status" "JobStatus" NOT NULL DEFAULT 'DRAFT',
+    "location" TEXT,
+    "isRemote" BOOLEAN NOT NULL DEFAULT false,
+    "salaryMin" DOUBLE PRECISION,
+    "salaryMax" DOUBLE PRECISION,
+    "currency" "Currency" NOT NULL DEFAULT 'VND',
+    "isSalaryNegotiable" BOOLEAN NOT NULL DEFAULT false,
+    "experienceLevel" TEXT,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "viewsCount" INTEGER NOT NULL DEFAULT 0,
+    "clicksCount" INTEGER NOT NULL DEFAULT 0,
+    "publishedAt" TIMESTAMP(3),
+    "deadline" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Job_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "iconUrl" TEXT,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
@@ -389,6 +365,24 @@ CREATE UNIQUE INDEX "CandidateSkill_candidateId_skillId_key" ON "CandidateSkill"
 CREATE UNIQUE INDEX "Company_slug_key" ON "Company"("slug");
 
 -- CreateIndex
+CREATE INDEX "CompanyReview_companyId_idx" ON "CompanyReview"("companyId");
+
+-- CreateIndex
+CREATE INDEX "CompanyReview_candidateId_idx" ON "CompanyReview"("candidateId");
+
+-- CreateIndex
+CREATE INDEX "CompanyReview_rating_idx" ON "CompanyReview"("rating");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CompanyReview_companyId_candidateId_key" ON "CompanyReview"("companyId", "candidateId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Job_slug_key" ON "Job"("slug");
+
+-- CreateIndex
+CREATE INDEX "Job_title_description_idx" ON "Job"("title", "description");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
 -- CreateIndex
@@ -402,9 +396,6 @@ CREATE UNIQUE INDEX "Interview_accessCode_key" ON "Interview"("accessCode");
 
 -- CreateIndex
 CREATE INDEX "InterviewExchange_interviewId_orderIndex_idx" ON "InterviewExchange"("interviewId", "orderIndex");
-
--- CreateIndex
-CREATE INDEX "Job_title_description_idx" ON "Job"("title", "description");
 
 -- AddForeignKey
 ALTER TABLE "CandidateProfile" ADD CONSTRAINT "CandidateProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -426,6 +417,12 @@ ALTER TABLE "CandidateSkill" ADD CONSTRAINT "CandidateSkill_candidateId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "CandidateSkill" ADD CONSTRAINT "CandidateSkill_skillId_fkey" FOREIGN KEY ("skillId") REFERENCES "Skill"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CompanyReview" ADD CONSTRAINT "CompanyReview_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CompanyReview" ADD CONSTRAINT "CompanyReview_candidateId_fkey" FOREIGN KEY ("candidateId") REFERENCES "CandidateProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Job" ADD CONSTRAINT "Job_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

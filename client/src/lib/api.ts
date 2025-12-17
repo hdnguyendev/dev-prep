@@ -89,6 +89,7 @@ export interface Job {
   requirements?: string | null;
   responsibilities?: string | null;
   benefits?: string | null;
+  interviewQuestions?: string[]; // recruiter-defined interview prompts
   type: JobType;
   status: JobStatus;
   location?: string | null;

@@ -31,6 +31,7 @@ type Job = {
   description: string;
   requirements?: string;
   responsibilities?: string;
+  interviewQuestions?: string[];
   location?: string;
   locationType?: string;
   employmentType?: string;
@@ -55,6 +56,7 @@ type JobFormData = {
   description: string;
   requirements: string;
   responsibilities: string;
+  interviewQuestions: string[];
   location: string;
   locationType: string;
   employmentType: string;
@@ -80,6 +82,7 @@ const RecruiterJobs = () => {
     description: "",
     requirements: "",
     responsibilities: "",
+    interviewQuestions: [],
     location: "",
     locationType: "REMOTE",
     employmentType: "FULL_TIME",
@@ -89,6 +92,7 @@ const RecruiterJobs = () => {
     salaryCurrency: "USD",
     status: "DRAFT",
   });
+  const [questionInput, setQuestionInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -152,6 +156,29 @@ const RecruiterJobs = () => {
     });
   };
 
+  /**
+   * Append a recruiter-defined interview question to the form state.
+   */
+  const handleAddQuestion = () => {
+    const trimmed = questionInput.trim();
+    if (!trimmed) return;
+    setFormData((prev) => ({
+      ...prev,
+      interviewQuestions: [...prev.interviewQuestions, trimmed],
+    }));
+    setQuestionInput("");
+  };
+
+  /**
+   * Remove an interview question at a given index.
+   */
+  const handleRemoveQuestion = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      interviewQuestions: prev.interviewQuestions.filter((_, i) => i !== index),
+    }));
+  };
+
   // Open create modal
   const handleCreate = async () => {
     if (!currentUser) return;
@@ -177,6 +204,7 @@ const RecruiterJobs = () => {
         description: "",
         requirements: "",
         responsibilities: "",
+        interviewQuestions: [],
         location: "",
         locationType: "REMOTE",
         employmentType: "FULL_TIME",
@@ -186,6 +214,7 @@ const RecruiterJobs = () => {
         salaryCurrency: "USD",
         status: "DRAFT",
       });
+      setQuestionInput("");
       setShowModal(true);
     } catch (err) {
       console.error("Failed to prepare create:", err);
@@ -203,6 +232,7 @@ const RecruiterJobs = () => {
       description: job.description,
       requirements: job.requirements || "",
       responsibilities: job.responsibilities || "",
+      interviewQuestions: job.interviewQuestions || [],
       location: job.location || "",
       locationType: job.locationType || "REMOTE",
       employmentType: job.employmentType || "FULL_TIME",
@@ -212,6 +242,7 @@ const RecruiterJobs = () => {
       salaryCurrency: job.salaryCurrency || "USD",
       status: job.status,
     });
+    setQuestionInput("");
     setShowModal(true);
   };
 
@@ -240,6 +271,7 @@ const RecruiterJobs = () => {
         description: formData.description,
         requirements: formData.requirements || null,
         responsibilities: formData.responsibilities || null,
+        interviewQuestions: formData.interviewQuestions.filter((q) => q.trim().length > 0),
         location: formData.location || null,
         locationType: formData.locationType,
         employmentType: formData.employmentType,
@@ -560,6 +592,53 @@ const RecruiterJobs = () => {
                   placeholder="Key responsibilities..."
                   rows={3}
                 />
+              </div>
+
+              {/* Interview Questions */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Interview Questions</label>
+                  <span className="text-xs text-muted-foreground">
+                    {formData.interviewQuestions.length} saved
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={questionInput}
+                    onChange={(e) => setQuestionInput(e.target.value)}
+                    placeholder="Add a question candidates will practice"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddQuestion();
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleAddQuestion} variant="secondary">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {formData.interviewQuestions.length > 0 && (
+                  <div className="space-y-2 rounded-md border border-dashed border-muted p-3">
+                    {formData.interviewQuestions.map((question, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <Badge variant="secondary" className="mt-0.5">
+                          #{index + 1}
+                        </Badge>
+                        <div className="flex-1 text-sm leading-5">{question}</div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveQuestion(index)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          title="Remove question"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Location & Type */}

@@ -89,29 +89,6 @@ const initPrisma = (): PrismaClient => {
   return createPrismaClient(connectionString);
 };
 
-// Removed blocking testConnection() - causes Workers to hang
-// Connection happens lazily on first query
-
-export const testConnection = async () => {
-  // Non-blocking test for local dev only
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      await prisma.$queryRaw`SELECT 1`;
-      console.log("[DB] Database connection OK");
-    } catch (error) {
-      console.error("[DB] Database connection failed:", error);
-    }
-  }
-};
-
-export const disconnect = async () => {
-  try {
-    await prisma.$disconnect();
-  } catch (error) {
-    console.error("[DB] Disconnect error:", error);
-  }
-};
-
 export const getPrisma = () => {
   return initPrisma();
 };

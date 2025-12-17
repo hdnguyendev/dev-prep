@@ -4,6 +4,18 @@ import { getOrCreateClerkUser } from "../utils/clerkAuth";
 
 const applicationRoutes = new Hono();
 
+const APPLICATION_STATUSES = [
+  "APPLIED",
+  "REVIEWING",
+  "SHORTLISTED",
+  "INTERVIEW_SCHEDULED",
+  "INTERVIEWED",
+  "OFFER_SENT",
+  "HIRED",
+  "REJECTED",
+  "WITHDRAWN",
+];
+
 /**
  * Create application for authenticated candidate
  * Automatically gets candidateId from Clerk user
@@ -100,3 +112,58 @@ applicationRoutes.post("/", async (c) => {
 });
 
 export default applicationRoutes;
+
+/**
+ * Update application status (used by recruiter/admin). Adds an entry to ApplicationHistory.
+ */
+applicationRoutes.patch("/:id/status", async (c) => {
+  try {
+    const { id } = c.req.param();
+    const body = await c.req.json();
+    const { status, note } = body as { status?: string; note?: string };
+
+    if (!status || !APPLICATION_STATUSES.includes(status)) {
+      return c.json(
+        { success: false, message: "Invalid or missing status" },
+        400
+      );
+    }
+
+    const updated = await prisma.application.update({
+      where: { id },
+      data: { status },
+      include: {
+        job: { include: { company: true } },
+        candidate: { include: { user: true } },
+      },
+    });
+
+    // Log history (best-effort; do not fail request if history fails)
+    try {
+      await prisma.applicationHistory.create({
+        data: {
+          applicationId: id,
+          status,
+          note: note || null,
+          changedBy: "SYSTEM", // In future: replace with authenticated recruiter/admin ID
+        },
+      });
+    } catch (historyError) {
+      console.error("Failed to create application history:", historyError);
+    }
+
+    return c.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Application status update error:", error);
+    return c.json(
+      {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to update application status",
+      },
+      500
+    );
+  }
+});

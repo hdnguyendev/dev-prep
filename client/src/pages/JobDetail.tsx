@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -241,6 +241,24 @@ const JobDetail = () => {
     return colors[index % colors.length];
   };
 
+  const practiceQuestions = useMemo(
+    () => (job?.interviewQuestions || []).filter((q) => q && q.trim().length > 0),
+    [job?.interviewQuestions]
+  );
+
+  /**
+   * Điều hướng đến trang phỏng vấn, ưu tiên dùng bộ câu hỏi của job nếu có.
+   */
+  const handlePracticeInterview = () => {
+    if (!job) return;
+    navigate("/interview", {
+      state: {
+        questions: practiceQuestions,
+        jobTitle: job.title,
+      },
+    });
+  };
+
   if (loading) {
     return (
       <main className="min-h-dvh bg-gradient-to-b from-background via-primary/5 to-background">
@@ -438,6 +456,28 @@ const JobDetail = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Interview Questions */}
+            {practiceQuestions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Interview Practice Questions</CardTitle>
+                  <CardDescription>
+                    Recruiter-provided questions to help you prepare.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {practiceQuestions.map((question, index) => (
+                    <div key={index} className="flex gap-3">
+                      <div className="mt-1 h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                        {index + 1}
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-5">{question}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -538,10 +578,10 @@ const JobDetail = () => {
                     <Button 
                       variant="outline" 
                       className="w-full gap-2 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all group"
-                      onClick={() => navigate("/interview")}
+                      onClick={handlePracticeInterview}
                     >
                       <Sparkles className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                      Practice Interview
+                      {practiceQuestions.length > 0 ? "Practice Interview" : "Quick Practice"}
                     </Button>
                   </>
                 )}

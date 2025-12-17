@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   User,
@@ -15,6 +16,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
@@ -105,12 +107,21 @@ const RecruiterJobApplications = () => {
   const navigate = useNavigate();
   const { jobId } = useParams();
   const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
   
   const [job, setJob] = useState<Job | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set());
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   // Check auth
   useEffect(() => {
@@ -121,18 +132,18 @@ const RecruiterJobApplications = () => {
 
   // Fetch job and applications
   useEffect(() => {
+    let abort = false;
     const fetchData = async () => {
-      if (!currentUser || !jobId) return;
+      if (!userId || !jobId) return;
       
       try {
         setLoading(true);
         setError(null);
         
         const headers: Record<string, string> = {
-          "Authorization": `Bearer ${currentUser.id}`,
+          "Authorization": `Bearer ${userId}`,
         };
         
-        // Fetch job details
         const jobResponse = await fetch(`${API_BASE}/jobs/${jobId}`, { headers });
         const jobData = await jobResponse.json();
         
@@ -141,9 +152,8 @@ const RecruiterJobApplications = () => {
           return;
         }
         
-        setJob(jobData.data);
+        if (!abort) setJob(jobData.data);
         
-        // Fetch applications for this job
         const appsResponse = await fetch(
           `${API_BASE}/applications?jobId=${jobId}&pageSize=100&include=candidate,job`,
           { headers }
@@ -151,20 +161,24 @@ const RecruiterJobApplications = () => {
         const appsData = await appsResponse.json();
         
         if (appsData.success) {
-          setApplications(appsData.data || []);
+          if (!abort) setApplications(appsData.data || []);
         } else {
-          setError(appsData.message || "Failed to fetch applications");
+          if (!abort) setError(appsData.message || "Failed to fetch applications");
         }
       } catch (err) {
+        if (abort) return;
         console.error("Failed to fetch data:", err);
         setError("Network error");
       } finally {
-        setLoading(false);
+        if (!abort) setLoading(false);
       }
     };
 
     fetchData();
-  }, [currentUser?.id, jobId]);
+    return () => {
+      abort = true;
+    };
+  }, [userId, jobId]);
 
   const getStatusConfig = (status: string) => {
     return statusConfig[status] || { 
@@ -174,8 +188,115 @@ const RecruiterJobApplications = () => {
     };
   };
 
+  const handleInlineStatusUpdate = async (applicationId: string, nextStatus: string) => {
+    if (!currentUser) return;
+    try {
+      setUpdating(true);
+      setInlineEditingId(applicationId);
+      setError(null);
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentUser.id}`,
+      };
+      const response = await fetch(
+        `${API_BASE}/applications/${applicationId}/status`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ status: nextStatus }),
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setApplications((prev) =>
+          prev.map((app) =>
+            app.id === applicationId ? { ...app, status: nextStatus } : app
+          )
+        );
+        setInlineEditingId(null);
+      } else {
+        setError(data.message || "Failed to update status");
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      setError("Network error");
+    } finally {
+      setUpdating(false);
+      setInlineEditingId(null);
+    }
+  };
+
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      setPage(1);
+      return next;
+    });
+  };
+
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      const candidateName = app.candidate?.user
+        ? `${app.candidate.user.firstName || ''} ${app.candidate.user.lastName || ''}`.trim()
+        : "";
+      const email = app.candidate?.user?.email || "";
+      const haystack = `${candidateName} ${email}`.toLowerCase();
+
+      if (searchTerm && !haystack.includes(searchTerm.toLowerCase().trim())) {
+        return false;
+      }
+
+      if (statusFilters.size > 0 && !statusFilters.has(app.status)) {
+        return false;
+      }
+
+      if (dateFrom) {
+        const applied = new Date(app.appliedAt).getTime();
+        if (applied < new Date(dateFrom).getTime()) return false;
+      }
+      if (dateTo) {
+        const applied = new Date(app.appliedAt).getTime();
+        if (applied > new Date(dateTo).getTime()) return false;
+      }
+
+      return true;
+    });
+  }, [applications, searchTerm, statusFilters, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedApplications = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredApplications.slice(start, start + pageSize);
+  }, [filteredApplications, currentPage, pageSize]);
+
   if (!isRecruiterLoggedIn()) {
     return null;
+  }
+
+  if (!jobId) {
+    return (
+      <main className="min-h-dvh bg-muted/40 py-8">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg">
+            <CardHeader>
+              <CardTitle>Job not found</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                This page requires a valid jobId in the URL.
+              </p>
+              <Button onClick={() => navigate("/recruiter/jobs")}>Back to jobs</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -195,13 +316,92 @@ const RecruiterJobApplications = () => {
         </div>
 
         {job && (
-          <div>
+          <div className="space-y-1">
             <h1 className="text-3xl font-bold">{job.title}</h1>
-            <p className="text-sm text-muted-foreground">
-              {job.company?.name} • {applications.length} application{applications.length !== 1 ? 's' : ''}
-            </p>
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <span>{job.company?.name}</span>
+              <span>•</span>
+              <span>
+                {applications.length} application{applications.length !== 1 ? "s" : ""}
+              </span>
+            </div>
           </div>
         )}
+
+        {/* Filters */}
+        <Card className="border-dashed">
+          <CardContent className="pt-6 space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Search</label>
+                <Input
+                  placeholder="Name or email"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Applied from</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Applied to</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(statusConfig).map((key) => {
+                  const active = statusFilters.has(key);
+                  return (
+                    <Button
+                      key={key}
+                      type="button"
+                      size="sm"
+                      variant={active ? "default" : "outline"}
+                      className="gap-1"
+                      onClick={() => toggleStatusFilter(key)}
+                    >
+                      {statusConfig[key].icon}
+                      {statusConfig[key].label}
+                    </Button>
+                  );
+                })}
+                {statusFilters.size > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setStatusFilters(new Set());
+                      setPage(1);
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Error */}
         {error && (
@@ -215,30 +415,33 @@ const RecruiterJobApplications = () => {
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading applications...</p>
           </div>
-        ) : applications.length === 0 ? (
+        ) : pagedApplications.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No applications yet</h3>
+              <h3 className="mb-2 text-lg font-semibold">No applications found</h3>
               <p className="text-sm text-muted-foreground">
-                Applications for this job will appear here
+                Try adjusting filters to see more results.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {applications.map((app) => {
+          <div className="grid gap-3">
+            {pagedApplications.map((app) => {
               const config = getStatusConfig(app.status);
               const candidateName = app.candidate?.user
                 ? `${app.candidate.user.firstName || ''} ${app.candidate.user.lastName || ''}`.trim() || app.candidate.user.email
                 : "Unknown";
               
               return (
-                <Card key={app.id} className="hover:shadow-md transition">
+                <Card
+                  key={app.id}
+                  className="hover:shadow-md transition cursor-pointer"
+                  onClick={() => setSelectedApplication(app)}
+                >
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1">
-                        {/* Avatar */}
+                    <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-4">
+                      <div className="flex items-start gap-3">
                         {app.candidate?.user?.avatarUrl ? (
                           <img
                             src={app.candidate.user.avatarUrl}
@@ -250,87 +453,64 @@ const RecruiterJobApplications = () => {
                             <User className="h-6 w-6 text-primary" />
                           </div>
                         )}
-                        
-                        {/* Info */}
-                        <div className="flex-1">
+                        <div className="flex-1 space-y-1">
                           <CardTitle className="text-base">{candidateName}</CardTitle>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Mail className="h-3 w-3" />
                             {app.candidate?.user?.email || "No email"}
                           </div>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
                             Applied {new Date(app.appliedAt).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Status Badge */}
-                      <Badge variant={config.variant} className="gap-1 shrink-0">
-                        {config.icon}
-                        {config.label}
-                      </Badge>
+
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Badge variant={config.variant} className="gap-1">
+                          {config.icon}
+                          {config.label}
+                        </Badge>
+                        <select
+                          value={app.status}
+                          onChange={(e) => handleInlineStatusUpdate(app.id, e.target.value)}
+                          className="flex h-9 rounded-md border border-input bg-background px-2 py-1 text-xs min-w-[150px]"
+                          disabled={updating && inlineEditingId === app.id}
+                        >
+                          {Object.keys(statusConfig).map((key) => (
+                            <option key={key} value={key}>
+                              {statusConfig[key].label}
+                            </option>
+                          ))}
+                        </select>
+                        {updating && inlineEditingId === app.id && (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
-                  
-                  <CardContent className="space-y-3">
-                    {/* Resume */}
+
+                  <CardContent className="space-y-2" onClick={(e) => e.stopPropagation()}>
                     {app.resumeUrl && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 text-sm">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <a
                           href={app.resumeUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline flex items-center gap-1"
+                          className="text-primary hover:underline inline-flex items-center gap-1"
                         >
-                          View Resume
+                          Resume
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
                     )}
-                    
-                    {/* Cover Letter */}
+
                     {app.coverLetter && (
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">Cover Letter</div>
-                        <div className="text-sm text-muted-foreground whitespace-pre-line line-clamp-3">
-                          {app.coverLetter}
-                        </div>
-                        {app.coverLetter.length > 200 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedApplication(app)}
-                            className="h-auto p-0 text-xs"
-                          >
-                            Read more
-                          </Button>
-                        )}
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {app.coverLetter}
                       </div>
                     )}
-                    
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedApplication(app)}
-                        className="flex-1"
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => {
-                          // TODO: Update application status
-                          alert("Status update coming soon");
-                        }}
-                      >
-                        Update Status
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
               );
@@ -338,6 +518,36 @@ const RecruiterJobApplications = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {!loading && (
+        <div className="container mx-auto px-4 pt-4">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div>
+              Page {currentPage} / {totalPages} • {filteredApplications.length} result
+              {filteredApplications.length !== 1 ? "s" : ""}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Prev
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Application Detail Modal */}
       {selectedApplication && (
@@ -427,15 +637,6 @@ const RecruiterJobApplications = () => {
                   onClick={() => setSelectedApplication(null)}
                 >
                   Close
-                </Button>
-                <Button
-                  variant="default"
-                  onClick={() => {
-                    // TODO: Update status
-                    alert("Status update coming soon");
-                  }}
-                >
-                  Update Status
                 </Button>
               </div>
             </CardContent>

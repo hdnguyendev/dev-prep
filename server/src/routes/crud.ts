@@ -113,8 +113,9 @@ const createCrudRouter = (config: ResourceConfig) => {
   });
 
   router.post("/", async (c) => {
-    const client = getModelClient(config.model);
     const payload = await c.req.json();
+
+    const client = getModelClient(config.model);
     const data = pickPayload(payload, config.allowedFields);
     const created = await client.create({ data, include: config.include });
     return c.json({ success: true, data: created }, 201);
@@ -122,8 +123,9 @@ const createCrudRouter = (config: ResourceConfig) => {
 
   router.put(`/${idPath}`, async (c) => {
     try {
-      const client = getModelClient(config.model);
       const payload = await c.req.json();
+
+      const client = getModelClient(config.model);
       const data = pickPayload(payload, config.allowedFields);
       const where = buildWhere(c.req.param(), config.primaryKeys);
       const updated = await client.update({ where, data, include: config.include });
@@ -308,6 +310,7 @@ export const resources: ResourceConfig[] = [
       "clicksCount",
       "publishedAt",
       "deadline",
+      "interviewQuestions",
       "createdAt",
       "updatedAt",
     ],

@@ -1,5 +1,7 @@
 import "dotenv/config";
-import prisma from "../src/app/db/prisma";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import {
   ApplicationStatus,
   Currency,
@@ -9,6 +11,24 @@ import {
   JobType,
   UserRole,
 } from "../src/generated/prisma";
+
+// Use a single pg Pool + PrismaPg adapter for seeding (1 pool per process)
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) {
+  throw new Error("DATABASE_URL is required for seeding. Please set it in your environment.");
+}
+
+const pool = new Pool({
+  connectionString: dbUrl,
+  max: 5, // few connections, single pool
+});
+
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({
+  adapter,
+  log: ["error"],
+});
 
 async function clearData() {
   console.log("🧹 Clearing existing data...");
@@ -118,6 +138,66 @@ const companySeeds = [
     logoUrl: "https://dummyimage.com/200x200/0f172a/60a5fa&text=Aero",
     coverUrl: "https://dummyimage.com/1200x360/020617/60a5fa&text=Aero+Cover",
   },
+  {
+    name: "Cloud Nexus",
+    slug: "cloud-nexus",
+    website: "https://cloud-nexus.example.com",
+    industry: "Cloud Infrastructure",
+    companySize: "51-200",
+    city: "Ho Chi Minh City",
+    country: "Vietnam",
+    isVerified: true,
+    logoUrl: "https://dummyimage.com/200x200/0f172a/22c55e&text=Cloud",
+    coverUrl: "https://dummyimage.com/1200x360/020617/22c55e&text=Cloud+Cover",
+  },
+  {
+    name: "Pixel Studio",
+    slug: "pixel-studio",
+    website: "https://pixel-studio.example.com",
+    industry: "Design",
+    companySize: "11-50",
+    city: "Da Nang",
+    country: "Vietnam",
+    isVerified: false,
+    logoUrl: "https://dummyimage.com/200x200/0f172a/f472b6&text=Pixel",
+    coverUrl: "https://dummyimage.com/1200x360/020617/f472b6&text=Pixel+Cover",
+  },
+  {
+    name: "DataSphere Analytics",
+    slug: "datasphere-analytics",
+    website: "https://datasphere.example.com",
+    industry: "Data & AI",
+    companySize: "51-200",
+    city: "Hanoi",
+    country: "Vietnam",
+    isVerified: true,
+    logoUrl: "https://dummyimage.com/200x200/0f172a/60a5fa&text=Data",
+    coverUrl: "https://dummyimage.com/1200x360/020617/60a5fa&text=Data+Cover",
+  },
+  {
+    name: "SecureWave",
+    slug: "securewave",
+    website: "https://securewave.example.com",
+    industry: "Security",
+    companySize: "51-200",
+    city: "Singapore",
+    country: "Singapore",
+    isVerified: true,
+    logoUrl: "https://dummyimage.com/200x200/0f172a/ef4444&text=Sec",
+    coverUrl: "https://dummyimage.com/1200x360/020617/ef4444&text=Sec+Cover",
+  },
+  {
+    name: "MobileCraft",
+    slug: "mobilecraft",
+    website: "https://mobilecraft.example.com",
+    industry: "Mobile",
+    companySize: "11-50",
+    city: "Ho Chi Minh City",
+    country: "Vietnam",
+    isVerified: false,
+    logoUrl: "https://dummyimage.com/200x200/0f172a/f59e0b&text=Mob",
+    coverUrl: "https://dummyimage.com/1200x360/020617/f59e0b&text=Mob+Cover",
+  },
 ];
 
 const questionBankSeeds = [
@@ -134,6 +214,11 @@ const userSeeds = [
   { email: "linh.candidate@example.com", passwordHash: "pw", firstName: "Linh", lastName: "Pham", role: UserRole.CANDIDATE },
   { email: "tuan.candidate@example.com", passwordHash: "pw", firstName: "Tuan", lastName: "Le", role: UserRole.CANDIDATE },
   { email: "mai.candidate@example.com", passwordHash: "pw", firstName: "Mai", lastName: "Vo", role: UserRole.CANDIDATE },
+  // Extra recruiters for richer data
+  { email: "recruiter@cloudnexus.com", passwordHash: "pw", firstName: "Quang", lastName: "Pham", role: UserRole.RECRUITER },
+  { email: "recruiter@pixelstudio.com", passwordHash: "pw", firstName: "An", lastName: "Do", role: UserRole.RECRUITER },
+  { email: "recruiter@datasphere.com", passwordHash: "pw", firstName: "Trang", lastName: "Vo", role: UserRole.RECRUITER },
+  { email: "recruiter@securewave.com", passwordHash: "pw", firstName: "Khoa", lastName: "Bui", role: UserRole.RECRUITER },
 ];
 
 const must = <T>(val: T | undefined | null, name: string): T => {
@@ -174,6 +259,21 @@ async function main() {
   const rec1 = await prisma.recruiterProfile.create({ data: { userId: r1.id, companyId: companyHitech.id, position: "Talent Acquisition Manager" } });
   const rec2 = await prisma.recruiterProfile.create({ data: { userId: r2.id, companyId: companyZen.id, position: "Lead Recruiter" } });
   const rec3 = await prisma.recruiterProfile.create({ data: { userId: r3.id, companyId: companyNova.id, position: "Senior Recruiter" } });
+
+  // Extra recruiters mapped to extra companies (round-robin)
+  const extraRecruiterUsers = users.slice(7).filter((u) => u.role === UserRole.RECRUITER);
+  const extraCompanies = companyRecords.slice(4);
+  const extraRecruiters = await Promise.all(
+    extraRecruiterUsers.map((u, index) =>
+      prisma.recruiterProfile.create({
+        data: {
+          userId: u.id,
+          companyId: extraCompanies[index % Math.max(extraCompanies.length, 1)].id,
+          position: "Recruiter",
+        },
+      }),
+    ),
+  );
 
   // Candidates
   const candidateProfile1 = await prisma.candidateProfile.create({
@@ -393,6 +493,120 @@ async function main() {
 
   const [job1, job2, job3, job4, job5] = jobs;
   console.log("💼 Created jobs");
+
+  // Extra jobs across many companies & recruiters
+  await Promise.all([
+    prisma.job.create({
+      data: {
+        slug: "fullstack-engineer-hitech-mid",
+        title: "Fullstack Engineer (Mid-level)",
+        companyId: companyHitech.id,
+        recruiterId: rec1.id,
+        description: "Build internal tools and candidate-facing features.",
+        requirements: "<ul><li>3+ years with Node.js/React</li><li>Experience with PostgreSQL</li></ul>",
+        benefits: "<ul><li>13th-month salary</li><li>Training budget</li></ul>",
+        type: JobType.FULL_TIME,
+        status: JobStatus.PUBLISHED,
+        location: "Ho Chi Minh City",
+        isRemote: true,
+        salaryMin: 1500,
+        salaryMax: 2200,
+        currency: Currency.USD,
+        experienceLevel: "Mid",
+        quantity: 2,
+        publishedAt: new Date(),
+        deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 40),
+      },
+    }),
+    prisma.job.create({
+      data: {
+        slug: "frontend-engineer-zen",
+        title: "Frontend Engineer (React)",
+        companyId: companyZen.id,
+        recruiterId: rec2.id,
+        description: "Implement UI for high-traffic e-commerce platform.",
+        requirements: "<ul><li>React/TypeScript</li><li>Performance optimization</li></ul>",
+        benefits: "<ul><li>Remote first</li><li>Flexible hours</li></ul>",
+        type: JobType.FULL_TIME,
+        status: JobStatus.PUBLISHED,
+        location: "Hanoi",
+        isRemote: true,
+        salaryMin: 1600,
+        salaryMax: 2300,
+        currency: Currency.USD,
+        experienceLevel: "Mid",
+        quantity: 2,
+        publishedAt: new Date(),
+        deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 28),
+      },
+    }),
+    prisma.job.create({
+      data: {
+        slug: "senior-data-engineer-datasphere",
+        title: "Senior Data Engineer",
+        companyId: must(companyRecords[6], "companyDataSphere").id,
+        recruiterId: extraRecruiters[2]?.id ?? rec3.id,
+        description: "Design and maintain data pipelines and warehouses.",
+        requirements: "<ul><li>ETL pipelines</li><li>SQL & Python</li></ul>",
+        benefits: "<ul><li>Stock options</li><li>Conference budget</li></ul>",
+        type: JobType.FULL_TIME,
+        status: JobStatus.PUBLISHED,
+        location: "Hanoi",
+        isRemote: true,
+        salaryMin: 2800,
+        salaryMax: 4200,
+        currency: Currency.USD,
+        experienceLevel: "Senior",
+        quantity: 1,
+        publishedAt: new Date(),
+        deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 32),
+      },
+    }),
+    prisma.job.create({
+      data: {
+        slug: "security-engineer-securewave",
+        title: "Security Engineer",
+        companyId: must(companyRecords[7], "companySecureWave").id,
+        recruiterId: extraRecruiters[3]?.id ?? rec3.id,
+        description: "Improve application and infrastructure security posture.",
+        requirements: "<ul><li>Threat modeling</li><li>Security tooling</li></ul>",
+        benefits: "<ul><li>Premium healthcare</li><li>On-call allowance</li></ul>",
+        type: JobType.FULL_TIME,
+        status: JobStatus.PUBLISHED,
+        location: "Singapore",
+        isRemote: false,
+        salaryMin: 3500,
+        salaryMax: 5000,
+        currency: Currency.USD,
+        experienceLevel: "Senior",
+        quantity: 1,
+        publishedAt: new Date(),
+        deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 45),
+      },
+    }),
+    prisma.job.create({
+      data: {
+        slug: "mobile-developer-mobilecraft",
+        title: "Mobile Developer (Flutter/React Native)",
+        companyId: must(companyRecords[8], "companyMobileCraft").id,
+        recruiterId: extraRecruiters[0]?.id ?? rec1.id,
+        description: "Ship delightful mobile experiences for consumer apps.",
+        requirements: "<ul><li>Flutter or React Native</li><li>Published apps</li></ul>",
+        benefits: "<ul><li>Remote friendly</li><li>Macbook + devices</li></ul>",
+        type: JobType.FULL_TIME,
+        status: JobStatus.PUBLISHED,
+        location: "Ho Chi Minh City",
+        isRemote: true,
+        salaryMin: 1400,
+        salaryMax: 2200,
+        currency: Currency.USD,
+        experienceLevel: "Mid",
+        quantity: 3,
+        publishedAt: new Date(),
+        deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 36),
+      },
+    }),
+  ]);
 
   await prisma.jobSkill.createMany({
     data: [

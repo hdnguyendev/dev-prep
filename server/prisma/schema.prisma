@@ -270,6 +270,7 @@ model Job {
   description  String  @db.Text // Rich Text HTML
   requirements String? @db.Text
   benefits     String? @db.Text
+  interviewQuestions String[] @default([]) // Câu hỏi phỏng vấn do recruiter thiết lập
 
   type   JobType   @default(FULL_TIME)
   status JobStatus @default(DRAFT)
@@ -505,6 +506,7 @@ model QuestionBank {
 
   createdAt DateTime @default(now())
 }
+
 
 // --------------------------------------
 // 8. SYSTEM MESSAGING & NOTIFICATIONS

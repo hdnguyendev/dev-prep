@@ -13918,6 +13918,7 @@ export namespace Prisma {
     description: number
     requirements: number
     benefits: number
+    interviewQuestions: number
     type: number
     status: number
     location: number
@@ -14017,6 +14018,7 @@ export namespace Prisma {
     description?: true
     requirements?: true
     benefits?: true
+    interviewQuestions?: true
     type?: true
     status?: true
     location?: true
@@ -14131,6 +14133,7 @@ export namespace Prisma {
     description: string
     requirements: string | null
     benefits: string | null
+    interviewQuestions: string[]
     type: $Enums.JobType
     status: $Enums.JobStatus
     location: string | null
@@ -14177,6 +14180,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     benefits?: boolean
+    interviewQuestions?: boolean
     type?: boolean
     status?: boolean
     location?: boolean
@@ -14211,6 +14215,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     benefits?: boolean
+    interviewQuestions?: boolean
     type?: boolean
     status?: boolean
     location?: boolean
@@ -14240,6 +14245,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     benefits?: boolean
+    interviewQuestions?: boolean
     type?: boolean
     status?: boolean
     location?: boolean
@@ -14269,6 +14275,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     benefits?: boolean
+    interviewQuestions?: boolean
     type?: boolean
     status?: boolean
     location?: boolean
@@ -14287,7 +14294,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type JobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "companyId" | "recruiterId" | "description" | "requirements" | "benefits" | "type" | "status" | "location" | "isRemote" | "salaryMin" | "salaryMax" | "currency" | "isSalaryNegotiable" | "experienceLevel" | "quantity" | "viewsCount" | "clicksCount" | "publishedAt" | "deadline" | "createdAt" | "updatedAt", ExtArgs["result"]["job"]>
+  export type JobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "companyId" | "recruiterId" | "description" | "requirements" | "benefits" | "interviewQuestions" | "type" | "status" | "location" | "isRemote" | "salaryMin" | "salaryMax" | "currency" | "isSalaryNegotiable" | "experienceLevel" | "quantity" | "viewsCount" | "clicksCount" | "publishedAt" | "deadline" | "createdAt" | "updatedAt", ExtArgs["result"]["job"]>
   export type JobInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     company?: boolean | CompanyDefaultArgs<ExtArgs>
     recruiter?: boolean | RecruiterProfileDefaultArgs<ExtArgs>
@@ -14325,6 +14332,7 @@ export namespace Prisma {
       description: string
       requirements: string | null
       benefits: string | null
+      interviewQuestions: string[]
       type: $Enums.JobType
       status: $Enums.JobStatus
       location: string | null
@@ -14778,6 +14786,7 @@ export namespace Prisma {
     readonly description: FieldRef<"Job", 'String'>
     readonly requirements: FieldRef<"Job", 'String'>
     readonly benefits: FieldRef<"Job", 'String'>
+    readonly interviewQuestions: FieldRef<"Job", 'String[]'>
     readonly type: FieldRef<"Job", 'JobType'>
     readonly status: FieldRef<"Job", 'JobStatus'>
     readonly location: FieldRef<"Job", 'String'>
@@ -28649,6 +28658,7 @@ export namespace Prisma {
     description: 'description',
     requirements: 'requirements',
     benefits: 'benefits',
+    interviewQuestions: 'interviewQuestions',
     type: 'type',
     status: 'status',
     location: 'location',
@@ -28978,6 +28988,7 @@ export namespace Prisma {
     description: 'description',
     requirements: 'requirements',
     benefits: 'benefits',
+    interviewQuestions: 'interviewQuestions',
     location: 'location',
     experienceLevel: 'experienceLevel'
   };
@@ -30069,6 +30080,7 @@ export namespace Prisma {
     description?: StringFilter<"Job"> | string
     requirements?: StringNullableFilter<"Job"> | string | null
     benefits?: StringNullableFilter<"Job"> | string | null
+    interviewQuestions?: StringNullableListFilter<"Job">
     type?: EnumJobTypeFilter<"Job"> | $Enums.JobType
     status?: EnumJobStatusFilter<"Job"> | $Enums.JobStatus
     location?: StringNullableFilter<"Job"> | string | null
@@ -30102,6 +30114,7 @@ export namespace Prisma {
     description?: SortOrder
     requirements?: SortOrderInput | SortOrder
     benefits?: SortOrderInput | SortOrder
+    interviewQuestions?: SortOrder
     type?: SortOrder
     status?: SortOrder
     location?: SortOrderInput | SortOrder
@@ -30139,6 +30152,7 @@ export namespace Prisma {
     description?: StringFilter<"Job"> | string
     requirements?: StringNullableFilter<"Job"> | string | null
     benefits?: StringNullableFilter<"Job"> | string | null
+    interviewQuestions?: StringNullableListFilter<"Job">
     type?: EnumJobTypeFilter<"Job"> | $Enums.JobType
     status?: EnumJobStatusFilter<"Job"> | $Enums.JobStatus
     location?: StringNullableFilter<"Job"> | string | null
@@ -30172,6 +30186,7 @@ export namespace Prisma {
     description?: SortOrder
     requirements?: SortOrderInput | SortOrder
     benefits?: SortOrderInput | SortOrder
+    interviewQuestions?: SortOrder
     type?: SortOrder
     status?: SortOrder
     location?: SortOrderInput | SortOrder
@@ -30207,6 +30222,7 @@ export namespace Prisma {
     description?: StringWithAggregatesFilter<"Job"> | string
     requirements?: StringNullableWithAggregatesFilter<"Job"> | string | null
     benefits?: StringNullableWithAggregatesFilter<"Job"> | string | null
+    interviewQuestions?: StringNullableListFilter<"Job">
     type?: EnumJobTypeWithAggregatesFilter<"Job"> | $Enums.JobType
     status?: EnumJobStatusWithAggregatesFilter<"Job"> | $Enums.JobStatus
     location?: StringNullableWithAggregatesFilter<"Job"> | string | null
@@ -31885,6 +31901,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -31918,6 +31935,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -31947,6 +31965,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31980,6 +31999,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32011,6 +32031,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -32036,6 +32057,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32063,6 +32085,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -33686,6 +33709,14 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
   export type EnumJobTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.JobType | EnumJobTypeFieldRefInput<$PrismaModel>
     in?: $Enums.JobType[] | ListEnumJobTypeFieldRefInput<$PrismaModel>
@@ -33748,6 +33779,7 @@ export namespace Prisma {
     description?: SortOrder
     requirements?: SortOrder
     benefits?: SortOrder
+    interviewQuestions?: SortOrder
     type?: SortOrder
     status?: SortOrder
     location?: SortOrder
@@ -34401,14 +34433,6 @@ export namespace Prisma {
     orderIndex?: SortOrder
     score?: SortOrder
     durationSeconds?: SortOrder
-  }
-
-  export type StringNullableListFilter<$PrismaModel = never> = {
-    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    has?: string | StringFieldRefInput<$PrismaModel> | null
-    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
-    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
-    isEmpty?: boolean
   }
 
   export type QuestionBankOrderByRelevanceInput = {
@@ -35380,6 +35404,10 @@ export namespace Prisma {
     update?: XOR<XOR<CandidateProfileUpdateToOneWithWhereWithoutCompanyReviewsInput, CandidateProfileUpdateWithoutCompanyReviewsInput>, CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput>
   }
 
+  export type JobCreateinterviewQuestionsInput = {
+    set: string[]
+  }
+
   export type CompanyCreateNestedOneWithoutJobsInput = {
     create?: XOR<CompanyCreateWithoutJobsInput, CompanyUncheckedCreateWithoutJobsInput>
     connectOrCreate?: CompanyCreateOrConnectWithoutJobsInput
@@ -35446,6 +35474,11 @@ export namespace Prisma {
     connectOrCreate?: JobCategoryCreateOrConnectWithoutJobInput | JobCategoryCreateOrConnectWithoutJobInput[]
     createMany?: JobCategoryCreateManyJobInputEnvelope
     connect?: JobCategoryWhereUniqueInput | JobCategoryWhereUniqueInput[]
+  }
+
+  export type JobUpdateinterviewQuestionsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type EnumJobTypeFieldUpdateOperationsInput = {
@@ -37267,6 +37300,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -37298,6 +37332,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -37462,6 +37497,7 @@ export namespace Prisma {
     description?: StringFilter<"Job"> | string
     requirements?: StringNullableFilter<"Job"> | string | null
     benefits?: StringNullableFilter<"Job"> | string | null
+    interviewQuestions?: StringNullableListFilter<"Job">
     type?: EnumJobTypeFilter<"Job"> | $Enums.JobType
     status?: EnumJobStatusFilter<"Job"> | $Enums.JobStatus
     location?: StringNullableFilter<"Job"> | string | null
@@ -37906,6 +37942,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -37937,6 +37974,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -38618,6 +38656,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -38650,6 +38689,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -38711,6 +38751,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -38743,6 +38784,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -38794,6 +38836,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -38826,6 +38869,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -38889,6 +38933,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -38921,6 +38966,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39015,6 +39061,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -39047,6 +39094,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -39138,6 +39186,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39170,6 +39219,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39198,6 +39248,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -39230,6 +39281,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -39419,6 +39471,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39451,6 +39504,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -40666,6 +40720,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -40691,6 +40746,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -40722,6 +40778,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -40752,6 +40809,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -40830,6 +40888,7 @@ export namespace Prisma {
     description: string
     requirements?: string | null
     benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
     type?: $Enums.JobType
     status?: $Enums.JobStatus
     location?: string | null
@@ -40895,6 +40954,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -40926,6 +40986,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -40956,6 +41017,7 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     requirements?: NullableStringFieldUpdateOperationsInput | string | null
     benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
     type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
     status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
     location?: NullableStringFieldUpdateOperationsInput | string | null

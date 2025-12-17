@@ -85,11 +85,48 @@ async function cleanDatabase() {
       },
     });
 
+    // Create 1 sample company and recruiter
+    console.log("\n🏢 Creating sample company...");
+    const company = await prisma.company.create({
+      data: {
+        name: "DevPrep Corp",
+        slug: "devprep-corp",
+        industry: "Technology",
+        companySize: "50-100",
+        city: "Remote",
+        country: "Global",
+        isVerified: true,
+      },
+    });
+
+    console.log("\n👤 Creating recruiter account...");
+    const recruiterUser = await prisma.user.create({
+      data: {
+        email: "recruiter@devprep.com",
+        passwordHash: "$2a$10$YourHashedPasswordHere", // Hash for recruiter (e.g., recruiter123)
+        firstName: "Recruiter",
+        lastName: "User",
+        role: "RECRUITER",
+        isVerified: true,
+        isActive: true,
+        recruiterProfile: {
+          create: {
+            companyId: company.id,
+            position: "Talent Lead",
+          },
+        },
+      },
+    });
+
     console.log("\n✅ Database cleaned successfully!");
     console.log("\n🔐 Admin Account Created:");
     console.log("   Email: admin@devprep.com");
     console.log("   Password: admin123");
     console.log("   ID:", admin.id);
+    console.log("\n👤 Recruiter Account Created:");
+    console.log("   Email: recruiter@devprep.com");
+    console.log("   Password: recruiter123");
+    console.log("   ID:", recruiterUser.id);
     console.log("\n📊 Database is now clean and ready for setup!");
 
   } catch (error) {

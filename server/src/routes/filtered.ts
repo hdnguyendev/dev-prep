@@ -101,6 +101,7 @@ filteredRoutes.get("/applications", async (c) => {
           job: {
             include: {
               company: true,
+              // include scalar fields like interviewQuestions by default
             },
           },
           candidate: {

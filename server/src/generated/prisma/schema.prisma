@@ -267,9 +267,10 @@ model Job {
   recruiter   RecruiterProfile @relation(fields: [recruiterId], references: [id])
 
   // Job Details
-  description  String  @db.Text // Rich Text HTML
-  requirements String? @db.Text
-  benefits     String? @db.Text
+  description        String   @db.Text // Rich Text HTML
+  requirements       String?  @db.Text
+  benefits           String?  @db.Text
+  interviewQuestions String[] @default([]) // Câu hỏi phỏng vấn do recruiter thiết lập
 
   type   JobType   @default(FULL_TIME)
   status JobStatus @default(DRAFT)

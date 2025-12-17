@@ -239,6 +239,7 @@ exports.Prisma.JobScalarFieldEnum = {
   description: 'description',
   requirements: 'requirements',
   benefits: 'benefits',
+  interviewQuestions: 'interviewQuestions',
   type: 'type',
   status: 'status',
   location: 'location',
@@ -490,6 +491,7 @@ exports.Prisma.JobOrderByRelevanceFieldEnum = {
   description: 'description',
   requirements: 'requirements',
   benefits: 'benefits',
+  interviewQuestions: 'interviewQuestions',
   location: 'location',
   experienceLevel: 'experienceLevel'
 };
