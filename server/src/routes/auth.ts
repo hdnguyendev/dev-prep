@@ -206,7 +206,13 @@ authRoutes.get("/me", async (c) => {
             company: true,
           },
         },
-        candidateProfile: true,
+        candidateProfile: {
+          include: {
+            skills: { include: { skill: true } },
+            experiences: true,
+            educations: true,
+          },
+        },
       },
     });
 
@@ -226,7 +232,13 @@ authRoutes.get("/me", async (c) => {
                 company: true,
               },
             },
-            candidateProfile: true,
+            candidateProfile: {
+              include: {
+                skills: { include: { skill: true } },
+                experiences: true,
+                educations: true,
+              },
+            },
           },
         });
       }
@@ -250,6 +262,161 @@ authRoutes.get("/me", async (c) => {
   } catch (error) {
     console.error("Auth check error:", error);
     return c.json({ success: false, message: "Authentication check failed" }, 500);
+  }
+});
+
+/**
+ * Candidate Experience CRUD (Clerk-authenticated)
+ * - Candidate can only manage their own experiences
+ */
+authRoutes.post("/experience", async (c) => {
+  try {
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.error || "Authentication failed" }, 401);
+    }
+    const user = result.user;
+    if (!user.candidateProfile) {
+      return c.json({ success: false, message: "Candidate profile not found" }, 404);
+    }
+
+    const body = await c.req.json();
+    const companyName = (body?.companyName as string | undefined)?.trim();
+    const position = (body?.position as string | undefined)?.trim();
+    const location = (body?.location as string | undefined)?.trim();
+    const startDateRaw = body?.startDate as string | undefined;
+    const endDateRaw = body?.endDate as string | undefined;
+    const isCurrent = Boolean(body?.isCurrent);
+    const description = (body?.description as string | undefined)?.trim();
+
+    if (!companyName || !position || !startDateRaw) {
+      return c.json({ success: false, message: "companyName, position, startDate are required" }, 400);
+    }
+
+    const startDate = new Date(startDateRaw);
+    if (Number.isNaN(startDate.getTime())) {
+      return c.json({ success: false, message: "Invalid startDate" }, 400);
+    }
+
+    const endDate =
+      !endDateRaw || isCurrent ? null : new Date(endDateRaw);
+    if (endDateRaw && !isCurrent && endDate && Number.isNaN(endDate.getTime())) {
+      return c.json({ success: false, message: "Invalid endDate" }, 400);
+    }
+
+    const created = await prisma.experience.create({
+      data: {
+        candidateId: user.candidateProfile.id,
+        companyName,
+        position,
+        location: location || null,
+        startDate,
+        endDate: endDate ?? null,
+        isCurrent,
+        description: description || null,
+      },
+    });
+
+    return c.json({ success: true, data: created }, 201);
+  } catch (error) {
+    console.error("Create experience error:", error);
+    return c.json({ success: false, message: "Failed to create experience" }, 500);
+  }
+});
+
+authRoutes.put("/experience/:id", async (c) => {
+  try {
+    const { id } = c.req.param();
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.error || "Authentication failed" }, 401);
+    }
+    const user = result.user;
+    if (!user.candidateProfile) {
+      return c.json({ success: false, message: "Candidate profile not found" }, 404);
+    }
+
+    const existing = await prisma.experience.findUnique({ where: { id } });
+    if (!existing || existing.candidateId !== user.candidateProfile.id) {
+      return c.json({ success: false, message: "Experience not found" }, 404);
+    }
+
+    const body = await c.req.json();
+    const companyName = (body?.companyName as string | undefined)?.trim();
+    const position = (body?.position as string | undefined)?.trim();
+    const location = (body?.location as string | undefined)?.trim();
+    const startDateRaw = body?.startDate as string | undefined;
+    const endDateRaw = body?.endDate as string | undefined;
+    const isCurrent = Boolean(body?.isCurrent);
+    const description = (body?.description as string | undefined)?.trim();
+
+    const data: any = {};
+    if (typeof companyName !== "undefined") data.companyName = companyName || "";
+    if (typeof position !== "undefined") data.position = position || "";
+    if (typeof location !== "undefined") data.location = location || null;
+    if (typeof description !== "undefined") data.description = description || null;
+    if (typeof isCurrent !== "undefined") data.isCurrent = isCurrent;
+
+    if (typeof startDateRaw !== "undefined") {
+      const startDate = new Date(startDateRaw);
+      if (Number.isNaN(startDate.getTime())) return c.json({ success: false, message: "Invalid startDate" }, 400);
+      data.startDate = startDate;
+    }
+
+    if (isCurrent) {
+      data.endDate = null;
+    } else if (typeof endDateRaw !== "undefined") {
+      if (!endDateRaw) {
+        data.endDate = null;
+      } else {
+        const endDate = new Date(endDateRaw);
+        if (Number.isNaN(endDate.getTime())) return c.json({ success: false, message: "Invalid endDate" }, 400);
+        data.endDate = endDate;
+      }
+    }
+
+    // Basic validation if they attempted to blank required fields
+    if ("companyName" in data && !data.companyName) {
+      return c.json({ success: false, message: "companyName is required" }, 400);
+    }
+    if ("position" in data && !data.position) {
+      return c.json({ success: false, message: "position is required" }, 400);
+    }
+
+    const updated = await prisma.experience.update({
+      where: { id },
+      data,
+    });
+
+    return c.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Update experience error:", error);
+    return c.json({ success: false, message: "Failed to update experience" }, 500);
+  }
+});
+
+authRoutes.delete("/experience/:id", async (c) => {
+  try {
+    const { id } = c.req.param();
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.error || "Authentication failed" }, 401);
+    }
+    const user = result.user;
+    if (!user.candidateProfile) {
+      return c.json({ success: false, message: "Candidate profile not found" }, 404);
+    }
+
+    const existing = await prisma.experience.findUnique({ where: { id } });
+    if (!existing || existing.candidateId !== user.candidateProfile.id) {
+      return c.json({ success: false, message: "Experience not found" }, 404);
+    }
+
+    const deleted = await prisma.experience.delete({ where: { id } });
+    return c.json({ success: true, data: deleted });
+  } catch (error) {
+    console.error("Delete experience error:", error);
+    return c.json({ success: false, message: "Failed to delete experience" }, 500);
   }
 });
 
@@ -298,6 +465,38 @@ authRoutes.post("/sync-candidate", async (c) => {
   } catch (error) {
     console.error("sync-candidate error:", error);
     return c.json({ success: false, message: "Failed to sync candidate" }, 500);
+  }
+});
+
+/**
+ * Update candidate name (Clerk-authenticated)
+ * - Used on first login when Clerk doesn't provide real first/last name
+ */
+authRoutes.put("/name", async (c) => {
+  try {
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.error || "Authentication failed" }, 401);
+    }
+
+    const body = await c.req.json();
+    const firstName = (body?.firstName as string | undefined)?.trim();
+    const lastName = (body?.lastName as string | undefined)?.trim();
+
+    if (!firstName || !lastName) {
+      return c.json({ success: false, message: "firstName and lastName are required" }, 400);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: result.user.id },
+      data: { firstName, lastName },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true },
+    });
+
+    return c.json({ success: true, user: updated });
+  } catch (error) {
+    console.error("Update name error:", error);
+    return c.json({ success: false, message: "Failed to update name" }, 500);
   }
 });
 

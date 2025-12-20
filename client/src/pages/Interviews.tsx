@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { type Interview } from "@/lib/api";
 import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
 import { getCurrentUser } from "@/lib/auth";
-import { Video } from "lucide-react";
+import { Loader2, Video } from "lucide-react";
 
 const statusColor: Record<Interview["status"], "default" | "outline" | "success"> = {
   PENDING: "outline",
@@ -166,6 +166,7 @@ interface InterviewsListProps {
 }
 
 const InterviewsList = ({ interviews, page, totalPages, total, setPage }: InterviewsListProps) => {
+  const navigate = useNavigate();
   return (
     <main className="container mx-auto min-h-dvh px-4 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -199,7 +200,9 @@ const InterviewsList = ({ interviews, page, totalPages, total, setPage }: Interv
                   <CardTitle className="text-base">
                     {iv.title} <span className="text-xs font-normal text-muted-foreground">({iv.id.slice(0, 6)})</span>
                   </CardTitle>
-                  <CardDescription>{iv.application?.job?.title || iv.applicationId}</CardDescription>
+                  <CardDescription>
+                    {iv.application?.job?.title || iv.job?.title || (iv.applicationId ? iv.applicationId : "Standalone mock")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
                   <div className="flex flex-wrap items-center gap-2">
@@ -214,6 +217,22 @@ const InterviewsList = ({ interviews, page, totalPages, total, setPage }: Interv
                   {iv.overallScore !== null && iv.overallScore !== undefined && (
                     <div className="font-medium text-foreground">Score: {iv.overallScore}</div>
                   )}
+                  <div className="pt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate(`/interviews/${iv.id}/feedback`)}
+                    >
+                      {iv.status === "COMPLETED" ? (
+                        "View feedback"
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          View feedback
+                        </span>
+                      )}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

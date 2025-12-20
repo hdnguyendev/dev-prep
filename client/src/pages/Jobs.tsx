@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useSearchParams } from "react-router";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +19,13 @@ import {
   ArrowRight,
   X,
   CheckCircle,
+  LayoutGrid,
+  Table,
 } from "lucide-react";
 
 const Jobs = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { getToken, isSignedIn } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
@@ -41,7 +45,20 @@ const Jobs = () => {
   const [sort, setSort] = useState("recent");
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
+    const saved = localStorage.getItem("jobs-view-mode");
+    return (saved === "table" || saved === "grid") ? saved : "grid";
+  });
   const pageSize = 9;
+  const fetchPageSize = 200;
+
+  useEffect(() => {
+    const q = (searchParams.get("query") || "").trim();
+    const loc = (searchParams.get("location") || "").trim();
+    if (q) setQuery(q);
+    if (loc) setLocation(loc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch jobs
   useEffect(() => {
@@ -56,7 +73,7 @@ const Jobs = () => {
         setLoading(true);
         setError(null);
         const token = await getToken();
-        const response = await apiClient.listJobs({ page, pageSize: 100 }, token ?? undefined);
+        const response = await apiClient.listJobs({ page: 1, pageSize: fetchPageSize }, token ?? undefined);
         
         // Only update state if this is still the latest request and component is mounted
         if (currentRequestId !== requestId || !isMounted || abortController.signal.aborted) {
@@ -89,7 +106,11 @@ const Jobs = () => {
       requestId++; // Invalidate any pending requests
       abortController.abort();
     };
-  }, [getToken, page]);
+  }, [getToken]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, location, selectedTags, sort, types]);
 
   // Fetch saved jobs status
   useEffect(() => {
@@ -200,6 +221,16 @@ const Jobs = () => {
     return Array.from(t).slice(0, 20);
   }, [jobs]);
 
+  const postedAgo = (createdAt: string) => {
+    const ts = createdAt ? new Date(createdAt).getTime() : 0;
+    if (!ts) return "";
+    const diffMs = Date.now() - ts;
+    const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    if (days <= 0) return "Today";
+    if (days === 1) return "1 day ago";
+    return `${days} days ago`;
+  };
+
   const filtered = useMemo(() => {
     const activeTypes = Object.entries(types)
       .filter(([, v]) => v)
@@ -221,6 +252,8 @@ const Jobs = () => {
     });
     if (sort === "salary")
       list = list.sort((a, b) => (b.salaryMin || 0) - (a.salaryMin || 0));
+    if (sort === "recent")
+      list = list.sort((a, b) => (new Date(b.createdAt).getTime() || 0) - (new Date(a.createdAt).getTime() || 0));
     return list;
   }, [jobs, location, query, selectedTags, sort, types]);
 
@@ -230,6 +263,11 @@ const Jobs = () => {
   const toggleType = (k: JobType) => setTypes((prev) => ({ ...prev, [k]: !prev[k] }));
   const toggleTag = (t: string) =>
     setSelectedTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+
+  const handleViewModeChange = (mode: "grid" | "table") => {
+    setViewMode(mode);
+    localStorage.setItem("jobs-view-mode", mode);
+  };
 
   const getCompanyInitial = (job: Job) => {
     return job.company?.name?.[0]?.toUpperCase() || "C";
@@ -245,6 +283,22 @@ const Jobs = () => {
       "from-indigo-500 to-purple-500",
     ];
     return colors[index % colors.length];
+  };
+
+  const clearAll = () => {
+    setQuery("");
+    setLocation("");
+    setSelectedTags([]);
+    setTypes({
+      FULL_TIME: false,
+      PART_TIME: false,
+      CONTRACT: false,
+      FREELANCE: false,
+      INTERNSHIP: false,
+      REMOTE: false,
+    });
+    setSort("recent");
+    setSearchParams({});
   };
 
   if (loading) {
@@ -287,62 +341,76 @@ const Jobs = () => {
       {/* Hero Search Section */}
       <section className="border-b bg-gradient-to-br from-primary/5 via-background to-purple-500/5">
         <div className="container mx-auto px-4 py-12 md:py-16">
-          <div className="mb-8 text-center">
-            <Badge className="mb-4">
-              <Briefcase className="mr-1 h-3 w-3" />
-              {filtered.length} Jobs Available
-            </Badge>
-            <h1 className="text-4xl font-bold tracking-tight md:text-5xl mb-4">
-              Find Your <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">Dream Job</span>
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Discover opportunities from top companies worldwide
-            </p>
-          </div>
-
-          {/* Search Bar */}
-          <Card className="border-2 shadow-lg">
-            <CardContent className="p-4">
-              <div className="grid gap-3 md:grid-cols-[1fr_200px_auto]">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Job title, company, keywords..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="pl-9 h-11"
-                  />
-                </div>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="pl-9 h-11"
-                  />
-                </div>
-                <Button className="h-11 px-8 gap-2">
-                  <Search className="h-4 w-4" />
-                  Search
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Popular Tags */}
-          <div className="mt-6 flex flex-wrap items-center gap-2 justify-center">
-            <span className="text-sm text-muted-foreground">Popular:</span>
-            {allTags.slice(0, 6).map((t) => (
-              <Badge
-                key={t}
-                variant={selectedTags.includes(t) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => toggleTag(t)}
-              >
-                {t}
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <Badge className="mb-4">
+                <Briefcase className="mr-1 h-3 w-3" />
+                {filtered.length} Jobs Available
               </Badge>
-            ))}
+              <h1 className="text-4xl font-bold tracking-tight md:text-5xl mb-4">
+                Find Your{" "}
+                <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                  Dream Job
+                </span>
+              </h1>
+              <p className="text-lg text-muted-foreground mb-6">
+                Search smarter, apply faster, and track your progress.
+              </p>
+            </div>
+
+            {/* Search Bar */}
+            <Card className="border-2 shadow-lg mb-6">
+              <CardContent className="p-4">
+                <form
+                  className="grid gap-3 md:grid-cols-[1fr_200px_auto]"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const params = new URLSearchParams();
+                    if (query.trim()) params.set("query", query.trim());
+                    if (location.trim()) params.set("location", location.trim());
+                    setSearchParams(params);
+                  }}
+                >
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Job title, company, keywords..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      className="pl-9 h-11"
+                    />
+                  </div>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Location"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="pl-9 h-11"
+                    />
+                  </div>
+                  <Button className="h-11 px-8 gap-2" type="submit">
+                    <Search className="h-4 w-4" />
+                    Search
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Popular Tags */}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="text-sm text-muted-foreground">Popular:</span>
+              {allTags.slice(0, 6).map((t) => (
+                <Badge
+                  key={t}
+                  variant={selectedTags.includes(t) ? "default" : "outline"}
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => toggleTag(t)}
+                >
+                  {t}
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -435,6 +503,24 @@ const Jobs = () => {
                 <span className="font-semibold text-foreground">{filtered.length}</span> jobs found
               </div>
               <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 border rounded-md p-1">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => handleViewModeChange("grid")}
+                    className="h-8 px-3"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "table" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => handleViewModeChange("table")}
+                    className="h-8 px-3"
+                  >
+                    <Table className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -455,7 +541,34 @@ const Jobs = () => {
               </div>
             </div>
 
-            {/* Jobs Grid */}
+            {(query || location || selectedTags.length > 0 || Object.values(types).some(Boolean) || sort !== "recent") && (
+              <div className="flex flex-wrap items-center gap-2">
+                {query ? <Badge variant="outline">Query: {query}</Badge> : null}
+                {location ? <Badge variant="outline">Location: {location}</Badge> : null}
+                {selectedTags.map((t) => (
+                  <Badge key={`tag-${t}`} variant="outline" className="cursor-pointer" onClick={() => toggleTag(t)}>
+                    {t} <span className="ml-1">×</span>
+                  </Badge>
+                ))}
+                {Object.entries(types)
+                  .filter(([, v]) => v)
+                  .map(([k]) => (
+                    <Badge key={`type-${k}`} variant="outline" className="cursor-pointer" onClick={() => toggleType(k as JobType)}>
+                      {typeLabels[k as JobType] ?? k} <span className="ml-1">×</span>
+                    </Badge>
+                  ))}
+                {sort !== "recent" ? (
+                  <Badge variant="outline" className="cursor-pointer" onClick={() => setSort("recent")}>
+                    Sort: {sort} <span className="ml-1">×</span>
+                  </Badge>
+                ) : null}
+                <Button variant="ghost" size="sm" onClick={clearAll}>
+                  Clear all
+                </Button>
+              </div>
+            )}
+
+            {/* Jobs View */}
             {paged.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
@@ -464,29 +577,17 @@ const Jobs = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Try adjusting your filters or search terms
                   </p>
-                  <Button variant="outline" onClick={() => {
-                    setQuery("");
-                    setLocation("");
-                    setSelectedTags([]);
-                    setTypes({
-                      FULL_TIME: false,
-                      PART_TIME: false,
-                      CONTRACT: false,
-                      FREELANCE: false,
-                      INTERNSHIP: false,
-                      REMOTE: false,
-                    });
-                  }}>
+                  <Button variant="outline" onClick={clearAll}>
                     Clear All Filters
                   </Button>
                 </CardContent>
               </Card>
-            ) : (
+            ) : viewMode === "grid" ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {paged.map((job, index) => (
                   <Card
                     key={job.id}
-                    className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-xl cursor-pointer"
+                    className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-xl cursor-pointer h-full flex flex-col"
                     onClick={() => navigate(`/jobs/${job.id}`)}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -538,25 +639,29 @@ const Jobs = () => {
                           <span>•</span>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            Posted 2d ago
+                            {postedAgo(job.createdAt)}
                           </div>
                         </div>
                       </div>
                     </CardHeader>
 
-                    <CardContent className="relative space-y-4">
+                    <CardContent className="relative space-y-4 flex-1">
                       {/* Description */}
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {job.description}
+                      <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                        {job.description || "No description available"}
                       </p>
 
                       {/* Skills */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {getSkillTags(job).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+                      <div className="flex flex-wrap gap-1.5 min-h-[1.5rem]">
+                        {getSkillTags(job).length > 0 ? (
+                          getSkillTags(job).map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50">No skills listed</span>
+                        )}
                       </div>
                     </CardContent>
 
@@ -597,6 +702,104 @@ const Jobs = () => {
                   </Card>
                 ))}
               </div>
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b bg-muted/50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Job</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Company</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Location</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Salary</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Posted</th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paged.map((job, index) => (
+                          <tr
+                            key={job.id}
+                            className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                            onClick={() => navigate(`/jobs/${job.id}`)}
+                          >
+                            <td className="px-4 py-4">
+                              <div className="font-medium">{job.title}</div>
+                              <div className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                                {job.description}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {getSkillTags(job).slice(0, 2).map((tag) => (
+                                  <Badge key={tag} variant="outline" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`h-8 w-8 rounded-lg bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-sm font-bold text-white`}
+                                >
+                                  {getCompanyInitial(job)}
+                                </div>
+                                <span className="text-sm">{job.company?.name || "Company"}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-muted-foreground">
+                              {getLocation(job)}
+                            </td>
+                            <td className="px-4 py-4">
+                              <Badge variant="outline" className="text-xs">
+                                {getEmploymentTypeLabel(job)}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-4 text-sm font-medium">
+                              {getSalaryRange(job)}
+                            </td>
+                            <td className="px-4 py-4 text-xs text-muted-foreground">
+                              {postedAgo(job.createdAt)}
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleSave(e, job.id);
+                                  }}
+                                >
+                                  <Heart
+                                    className={`h-4 w-4 transition-colors ${
+                                      savedJobs.has(job.id)
+                                        ? "fill-red-500 text-red-500"
+                                        : "text-muted-foreground hover:text-red-500"
+                                    }`}
+                                  />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/jobs/${job.id}`);
+                                  }}
+                                >
+                                  View
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Pagination */}

@@ -1,0 +1,84 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-apply" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5E9" stop-opacity="0.12"/>
+      <stop offset="0.5" stop-color="#3B82F6" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="card-apply" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#F0F9FF" stop-opacity="0.90"/>
+    </linearGradient>
+    <linearGradient id="accent-apply" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0EA5E9"/>
+      <stop offset="1" stop-color="#3B82F6"/>
+    </linearGradient>
+    <filter id="shadow-apply" x="-20" y="-20" width="1240" height="940" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="#0F172A" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="url(#bg-apply)"/>
+  <circle cx="1120" cy="180" r="150" fill="#0EA5E9" fill-opacity="0.05"/>
+  <circle cx="80" cy="820" r="190" fill="#3B82F6" fill-opacity="0.05"/>
+
+  <!-- Application Form Card -->
+  <g filter="url(#shadow-apply)">
+    <rect x="250" y="150" width="700" height="600" rx="36" fill="url(#card-apply)"/>
+    <rect x="250" y="150" width="700" height="600" rx="36" stroke="#BFDBFE" stroke-width="2"/>
+    
+    <!-- Header -->
+    <rect x="290" y="190" width="620" height="80" rx="16" fill="url(#accent-apply)" fill-opacity="0.1"/>
+    <rect x="290" y="190" width="620" height="80" rx="16" stroke="url(#accent-apply)" stroke-width="2" stroke-opacity="0.3"/>
+    <rect x="310" y="210" width="250" height="16" rx="8" fill="url(#accent-apply)" fill-opacity="0.4"/>
+    <rect x="310" y="235" width="180" height="12" rx="6" fill="url(#accent-apply)" fill-opacity="0.25"/>
+    
+    <!-- Form Fields -->
+    <g>
+      <!-- Name Field -->
+      <rect x="310" y="310" width="280" height="50" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+      <rect x="330" y="325" width="100" height="8" rx="4" fill="#94A3B8" fill-opacity="0.3"/>
+      <rect x="330" y="340" width="200" height="10" rx="5" fill="#CBD5E1" fill-opacity="0.4"/>
+      
+      <!-- Email Field -->
+      <rect x="610" y="310" width="280" height="50" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+      <rect x="630" y="325" width="80" height="8" rx="4" fill="#94A3B8" fill-opacity="0.3"/>
+      <rect x="630" y="340" width="220" height="10" rx="5" fill="#CBD5E1" fill-opacity="0.4"/>
+      
+      <!-- Resume Upload -->
+      <rect x="310" y="380" width="580" height="80" rx="12" fill="#F0F9FF" stroke="#BFDBFE" stroke-width="2" stroke-dasharray="8 4"/>
+      <circle cx="360" cy="420" r="20" fill="url(#accent-apply)" fill-opacity="0.15"/>
+      <rect x="400" y="410" width="200" height="10" rx="5" fill="#94A3B8" fill-opacity="0.3"/>
+      <rect x="400" y="430" width="150" height="8" rx="4" fill="#CBD5E1" fill-opacity="0.4"/>
+      <rect x="750" y="405" width="100" height="30" rx="15" fill="url(#accent-apply)" fill-opacity="0.2"/>
+      <rect x="750" y="405" width="100" height="30" rx="15" stroke="url(#accent-apply)" stroke-width="2" stroke-opacity="0.3"/>
+      
+      <!-- Cover Letter -->
+      <rect x="310" y="480" width="580" height="120" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+      <rect x="330" y="495" width="120" height="8" rx="4" fill="#94A3B8" fill-opacity="0.3"/>
+      <rect x="330" y="520" width="520" height="6" rx="3" fill="#CBD5E1" fill-opacity="0.4"/>
+      <rect x="330" y="535" width="500" height="6" rx="3" fill="#CBD5E1" fill-opacity="0.4"/>
+      <rect x="330" y="550" width="480" height="6" rx="3" fill="#CBD5E1" fill-opacity="0.4"/>
+      <rect x="330" y="565" width="450" height="6" rx="3" fill="#CBD5E1" fill-opacity="0.4"/>
+    </g>
+    
+    <!-- Submit Button -->
+    <rect x="310" y="630" width="580" height="60" rx="16" fill="url(#accent-apply)" fill-opacity="0.9"/>
+    <rect x="310" y="630" width="580" height="60" rx="16" stroke="url(#accent-apply)" stroke-width="2"/>
+    <rect x="480" y="650" width="240" height="20" rx="10" fill="#FFFFFF" fill-opacity="0.9"/>
+  </g>
+
+  <!-- Floating Elements -->
+  <g opacity="0.4">
+    <rect x="120" y="350" width="100" height="100" rx="20" fill="#0EA5E9" fill-opacity="0.08"/>
+    <rect x="980" y="450" width="100" height="100" rx="20" fill="#3B82F6" fill-opacity="0.08"/>
+  </g>
+
+  <!-- Decorative Icons -->
+  <g opacity="0.25">
+    <circle cx="180" cy="500" r="50" fill="#0EA5E9" fill-opacity="0.08"/>
+    <circle cx="1020" cy="300" r="55" fill="#3B82F6" fill-opacity="0.08"/>
+  </g>
+</svg>
+

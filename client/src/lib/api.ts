@@ -114,6 +114,7 @@ export interface Job {
 export interface CandidateProfile {
   id: string;
   userId: string;
+  isPublic?: boolean;
   headline?: string | null;
   bio?: string | null;
   website?: string | null;
@@ -140,7 +141,9 @@ export interface Application {
 
 export interface Interview {
   id: string;
-  applicationId: string;
+  applicationId?: string | null;
+  candidateId?: string | null;
+  jobId?: string | null;
   title: string;
   type: InterviewType;
   status: InterviewStatus;
@@ -151,11 +154,30 @@ export interface Interview {
   endedAt?: string | null;
   durationSeconds?: number | null;
   overallScore?: number | null;
+  summary?: string | null;
   recommendation?: string | null;
   createdAt: string;
   updatedAt: string;
   application?: Application;
+  candidate?: CandidateProfile;
+  job?: Job;
 }
+
+export type InterviewFeedback = {
+  id: string;
+  status: InterviewStatus;
+  overallScore?: number | null;
+  summary?: string | null;
+  recommendation?: string | null;
+  aiAnalysisData?: unknown;
+  perQuestion: Array<{
+    orderIndex: number;
+    questionText: string;
+    questionCategory?: string | null;
+    score?: number | null;
+    feedback?: string | null;
+  }>;
+};
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -309,6 +331,14 @@ class ApiClient {
 
   listInterviews(params?: ListParams, token?: string) {
     return this.request<Interview[]>(`/interviews${buildQuery(params)}`, {}, token);
+  }
+
+  getInterviewFeedback(interviewId: string, token?: string) {
+    return this.request<InterviewFeedback>(`/interviews/${interviewId}/feedback`, {}, token);
+  }
+
+  analyzeInterview(interviewId: string, token?: string) {
+    return this.request<Interview>(`/interviews/${interviewId}/analyze`, { method: "POST" }, token);
   }
 
   // Review endpoints

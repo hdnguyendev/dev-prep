@@ -103,6 +103,9 @@ model CandidateProfile {
   // Thông tin CV structured (Để search tốt hơn là chỉ lưu file PDF)
   cvUrl String? // Link file gốc (PDF/Word)
 
+  // Public profile visibility (Candidate can publish/unpublish)
+  isPublic Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -113,6 +116,7 @@ model CandidateProfile {
   applications   Application[]
   savedJobs      SavedJob[]
   companyReviews CompanyReview[]
+  interviews     Interview[]
 }
 
 // Profile dành cho nhà tuyển dụng
@@ -301,6 +305,7 @@ model Job {
   // Relations
   skills       JobSkill[]
   applications Application[]
+  interviews   Interview[]
   savedBy      SavedJob[]
   categories   JobCategory[]
 
@@ -430,8 +435,16 @@ enum InterviewStatus {
 model Interview {
   id String @id @default(uuid())
 
-  applicationId String
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  // Interview can be linked to an Application OR standalone (mock interview not tied to an application)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  // Optional direct links for standalone interviews
+  candidateId String?
+  candidate   CandidateProfile? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+
+  jobId String?
+  job   Job?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
 
   // Cấu hình phỏng vấn
   title  String // VD: "Vòng 1: AI Screening"

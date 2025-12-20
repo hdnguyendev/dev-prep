@@ -1,0 +1,72 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-success" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E" stop-opacity="0.12"/>
+      <stop offset="0.5" stop-color="#10B981" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#059669" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="card-success" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#F0FDF4" stop-opacity="0.90"/>
+    </linearGradient>
+    <linearGradient id="accent-success" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+    <filter id="shadow-success" x="-20" y="-20" width="1240" height="940" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="#0F172A" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="url(#bg-success)"/>
+  <circle cx="1100" cy="200" r="140" fill="#22C55E" fill-opacity="0.05"/>
+  <circle cx="100" cy="800" r="180" fill="#10B981" fill-opacity="0.05"/>
+
+  <!-- Success Card -->
+  <g filter="url(#shadow-success)">
+    <rect x="350" y="250" width="500" height="400" rx="36" fill="url(#card-success)"/>
+    <rect x="350" y="250" width="500" height="400" rx="36" stroke="#D1FAE5" stroke-width="2"/>
+    
+    <!-- Success Icon -->
+    <circle cx="600" cy="380" r="60" fill="url(#accent-success)" fill-opacity="0.15"/>
+    <circle cx="600" cy="380" r="60" stroke="url(#accent-success)" stroke-width="3" stroke-opacity="0.4"/>
+    <path d="M575 380 L590 395 L625 360" stroke="url(#accent-success)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Title -->
+    <rect x="420" y="480" width="360" height="20" rx="10" fill="url(#accent-success)" fill-opacity="0.3"/>
+    <rect x="420" y="510" width="280" height="16" rx="8" fill="#94A3B8" fill-opacity="0.3"/>
+    
+    <!-- Stats -->
+    <rect x="420" y="560" width="100" height="60" rx="12" fill="#22C55E" fill-opacity="0.1"/>
+    <rect x="420" y="560" width="100" height="60" rx="12" stroke="#22C55E" stroke-width="2" stroke-opacity="0.2"/>
+    <circle cx="470" cy="585" r="8" fill="#22C55E" fill-opacity="0.5"/>
+    <rect x="440" y="600" width="60" height="8" rx="4" fill="#22C55E" fill-opacity="0.4"/>
+    
+    <rect x="540" y="560" width="100" height="60" rx="12" fill="#10B981" fill-opacity="0.1"/>
+    <rect x="540" y="560" width="100" height="60" rx="12" stroke="#10B981" stroke-width="2" stroke-opacity="0.2"/>
+    <circle cx="590" cy="585" r="8" fill="#10B981" fill-opacity="0.5"/>
+    <rect x="560" y="600" width="60" height="8" rx="4" fill="#10B981" fill-opacity="0.4"/>
+    
+    <rect x="660" y="560" width="100" height="60" rx="12" fill="#059669" fill-opacity="0.1"/>
+    <rect x="660" y="560" width="100" height="60" rx="12" stroke="#059669" stroke-width="2" stroke-opacity="0.2"/>
+    <circle cx="710" cy="585" r="8" fill="#059669" fill-opacity="0.5"/>
+    <rect x="680" y="600" width="60" height="8" rx="4" fill="#059669" fill-opacity="0.4"/>
+  </g>
+
+  <!-- Floating Success Elements -->
+  <g opacity="0.4">
+    <circle cx="200" cy="350" r="30" fill="#22C55E" fill-opacity="0.15"/>
+    <path d="M185 350 L195 360 L215 340" stroke="#22C55E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <circle cx="1000" cy="550" r="35" fill="#10B981" fill-opacity="0.15"/>
+    <path d="M985 550 L995 560 L1015 540" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Decorative Elements -->
+  <g opacity="0.2">
+    <rect x="120" y="500" width="80" height="80" rx="16" fill="#22C55E" fill-opacity="0.1"/>
+    <rect x="1000" y="300" width="80" height="80" rx="16" fill="#10B981" fill-opacity="0.1"/>
+  </g>
+</svg>
+

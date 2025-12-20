@@ -22,14 +22,14 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (clerkUser) {
-      // Clerk user (Candidate) - redirect to dashboard
-      navigate("/dashboard");
+      // Clerk user (Candidate) - redirect to candidate dashboard
+      navigate("/candidate/dashboard");
     } else if (customUser) {
       // Custom user (Staff) - redirect based on role
       if (customUser.role === "ADMIN") {
-        navigate("/admin");
+        navigate("/admin/dashboard");
       } else if (customUser.role === "RECRUITER") {
-        navigate("/recruiter");
+        navigate("/recruiter/dashboard");
       }
     }
   }, [clerkUser, customUser, navigate]);
@@ -50,9 +50,9 @@ const Login = () => {
       if (result.success && result.user) {
         // Redirect based on role
         if (result.user.role === "ADMIN") {
-          navigate("/admin");
+          navigate("/admin/dashboard");
         } else if (result.user.role === "RECRUITER") {
-          navigate("/recruiter");
+          navigate("/recruiter/dashboard");
         } else {
           setError("Invalid role. Staff login is for Admin and Recruiter only.");
         }

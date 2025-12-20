@@ -1,0 +1,63 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="140" y1="120" x2="1060" y2="780" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E" stop-opacity="0.14"/>
+      <stop offset="0.5" stop-color="#0EA5E9" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0.10"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <filter id="shadow" x="-20" y="-20" width="1240" height="940" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="26" flood-color="#0F172A" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect x="100" y="80" width="1000" height="740" rx="64" fill="url(#g1)"/>
+  <circle cx="920" cy="240" r="150" fill="#A855F7" fill-opacity="0.08"/>
+  <circle cx="300" cy="700" r="170" fill="#F97316" fill-opacity="0.08"/>
+
+  <g filter="url(#shadow)">
+    <!-- video call frame -->
+    <rect x="250" y="170" width="700" height="520" rx="28" fill="#0B1220" fill-opacity="0.92"/>
+    <rect x="250" y="170" width="700" height="520" rx="28" stroke="#334155" stroke-opacity="0.5"/>
+
+    <!-- top controls -->
+    <circle cx="290" cy="210" r="7" fill="#EF4444" fill-opacity="0.9"/>
+    <circle cx="314" cy="210" r="7" fill="#F59E0B" fill-opacity="0.9"/>
+    <circle cx="338" cy="210" r="7" fill="#22C55E" fill-opacity="0.9"/>
+    <rect x="370" y="202" width="180" height="16" rx="8" fill="#FFFFFF" fill-opacity="0.08"/>
+
+    <!-- left: session panel (no person icon) -->
+    <rect x="290" y="250" width="410" height="310" rx="22" fill="#111827" stroke="#334155" stroke-opacity="0.5"/>
+    <rect x="320" y="290" width="140" height="22" rx="11" fill="url(#accent)" fill-opacity="0.85"/>
+    <rect x="320" y="326" width="260" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.12"/>
+    <rect x="320" y="352" width="220" height="12" rx="6" fill="#FFFFFF" fill-opacity="0.08"/>
+    <rect x="320" y="386" width="320" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.08"/>
+    <rect x="320" y="412" width="280" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.06"/>
+    <rect x="320" y="438" width="300" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.06"/>
+
+    <!-- right: AI panel -->
+    <rect x="720" y="250" width="200" height="150" rx="22" fill="#111827" stroke="#334155" stroke-opacity="0.5"/>
+    <rect x="758" y="286" width="124" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.10"/>
+    <rect x="758" y="316" width="92" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.08"/>
+    <rect x="758" y="346" width="86" height="18" rx="9" fill="#6366F1" fill-opacity="0.55"/>
+
+    <!-- transcript bubbles -->
+    <rect x="720" y="420" width="200" height="140" rx="22" fill="#111827" stroke="#334155" stroke-opacity="0.5"/>
+    <rect x="740" y="446" width="160" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.10"/>
+    <rect x="740" y="474" width="138" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.07"/>
+    <rect x="740" y="502" width="152" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.07"/>
+    <rect x="740" y="530" width="110" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.07"/>
+
+    <!-- bottom action bar -->
+    <rect x="290" y="590" width="630" height="64" rx="20" fill="#111827" stroke="#334155" stroke-opacity="0.5"/>
+    <rect x="320" y="610" width="120" height="24" rx="12" fill="#22C55E" fill-opacity="0.18"/>
+    <rect x="452" y="610" width="120" height="24" rx="12" fill="#0EA5E9" fill-opacity="0.18"/>
+    <rect x="584" y="610" width="120" height="24" rx="12" fill="#6366F1" fill-opacity="0.18"/>
+    <rect x="744" y="606" width="160" height="32" rx="16" fill="url(#accent)"/>
+  </g>
+</svg>
+
+

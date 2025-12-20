@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { adminResources, type AdminResource } from "@/lib/adminResources";
 import { adminClient, useAdminToken } from "@/lib/adminClient";
+import { normalizeAdminPayload } from "@/lib/adminNormalize";
+import { ADMIN_NUMERIC_FIELDS_BY_RESOURCE } from "@/constants/admin";
+import { getFoundedYearOptions } from "@/constants/company";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -202,7 +205,7 @@ const AdminDashboard = () => {
   );
 };
 
-const Admin = () => {
+const Admin = ({ embedded }: { embedded?: boolean }) => {
   const [resource, setResource] = useState<AdminResource>(adminResources[0]);
   const [state, setState] = useState<AdminState>({ loading: true, error: null, data: [] });
   const [page, setPage] = useState(1);
@@ -225,12 +228,13 @@ const Admin = () => {
   const [showDashboard, setShowDashboard] = useState(true); // Start with dashboard view
 
   useEffect(() => {
+    if (embedded) return;
     if (!isAdminLoggedIn()) {
       navigate("/login");
     } else {
       setIsAuthenticated(true);
     }
-  }, [navigate]);
+  }, [embedded, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -562,12 +566,13 @@ const Admin = () => {
     try {
       const token = await getToken();
       let jobId: string | undefined;
+      const normalizedFormData = normalizeAdminPayload(resource.key, formData);
 
       if (modalMode === "create") {
-        const res = await adminClient.create(resource.path, formData, token ?? undefined);
+        const res = await adminClient.create(resource.path, normalizedFormData, token ?? undefined);
         jobId = res?.data?.id as string | undefined;
       } else if (modalMode === "edit" && selectedRow) {
-        const res = await adminClient.update(resource.path, resource.primaryKeys, selectedRow, formData, token ?? undefined);
+        const res = await adminClient.update(resource.path, resource.primaryKeys, selectedRow, normalizedFormData, token ?? undefined);
         jobId = (selectedRow.id as string | undefined) ?? (res?.data?.id as string | undefined);
       } else {
         throw new Error("No row selected");
@@ -617,6 +622,8 @@ const Admin = () => {
     if (resource.fieldEnums && resource.fieldEnums[field]) return "select";
     if (typeof value === "number") return "number";
     if (typeof value === "boolean") return "checkbox";
+    if ((ADMIN_NUMERIC_FIELDS_BY_RESOURCE[resource.key] ?? []).includes(field)) return "number";
+    if (field.toLowerCase().includes("year")) return "number";
     if (field.startsWith("is")) return "checkbox";
     if (
       field.toLowerCase().includes("description") ||
@@ -629,14 +636,48 @@ const Admin = () => {
     return "text";
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !embedded) {
     return null;
   }
 
+  const embeddedNav = embedded ? (
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      <Button
+        key="dashboard-tab-embedded"
+        variant={showDashboard ? "default" : "outline"}
+        size="sm"
+        className="gap-2"
+        onClick={() => setShowDashboard(true)}
+      >
+        <LayoutPanelLeft className="h-4 w-4" /> Dashboard
+      </Button>
+      {adminResources.map((r) => (
+        <Button
+          key={`embedded-${r.key}`}
+          variant={!showDashboard && resource.key === r.key ? "default" : "outline"}
+          size="sm"
+          className="gap-2"
+          onClick={() => {
+            setShowDashboard(false);
+            setResource(r);
+          }}
+        >
+          {resourceIcons[r.key] ?? <Blocks className="h-4 w-4" />} {r.label}
+        </Button>
+      ))}
+      {!showDashboard ? (
+        <Button size="sm" onClick={() => openModal("create")} className="ml-auto">
+          + New {resource.label}
+        </Button>
+      ) : null}
+    </div>
+  ) : null;
+
   return (
-    <main className="min-h-dvh bg-muted/40">
-      <div className="mx-auto grid min-h-dvh max-w-7xl grid-cols-1 lg:grid-cols-[260px_1fr]">
-        <aside className="border-r bg-background/80 backdrop-blur px-4 py-6 flex flex-col gap-4">
+    <main className={embedded ? "" : "min-h-dvh bg-muted/40"}>
+      <div className={embedded ? "w-full" : "mx-auto grid min-h-dvh max-w-7xl grid-cols-1 lg:grid-cols-[260px_1fr]"}>
+        {!embedded ? (
+          <aside className="border-r bg-background/80 backdrop-blur px-4 py-6 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
             <div>
@@ -673,9 +714,11 @@ const Admin = () => {
               <Button variant="outline" size="sm" onClick={handleLogout} className="mt-auto">
                 Logout
               </Button>
-            </aside>
+          </aside>
+        ) : null}
 
-            <div className="px-4 py-6">
+            <div className={embedded ? "" : "px-4 py-6"}>
+              {embeddedNav}
               {showDashboard ? (
                 <AdminDashboard />
               ) : (
@@ -794,6 +837,10 @@ const Admin = () => {
                               >
                                 {visibleColumns.map((col) => {
                                   const val = row[col];
+                                  const isJobSkillCategoryCell =
+                                    resource.key === "jobs" &&
+                                    (col === "skills" || col === "categories") &&
+                                    Array.isArray(val);
                                   const relLabel = getRelationLabel(col, val);
                                   const isImg = isImageField(col) && typeof val === "string" && /^https?:\/\//i.test(val);
                                   const isBool = typeof val === "boolean";
@@ -810,7 +857,38 @@ const Admin = () => {
                                           : String(val);
                                   return (
                                     <td key={col} className="px-3 py-2">
-                                      {isAvatar ? (
+                                      {isJobSkillCategoryCell ? (
+                                        (() => {
+                                          const items = val as Array<Record<string, unknown>>;
+                                          const names = items
+                                            .map((it) => {
+                                              const nested =
+                                                col === "skills"
+                                                  ? ((it as any).skill as AdminRow | undefined)
+                                                  : ((it as any).category as AdminRow | undefined);
+                                              const name = (nested?.name as string | undefined) ?? "";
+                                              return name.trim();
+                                            })
+                                            .filter((n) => n.length > 0);
+                                          const shown = names.slice(0, 3);
+                                          const rest = names.length - shown.length;
+                                          return (
+                                            <div className="flex flex-wrap items-center gap-1">
+                                              {shown.map((n) => (
+                                                <Badge key={`${col}-${n}`} variant="outline" className="text-[11px]">
+                                                  {n}
+                                                </Badge>
+                                              ))}
+                                              {rest > 0 && (
+                                                <span className="text-[11px] text-muted-foreground">+{rest}</span>
+                                              )}
+                                              {names.length === 0 && (
+                                                <span className="text-xs text-muted-foreground">—</span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()
+                                      ) : isAvatar ? (
                                         renderAvatar(val, row, 36)
                                       ) : isImg ? (
                                         <img
@@ -929,6 +1007,32 @@ const Admin = () => {
                   const enumOptions = resource.fieldEnums?.[field];
                   const imageField = isImageField(field);
                   const relOptions = relationOptions[field];
+                  const foundedYearOptions = resource.key === "companies" ? getFoundedYearOptions() : [];
+
+                  if (resource.key === "companies" && field === "foundedYear") {
+                    return (
+                      <div key={field} className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          {formatLabel(field)}
+                        </label>
+                        <select
+                          value={String(formData[field] ?? "")}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            const v = e.target.value;
+                            handleFormChange(field, v === "" ? null : Number.parseInt(v, 10));
+                          }}
+                          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="">—</option>
+                          {foundedYearOptions.map((y) => (
+                            <option key={y} value={y}>
+                              {y}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  }
 
                   if (relOptions && relOptions.length > 0) {
                     return (

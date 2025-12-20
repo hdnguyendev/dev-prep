@@ -4,6 +4,8 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
 export type CreatePracticeInterviewInput = {
   applicationId: string;
+  candidateId?: string;
+  jobId?: string;
   title: string;
   type: InterviewType;
   status: InterviewStatus;
@@ -26,6 +28,40 @@ export async function createPracticeInterview(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
+  });
+
+  const json = (await res.json()) as ApiResponse<Interview>;
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to create interview");
+  }
+  return json.data;
+}
+
+export type CreateStandaloneInterviewInput = {
+  candidateId: string;
+  jobId?: string;
+  title: string;
+  type: InterviewType;
+  status: InterviewStatus;
+  accessCode: string;
+  expiresAt: string; // ISO
+  startedAt?: string; // ISO
+};
+
+/**
+ * Tạo Interview record cho buổi mock interview không gắn với Application.
+ */
+export async function createStandaloneInterview(
+  input: CreateStandaloneInterviewInput,
+  token?: string
+): Promise<Interview> {
+  const res = await fetch(`${API_BASE}/interviews`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ ...input, applicationId: null }),
   });
 
   const json = (await res.json()) as ApiResponse<Interview>;
@@ -98,6 +134,24 @@ export async function createInterviewExchange(
   const json = (await res.json()) as ApiResponse<unknown>;
   if (!res.ok || !json.success) {
     throw new Error(json.message || "Failed to create interview exchange");
+  }
+  return json.data;
+}
+
+/**
+ * Trigger backend analysis (Gemini) to generate feedback & scores from the saved transcript.
+ */
+export async function analyzeInterview(interviewId: string, token?: string): Promise<Interview> {
+  const res = await fetch(`${API_BASE}/interviews/${encodeURIComponent(interviewId)}/analyze`, {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  const json = (await res.json()) as ApiResponse<Interview>;
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to analyze interview");
   }
   return json.data;
 }

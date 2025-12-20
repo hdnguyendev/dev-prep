@@ -1,6 +1,8 @@
 export const Env = {
   DATABASE_URL: process.env.DATABASE_URL!,
   JWT_SECRET: process.env.JWT_SECRET || "dev-secret",
+  GEMINI_AI_API_KEY: process.env.GEMINI_AI_API_KEY,
+  INTERVIEW_EVALUATOR_MODE: process.env.INTERVIEW_EVALUATOR_MODE || "RULE_BASED",
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: Number(process.env.PORT || 3000),
 };

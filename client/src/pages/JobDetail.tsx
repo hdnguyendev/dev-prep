@@ -12,17 +12,23 @@ import {
   MapPin,
   Briefcase,
   DollarSign,
-  Clock,
   Building2,
   Users,
   Globe,
   CheckCircle,
   ArrowLeft,
-  Share2,
-  Bookmark,
   Send,
   FileText,
   Sparkles,
+  Award,
+  TrendingUp,
+  ArrowRight,
+  ExternalLink,
+  Zap,
+  Target,
+  Layers,
+  Code,
+  Rocket,
 } from "lucide-react";
 
 const JobDetail = () => {
@@ -73,10 +79,27 @@ const JobDetail = () => {
         if (data.success) {
           setJob(data.data);
           
-          // Fetch related jobs
-          const relatedResponse = await apiClient.listJobs({ page: 1, pageSize: 3 }, token ?? undefined);
-          if (relatedResponse.success && isMounted && !abortController.signal.aborted) {
-            setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 3));
+          // Fetch related jobs - from same company or similar skills
+          if (data.data?.companyId) {
+            const companyJobsResponse = await apiClient.getCompanyJobs(data.data.companyId, { page: 1, pageSize: 6 }, token ?? undefined);
+            if (companyJobsResponse.success && isMounted && !abortController.signal.aborted) {
+              const companyJobs = companyJobsResponse.data.filter(j => j.id !== jobId);
+              if (companyJobs.length > 0) {
+                setRelatedJobs(companyJobs.slice(0, 6));
+              } else {
+                // Fallback to general jobs if no company jobs
+                const relatedResponse = await apiClient.listJobs({ page: 1, pageSize: 6 }, token ?? undefined);
+                if (relatedResponse.success && isMounted && !abortController.signal.aborted) {
+                  setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 6));
+                }
+              }
+            }
+          } else {
+            // Fallback to general jobs
+            const relatedResponse = await apiClient.listJobs({ page: 1, pageSize: 6 }, token ?? undefined);
+            if (relatedResponse.success && isMounted && !abortController.signal.aborted) {
+              setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 6));
+            }
           }
         } else {
           setError(data.message || "Job not found");
@@ -255,6 +278,7 @@ const JobDetail = () => {
       state: {
         questions: practiceQuestions,
         jobTitle: job.title,
+        jobId: job.id,
       },
     });
   };
@@ -318,14 +342,21 @@ const JobDetail = () => {
     );
   }
 
+  const getSkillTags = (job: Job) => {
+    return job.skills?.map(s => s.skill?.name).filter(Boolean) as string[] || [];
+  };
+
   return (
-    <main className="min-h-dvh bg-gradient-to-b from-background via-primary/5 to-background">
+    <main className="min-h-dvh bg-background">
+
       {/* Success Message */}
       {applicationSuccess && (
         <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top">
-          <Card className="border-green-200 bg-green-50">
+          <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 shadow-xl">
             <CardContent className="p-4 flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
               <div>
                 <div className="font-semibold text-green-900">Application Submitted!</div>
                 <div className="text-sm text-green-700">Redirecting to applications...</div>
@@ -335,91 +366,121 @@ const JobDetail = () => {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 relative">
         {/* Back Button */}
-        <Button variant="ghost" onClick={() => navigate("/jobs")} className="mb-6 gap-2">
-          <ArrowLeft className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/jobs")} 
+          className="mb-6 gap-2 hover:bg-primary/10 transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
           Back to Jobs
         </Button>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+        {/* Hero Section */}
+        <div className="mb-8">
+          <Card className="border-2 shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-start gap-4">
+                <div className={`h-16 w-16 shrink-0 rounded-xl bg-gradient-to-br ${getCompanyColor(0)} flex items-center justify-center text-3xl font-bold text-white shadow-lg`}>
+                  {getCompanyInitial(job)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-3 mb-2 flex-wrap">
+                    <h1 className="text-2xl md:text-3xl font-bold">
+                      {job.title}
+                    </h1>
+                    {job.isRemote && (
+                      <Badge className="gap-1 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                        <Globe className="h-3 w-3" />
+                        Remote
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
+                    <button
+                      onClick={() => job.company?.slug && navigate(`/companies/${job.company.slug}`)}
+                      className="font-semibold hover:text-primary transition-colors hover:underline flex items-center gap-1.5"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      {job.company?.name || "Company"}
+                    </button>
+                    {job.company?.isVerified && (
+                      <Badge variant="outline" className="gap-1 border-green-500/30 text-green-700 dark:text-green-400">
+                        <CheckCircle className="h-3 w-3" />
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Quick Info */}
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {getLocation(job)}
+                    </Badge>
+                    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
+                      <Briefcase className="h-3.5 w-3.5" />
+                      {job.type?.replace("_", " ") || "Full-time"}
+                    </Badge>
+                    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
+                      <DollarSign className="h-3.5 w-3.5" />
+                      {getSalaryRange(job)}
+                    </Badge>
+                    {job.experienceLevel && (
+                      <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
+                        <Award className="h-3.5 w-3.5" />
+                        {job.experienceLevel}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
           {/* Main Content */}
           <div className="space-y-6">
-            {/* Job Header */}
-            <Card className="border-2">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className={`h-16 w-16 shrink-0 rounded-xl bg-gradient-to-br ${getCompanyColor(0)} flex items-center justify-center text-3xl font-bold text-white shadow-lg`}>
-                      {getCompanyInitial(job)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-2xl md:text-3xl mb-2">{job.title}</CardTitle>
-                      <CardDescription className="flex flex-wrap items-center gap-2 text-base">
-                        <button
-                          onClick={() => job.company?.slug && navigate(`/companies/${job.company.slug}`)}
-                          className="font-medium hover:text-primary transition-colors hover:underline"
-                        >
-                          {job.company?.name || "Company"}
-                        </button>
-                        {job.company?.isVerified && (
-                          <Badge variant="outline" className="gap-1">
-                            <CheckCircle className="h-3 w-3" />
-                            Verified
-                          </Badge>
-                        )}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm">
-                      <Bookmark className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Key Info */}
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 mt-6">
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{getLocation(job)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    <span>{job.type?.replace("_", " ") || "Full-time"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span>{getSalaryRange(job)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                {/* Skills */}
-                {job.skills && job.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
+            {/* Skills Section */}
+            {job.skills && job.skills.length > 0 && (
+              <Card className="border-2 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-primary/5 to-purple-500/5 border-b">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Code className="h-5 w-5 text-primary" />
+                    Required Skills
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="flex flex-wrap gap-2">
                     {job.skills.map((s) => s.skill?.name && (
-                      <Badge key={s.skill.id} variant="outline">
+                      <Badge 
+                        key={s.skill.id} 
+                        variant="outline" 
+                        className="gap-1.5 px-3 py-1.5 text-sm"
+                      >
+                        <Zap className="h-3.5 w-3.5" />
                         {s.skill.name}
+                        {s.isRequired && (
+                          <span className="text-xs text-primary font-semibold">*</span>
+                        )}
                       </Badge>
                     ))}
                   </div>
-                )}
-              </CardHeader>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Job Description */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Job Description</CardTitle>
+            <Card className="border shadow-sm">
+              <CardHeader className="border-b pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Job Description
+                </CardTitle>
               </CardHeader>
-              <CardContent className="prose prose-sm max-w-none">
+              <CardContent className="prose prose-sm max-w-none pt-4">
                 <div 
                   className="text-muted-foreground leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: job.description }}
@@ -429,11 +490,14 @@ const JobDetail = () => {
 
             {/* Requirements */}
             {job.requirements && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Requirements</CardTitle>
+              <Card className="border shadow-sm">
+                <CardHeader className="border-b pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    Requirements
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="prose prose-sm max-w-none">
+                <CardContent className="prose prose-sm max-w-none pt-4">
                   <div 
                     className="text-muted-foreground leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: job.requirements }}
@@ -444,11 +508,14 @@ const JobDetail = () => {
 
             {/* Responsibilities */}
             {job.responsibilities && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Responsibilities</CardTitle>
+              <Card className="border shadow-sm">
+                <CardHeader className="border-b pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Layers className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    Responsibilities
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="prose prose-sm max-w-none">
+                <CardContent className="prose prose-sm max-w-none pt-4">
                   <div 
                     className="text-muted-foreground leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: job.responsibilities }}
@@ -457,24 +524,157 @@ const JobDetail = () => {
               </Card>
             )}
 
+            {/* Benefits */}
+            {job.benefits && (
+              <Card className="border shadow-sm">
+                <CardHeader className="border-b pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Rocket className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    Benefits & Perks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="prose prose-sm max-w-none pt-4">
+                  <div 
+                    className="text-muted-foreground leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: job.benefits }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Interview Questions */}
             {practiceQuestions.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Interview Practice Questions</CardTitle>
-                  <CardDescription>
-                    Recruiter-provided questions to help you prepare.
-                  </CardDescription>
+              <Card className="border shadow-sm">
+                <CardHeader className="border-b pb-3">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      Interview Practice Questions
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-1.5">
+                      Recruiter-provided questions to help you prepare
+                    </CardDescription>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 pt-4">
                   {practiceQuestions.map((question, index) => (
-                    <div key={index} className="flex gap-3">
-                      <div className="mt-1 h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                    <div key={index} className="flex gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="mt-0.5 h-7 w-7 shrink-0 rounded-md bg-purple-500 text-white flex items-center justify-center text-xs font-semibold">
                         {index + 1}
                       </div>
-                      <p className="text-sm text-muted-foreground leading-5">{question}</p>
+                      <p className="text-sm text-foreground leading-6 flex-1">{question}</p>
                     </div>
                   ))}
+                  <Button 
+                    onClick={handlePracticeInterview}
+                    className="w-full gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Start Practice Interview
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Related Jobs Section */}
+            {relatedJobs.length > 0 && (
+              <Card className="border shadow-sm mt-6">
+                <CardHeader className="border-b pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 text-lg mb-1">
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        Related Jobs
+                      </CardTitle>
+                      <CardDescription className="text-sm">
+                        Explore similar opportunities from {job.company?.name || "other companies"}
+                      </CardDescription>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate("/jobs")}
+                      className="gap-2"
+                    >
+                      View All
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                      {relatedJobs.map((rJob, index) => (
+                      <Card
+                        key={rJob.id}
+                        className="group border transition-all hover:shadow-md cursor-pointer h-full flex flex-col"
+                        onClick={() => navigate(`/jobs/${rJob.id}`)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-lg font-bold text-white`}>
+                              {rJob.company?.name?.[0]?.toUpperCase() || "C"}
+                            </div>
+                            {rJob.isRemote && (
+                              <Badge variant="outline" className="gap-1 text-xs">
+                                <Globe className="h-3 w-3" />
+                                Remote
+                              </Badge>
+                            )}
+                          </div>
+                          <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                            {rJob.title}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-1 mt-2">
+                            <Building2 className="h-3 w-3" />
+                            {rJob.company?.name || "Company"}
+                          </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="relative space-y-3 flex-1 flex flex-col">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{getLocation(rJob)}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <DollarSign className="h-4 w-4 shrink-0" />
+                            <span>{getSalaryRange(rJob)}</span>
+                          </div>
+
+                          {getSkillTags(rJob).length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
+                              {getSkillTags(rJob).slice(0, 3).map((skill) => (
+                                <Badge key={skill} variant="outline" className="text-xs">
+                                  {skill}
+                                </Badge>
+                              ))}
+                              {getSkillTags(rJob).length > 3 && (
+                                <Badge variant="outline" className="text-xs text-muted-foreground">
+                                  +{getSkillTags(rJob).length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+
+                        <div className="border-t p-3 bg-muted/30">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full gap-2 group-hover:gap-3 transition-all"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/jobs/${rJob.id}`);
+                            }}
+                          >
+                            View Details
+                            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -483,14 +683,17 @@ const JobDetail = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Apply Card */}
-            <Card className="border-2 border-primary/20 sticky top-4">
-              <CardHeader>
-                <CardTitle>Apply for this position</CardTitle>
-                <CardDescription>
+            <Card className="border shadow-sm sticky top-4">
+              <CardHeader className="border-b pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Rocket className="h-4 w-4 text-primary" />
+                  Apply for this position
+                </CardTitle>
+                <CardDescription className="text-sm mt-1">
                   Join {job.company?.name || "our team"} and make an impact
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-4">
                 {!isSignedIn ? (
                   <>
                     <p className="text-sm text-muted-foreground">
@@ -549,38 +752,29 @@ const JobDetail = () => {
                       </Button>
                       <Button 
                         type="submit" 
-                        className="flex-1 gap-2 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all relative overflow-hidden group"
+                        className="flex-1 gap-2"
                         disabled={applying || uploading}
                       >
-                        <span className="relative z-10 flex items-center gap-2">
-                          <Send className="h-4 w-4" />
-                          {uploading ? "Uploading..." : applying ? "Submitting..." : "Submit Application"}
-                        </span>
-                        {!applying && !uploading && (
-                          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                        )}
+                        <Send className="h-4 w-4" />
+                        {uploading ? "Uploading..." : applying ? "Submitting..." : "Submit Application"}
                       </Button>
                     </div>
                   </form>
                 ) : (
                   <>
                     <Button 
-                      className="w-full gap-2 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all group relative overflow-hidden h-12"
+                      className="w-full gap-2 h-11"
                       onClick={() => setShowApplyForm(true)}
                     >
-                      <span className="relative z-10 flex items-center gap-2">
-                        <Send className="h-5 w-5 group-hover:rotate-12 transition-transform" />
-                        Apply Now
-                      </span>
-                      {/* Shine effect */}
-                      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                      <Send className="h-4 w-4" />
+                      Apply Now
                     </Button>
                     <Button 
                       variant="outline" 
-                      className="w-full gap-2 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                      className="w-full gap-2"
                       onClick={handlePracticeInterview}
                     >
-                      <Sparkles className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                      <Sparkles className="h-4 w-4" />
                       {practiceQuestions.length > 0 ? "Practice Interview" : "Quick Practice"}
                     </Button>
                   </>
@@ -589,91 +783,88 @@ const JobDetail = () => {
             </Card>
 
             {/* Company Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
+            <Card className="border shadow-sm">
+              <CardHeader className="border-b pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   About Company
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <button
-                    onClick={() => job.company?.slug && navigate(`/companies/${job.company.slug}`)}
-                    className="font-semibold mb-1 hover:text-primary transition-colors hover:underline block"
-                  >
-                    {job.company?.name || "Company"}
-                  </button>
-                  <div className="text-muted-foreground">{job.company?.industry || "Technology"}</div>
-                </div>
-                
-                <Separator />
-                
-                {job.company?.city && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{job.company.city}{job.company.country && `, ${job.company.country}`}</span>
-                  </div>
-                )}
-                
-                {job.company?.companySize && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{job.company.companySize} employees</span>
-                  </div>
-                )}
-                
-                {job.company?.website && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Globe className="h-4 w-4" />
-                    <a
-                      href={job.company.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-primary transition-colors truncate"
+              <CardContent className="space-y-4 pt-4">
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <button
+                        onClick={() => job.company?.slug && navigate(`/companies/${job.company.slug}`)}
+                        className="font-bold text-lg mb-1 hover:text-primary transition-colors hover:underline block flex items-center gap-2 group"
+                      >
+                        {job.company?.name || "Company"}
+                        <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Briefcase className="h-4 w-4" />
+                        <span>{job.company?.industry || "Technology"}</span>
+                      </div>
+                      {job.company?.isVerified && (
+                        <Badge variant="outline" className="gap-1 mt-2 border-green-500/30 text-green-700 dark:text-green-400">
+                          <CheckCircle className="h-3 w-3" />
+                          Verified Company
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-3">
+                      {job.company?.city && (
+                        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group">
+                          <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                            <MapPin className="h-4 w-4" />
+                          </div>
+                          <span className="text-sm font-medium">
+                            {job.company.city}{job.company.country && `, ${job.company.country}`}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {job.company?.companySize && (
+                        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group">
+                          <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                            <Users className="h-4 w-4" />
+                          </div>
+                          <span className="text-sm font-medium">{job.company.companySize} employees</span>
+                        </div>
+                      )}
+                      
+                      {job.company?.website && (
+                        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group">
+                          <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform">
+                            <Globe className="h-4 w-4" />
+                          </div>
+                          <a
+                            href={job.company.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium hover:text-primary transition-colors truncate flex items-center gap-1"
+                          >
+                            {job.company.website.replace(/^https?:\/\/(www\.)?/, "")}
+                            <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </a>
+                        </div>
+                      )}
+
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => job.company?.slug && navigate(`/companies/${job.company.slug}`)}
                     >
-                      {job.company.website.replace(/^https?:\/\/(www\.)?/, "")}
-                    </a>
-                  </div>
-                )}
+                      <Building2 className="h-4 w-4" />
+                      View Company Profile
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
               </CardContent>
             </Card>
 
-            {/* Related Jobs */}
-            {relatedJobs.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Similar Jobs</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {relatedJobs.map((rJob) => (
-                    <div
-                      key={rJob.id}
-                      className="p-3 rounded-lg border hover:border-primary transition-colors cursor-pointer"
-                      onClick={() => navigate(`/jobs/${rJob.id}`)}
-                    >
-                      <div className="font-medium text-sm mb-1 truncate">{rJob.title}</div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          rJob.company?.slug && navigate(`/companies/${rJob.company.slug}`);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-primary transition-colors hover:underline block"
-                      >
-                        {rJob.company?.name}
-                      </button>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        <span>{getLocation(rJob)}</span>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="w-full">
-                    View All Jobs
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>

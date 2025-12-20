@@ -497,7 +497,7 @@ const CompanyDetail = () => {
               {jobs.map((job, index) => (
                 <Card
                   key={job.id}
-                  className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-xl cursor-pointer"
+                  className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-xl cursor-pointer h-full flex flex-col"
                   style={{
                     animationDelay: `${index * 50}ms`,
                     animation: "slideUp 0.5s ease-out forwards",
@@ -529,29 +529,27 @@ const CompanyDetail = () => {
                     </CardDescription>
                   </CardHeader>
 
-                  <CardContent className="space-y-3 pb-3">
-                    {job.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {job.description}
-                      </p>
-                    )}
+                  <CardContent className="space-y-3 pb-3 flex-1 flex flex-col">
+                    <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                      {job.description || "No description available"}
+                    </p>
 
-                    {getSkillTags(job).length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {getSkillTags(job).map((skill, i) => (
+                    <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
+                      {getSkillTags(job).length > 0 ? (
+                        getSkillTags(job).map((skill, i) => (
                           <Badge key={i} variant="outline" className="text-xs">
                             {skill}
                           </Badge>
-                        ))}
-                      </div>
-                    )}
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">No skills listed</span>
+                      )}
+                    </div>
 
-                    {job.experienceLevel && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Award className="h-4 w-4" />
-                        <span>{job.experienceLevel}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-h-[1.5rem]">
+                      <Award className="h-4 w-4 shrink-0" />
+                      <span>{job.experienceLevel || "Not specified"}</span>
+                    </div>
                   </CardContent>
 
                   <Separator />

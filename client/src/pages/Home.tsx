@@ -1,31 +1,38 @@
+import illGrowth from "@/assets/illustration-career-growth.svg";
+import illInterview from "@/assets/illustration-interview.svg";
+import illJobSearch from "@/assets/illustration-job-search.svg";
 import logo from "@/assets/logo.svg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
 import { apiClient, type Job } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
 import {
+  ArrowRight,
   Briefcase,
   Building2,
-  Users,
-  Sparkles,
-  TrendingUp,
+  MapPin,
+  Search,
   Shield,
-  Zap,
-  Target,
-  CheckCircle,
+  Sparkles,
   Star,
-  ArrowRight,
+  Target,
+  TrendingUp,
+  Users,
+  Zap
 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 const Home = () => {
   const navigate = useNavigate();
   const { getToken } = useAuth();
   const [featuredJobs, setFeaturedJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [heroQuery, setHeroQuery] = useState("");
+  const [heroLocation, setHeroLocation] = useState("");
   
   const slides = useMemo(
     () => [
@@ -150,6 +157,16 @@ const Home = () => {
       .filter((x): x is string => Boolean(x))
       .slice(0, 3);
 
+  const goToJobsWithSearch = () => {
+    const q = heroQuery.trim();
+    const loc = heroLocation.trim();
+    const params = new URLSearchParams();
+    if (q) params.set("query", q);
+    if (loc) params.set("location", loc);
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    navigate(`/jobs${suffix}`);
+  };
+
   return (
     <>
       <main className="min-h-dvh">
@@ -190,77 +207,113 @@ const Home = () => {
                     Try AI Interview
                   </Button>
                 </div>
-                
-                <div className="flex items-center gap-6 pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex -space-x-2">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="h-8 w-8 rounded-full border-2 border-background bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-xs font-bold text-white"
-                        >
-                          {["J", "M", "A", "S"][i - 1]}
-                        </div>
-                      ))}
+
+                <Card className="border-2 bg-background/70 backdrop-blur">
+                  <CardContent className="p-4">
+                    <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={heroQuery}
+                          onChange={(e) => setHeroQuery(e.target.value)}
+                          placeholder="Job title, skills, keywords..."
+                          className="h-11 pl-9"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") goToJobsWithSearch();
+                          }}
+                        />
+                      </div>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={heroLocation}
+                          onChange={(e) => setHeroLocation(e.target.value)}
+                          placeholder="Location (or Remote)"
+                          className="h-11 pl-9"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") goToJobsWithSearch();
+                          }}
+                        />
+                      </div>
+                      <Button className="h-11 px-8 gap-2" onClick={goToJobsWithSearch}>
+                        <Search className="h-4 w-4" />
+                        Search
+                      </Button>
                     </div>
-                    <span className="text-sm text-muted-foreground">35,000+ candidates</span>
-                  </div>
-                  <Separator orientation="vertical" className="h-6" />
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                    <span className="ml-1 text-sm font-medium">4.9/5</span>
-                  </div>
+                  </CardContent>
+                </Card>
+                
+                <div className="flex flex-wrap items-center gap-3 pt-4">
+                  <Badge variant="outline" className="gap-2">
+                    <Shield className="h-4 w-4 text-primary" />
+                    Verified companies
+                  </Badge>
+                  <Badge variant="outline" className="gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    Fast apply flow
+                  </Badge>
+                  <Badge variant="outline" className="gap-2">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    4.9/5 user rating
+                  </Badge>
                 </div>
               </div>
 
               {/* Hero Visual */}
               <div className="relative reveal">
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-purple-500/20 to-pink-500/20 blur-3xl" />
-                <Card className="relative overflow-hidden border-2 shadow-2xl">
+                <div className="relative overflow-hidden rounded-3xl border-2 bg-background/70 shadow-2xl backdrop-blur">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
-                  <CardHeader className="relative space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
-                          <img src={logo} alt="Logo" className="h-8 w-8" />
-                        </div>
-                        <div>
-                          <CardTitle>Senior Developer</CardTitle>
-                          <CardDescription>TechCorp Inc.</CardDescription>
-                        </div>
-                      </div>
-                      <Badge className="gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        Active
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="relative space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>Remote • Full-time</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>142 applicants</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {["React", "TypeScript", "Node.js"].map((skill) => (
-                        <Badge key={skill} variant="outline">{skill}</Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="relative justify-between border-t bg-muted/30">
-                    <span className="text-sm font-medium">$120k - $180k</span>
-                    <Button size="sm">Apply Now</Button>
-                  </CardFooter>
-                </Card>
+                  <img
+                    src={illJobSearch}
+                    alt="Job search illustration"
+                    className="relative w-full h-auto"
+                    draggable={false}
+                  />
+                </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="container mx-auto px-4 py-20 reveal">
+          <div className="mb-12 text-center">
+            <Badge className="mb-4">How it works</Badge>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">A simple flow that feels effortless</h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Search, apply, and practice interviews — all in one place.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {[
+              {
+                title: "Search smarter",
+                desc: "Use keywords, skills, and location to narrow down quickly.",
+                img: illJobSearch,
+              },
+              {
+                title: "Practice interviews",
+                desc: "Run AI interview sessions and get structured feedback.",
+                img: illInterview,
+              },
+              {
+                title: "Track your growth",
+                desc: "See your activity and improve with every attempt.",
+                img: illGrowth,
+              },
+            ].map((s) => (
+              <Card key={s.title} className="overflow-hidden border-2 hover:shadow-xl transition-all">
+                <div className="bg-gradient-to-br from-primary/5 via-background to-purple-500/5">
+                  <img src={s.img} alt={s.title} className="w-full h-48 object-cover" draggable={false} />
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-xl">{s.title}</CardTitle>
+                  <CardDescription>{s.desc}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
           </div>
         </section>
 
@@ -446,7 +499,7 @@ const Home = () => {
               {featuredJobs.map((job, i) => (
                 <Card
                   key={job.id}
-                  className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-2xl cursor-pointer"
+                  className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-2xl cursor-pointer h-full flex flex-col"
                   onClick={() => navigate(`/jobs/${job.id}`)}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -474,19 +527,21 @@ const Home = () => {
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="relative">
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {job.description}
+                  <CardContent className="relative flex-1 flex flex-col">
+                    <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                      {job.description || "No description available"}
                     </p>
-                    {getSkillTags(job).length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {getSkillTags(job).map((skill) => (
+                    <div className="mt-3 flex flex-wrap gap-1.5 min-h-[1.5rem]">
+                      {getSkillTags(job).length > 0 ? (
+                        getSkillTags(job).map((skill) => (
                           <Badge key={skill} variant="outline" className="text-xs">
                             {skill}
                           </Badge>
-                        ))}
-                      </div>
-                    )}
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">No skills listed</span>
+                      )}
+                    </div>
                   </CardContent>
                   <CardFooter className="relative justify-between border-t bg-muted/30">
                     <span className="text-xs text-muted-foreground">
@@ -503,31 +558,40 @@ const Home = () => {
           )}
         </section>
 
-        {/* Testimonial */}
+        {/* Proof / Social */}
         <section className="container mx-auto px-4 pb-20 reveal">
-          <Card className="relative overflow-hidden border-2 bg-gradient-to-br from-primary/5 via-background to-purple-500/5 shadow-xl">
-            <div className="absolute right-0 top-0 h-64 w-64 bg-gradient-to-br from-primary/20 to-transparent blur-3xl" />
-            <CardContent className="relative p-8 md:p-12">
-              <div className="mb-6 flex gap-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <blockquote className="mb-6 text-xl font-medium md:text-2xl">
-                "I landed my dream job in just 2 weeks! The AI interview prep was a game-changer, and the
-                application tracker kept me organized throughout the entire process."
-              </blockquote>
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-xl font-bold text-white">
-                  LN
-                </div>
-                <div>
-                  <div className="font-semibold">Linh Nguyen</div>
-                  <div className="text-sm text-muted-foreground">Product Designer @ Nova Tech</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {[
+              {
+                title: "Verified employers",
+                desc: "Browse companies with clear profiles, websites, and ratings.",
+                icon: <Shield className="h-6 w-6" />,
+                color: "from-green-500 to-emerald-500",
+              },
+              {
+                title: "AI interview practice",
+                desc: "Practice, get feedback, and improve confidence for real interviews.",
+                icon: <Sparkles className="h-6 w-6" />,
+                color: "from-purple-500 to-pink-500",
+              },
+              {
+                title: "Stay organized",
+                desc: "Track jobs, interviews, and saved opportunities in one dashboard.",
+                icon: <TrendingUp className="h-6 w-6" />,
+                color: "from-blue-500 to-cyan-500",
+              },
+            ].map((b) => (
+              <Card key={b.title} className="border-2 hover:shadow-xl transition-all">
+                <CardHeader>
+                  <div className={`mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${b.color} text-white`}>
+                    {b.icon}
+                  </div>
+                  <CardTitle className="text-lg">{b.title}</CardTitle>
+                  <CardDescription>{b.desc}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </section>
 
         {/* CTA Section */}

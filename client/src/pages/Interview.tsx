@@ -1,7 +1,7 @@
 import Agent from "@/components/Agent.tsx";
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from "@clerk/clerk-react";
 import { useLocation } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /**
  * Interview Prep page - CANDIDATE ONLY
@@ -11,11 +11,14 @@ const Interview = () => {
   const { getToken } = useAuth();
   const location = useLocation();
   const state =
-    (location.state as { questions?: string[]; jobTitle?: string; applicationId?: string } | undefined) ||
+    (location.state as { questions?: string[]; jobTitle?: string; applicationId?: string; jobId?: string } | undefined) ||
     {};
   const questions =
     state.questions?.filter((q) => q && q.trim().length > 0) ?? [];
   const hasCustomQuestions = questions.length > 0;
+  const [jobTechstack, setJobTechstack] = useState<string>("");
+  const [resolvedJobTitle, setResolvedJobTitle] = useState<string | undefined>(state.jobTitle);
+  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
   // Sync candidate profile to backend using Clerk token
   useEffect(() => {
@@ -37,6 +40,42 @@ const Interview = () => {
     syncCandidate();
   }, [getToken]);
 
+  // Prefill techstack from Job skills (if jobId is provided)
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!state.jobId) return;
+      try {
+        const token = await getToken().catch(() => undefined);
+        const res = await fetch(`${apiBase}/jobs/${state.jobId}?include=skills`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (!data?.success) return;
+
+        const job = data.data as any;
+        const skills = Array.isArray(job?.skills) ? (job.skills as any[]) : [];
+        const names = skills
+          .map((it) => (it?.skill?.name as string | undefined) ?? "")
+          .map((n) => n.trim())
+          .filter((n) => n.length > 0);
+        setJobTechstack(names.join(", "));
+        if (!resolvedJobTitle && typeof job?.title === "string") {
+          setResolvedJobTitle(job.title);
+        }
+      } catch (err) {
+        console.error("Failed to prefill job skills", err);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBase, getToken, resolvedJobTitle, state.jobId]);
+
+  const effectiveJobTitle = useMemo(() => state.jobTitle ?? resolvedJobTitle, [resolvedJobTitle, state.jobTitle]);
+
   return (
     <>
       <SignedOut>
@@ -57,8 +96,10 @@ const Interview = () => {
         )}
         <Agent
           initialQuestions={questions}
-          jobTitle={state.jobTitle}
+          jobTitle={effectiveJobTitle}
           applicationId={state.applicationId}
+          jobId={state.jobId}
+          initialTechstack={jobTechstack}
         />
       </SignedIn>
     </>

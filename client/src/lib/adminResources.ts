@@ -58,7 +58,7 @@ export const adminResources: AdminResource[] = [
     label: "Jobs",
     path: "jobs",
     primaryKeys: ["id"],
-    columns: ["title", "slug", "companyId", "type", "status", "location", "isRemote", "salaryMin", "salaryMax", "currency"],
+    columns: ["title", "companyId", "type", "status", "skills", "categories", "location", "isRemote", "salaryMin", "salaryMax", "currency"],
     allowedFields: [
       "slug",
       "title",

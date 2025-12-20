@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
   User,
@@ -36,7 +37,17 @@ type Application = {
       email: string;
       avatarUrl: string | null;
     };
+    skills?: Array<{ id: string; skillId: string; level?: string | null; skill?: { id: string; name: string } }>;
+    experiences?: Array<{
+      id: string;
+      companyName: string;
+      position: string;
+      startDate: string;
+      endDate?: string | null;
+      isCurrent?: boolean;
+    }>;
   };
+  notes?: Array<{ id: string; authorId: string; content: string; createdAt: string }>;
   job?: {
     id: string;
     title: string;
@@ -106,6 +117,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "outlin
 const RecruiterJobApplications = () => {
   const navigate = useNavigate();
   const { jobId } = useParams();
+  const location = useLocation();
   const currentUser = getCurrentUser();
   const userId = currentUser?.id;
   
@@ -116,6 +128,11 @@ const RecruiterJobApplications = () => {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [updating, setUpdating] = useState(false);
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
+  const [recruiterProfileId, setRecruiterProfileId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState("");
@@ -143,6 +160,17 @@ const RecruiterJobApplications = () => {
         const headers: Record<string, string> = {
           "Authorization": `Bearer ${userId}`,
         };
+
+        // Load recruiter profile id for note permissions
+        try {
+          const meRes = await fetch(`${API_BASE}/auth/me`, { headers });
+          const meData = await meRes.json();
+          if (!abort) {
+            setRecruiterProfileId(meData?.recruiterProfile?.id ?? null);
+          }
+        } catch {
+          // best-effort
+        }
         
         const jobResponse = await fetch(`${API_BASE}/jobs/${jobId}`, { headers });
         const jobData = await jobResponse.json();
@@ -155,7 +183,7 @@ const RecruiterJobApplications = () => {
         if (!abort) setJob(jobData.data);
         
         const appsResponse = await fetch(
-          `${API_BASE}/applications?jobId=${jobId}&pageSize=100&include=candidate,job`,
+          `${API_BASE}/api/applications?jobId=${jobId}&pageSize=100`,
           { headers }
         );
         const appsData = await appsResponse.json();
@@ -179,6 +207,133 @@ const RecruiterJobApplications = () => {
       abort = true;
     };
   }, [userId, jobId]);
+
+  // Support being opened from dashboard (auto-open a specific application)
+  useEffect(() => {
+    const state = location.state as { applicationId?: string } | undefined;
+    if (!state?.applicationId) return;
+    if (loading) return;
+    if (!applications.length) return;
+    const match = applications.find((a) => a.id === state.applicationId);
+    if (match) {
+      setSelectedApplication(match);
+      navigate(`/recruiter/jobs/${jobId}/applications`, { replace: true, state: null });
+    }
+  }, [applications, jobId, loading, location.state, navigate]);
+
+  // Reset note editor when selecting an application
+  useEffect(() => {
+    setNoteDraft("");
+    setEditingNoteId(null);
+    setEditingNoteText("");
+  }, [selectedApplication?.id]);
+
+  const upsertSelectedApplication = (next: Application) => {
+    setSelectedApplication(next);
+    setApplications((prev) => prev.map((a) => (a.id === next.id ? next : a)));
+  };
+
+  const handleAddNote = async () => {
+    if (!userId || !selectedApplication) return;
+    const content = noteDraft.trim();
+    if (!content) return;
+    try {
+      setSavingNote(true);
+      const res = await fetch(`${API_BASE}/applications/${selectedApplication.id}/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userId}`,
+        },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        setError(data?.message || "Failed to add note");
+        return;
+      }
+      const created = data.data as { id: string; authorId: string; content: string; createdAt: string };
+      const next: Application = {
+        ...selectedApplication,
+        notes: [created, ...(selectedApplication.notes || [])],
+      };
+      upsertSelectedApplication(next);
+      setNoteDraft("");
+    } catch (err) {
+      console.error("Failed to add note", err);
+      setError("Network error");
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleStartEditNote = (noteId: string, text: string) => {
+    setEditingNoteId(noteId);
+    setEditingNoteText(text);
+  };
+
+  const handleSaveEditNote = async () => {
+    if (!userId || !selectedApplication || !editingNoteId) return;
+    const content = editingNoteText.trim();
+    if (!content) return;
+    try {
+      setSavingNote(true);
+      const res = await fetch(`${API_BASE}/applications/${selectedApplication.id}/notes/${editingNoteId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userId}`,
+        },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        setError(data?.message || "Failed to update note");
+        return;
+      }
+      const updated = data.data as { id: string; authorId: string; content: string; createdAt: string };
+      const next: Application = {
+        ...selectedApplication,
+        notes: (selectedApplication.notes || []).map((n) => (n.id === updated.id ? updated : n)),
+      };
+      upsertSelectedApplication(next);
+      setEditingNoteId(null);
+      setEditingNoteText("");
+    } catch (err) {
+      console.error("Failed to update note", err);
+      setError("Network error");
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!userId || !selectedApplication) return;
+    try {
+      setSavingNote(true);
+      const res = await fetch(`${API_BASE}/applications/${selectedApplication.id}/notes/${noteId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${userId}`,
+        },
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        setError(data?.message || "Failed to delete note");
+        return;
+      }
+      const next: Application = {
+        ...selectedApplication,
+        notes: (selectedApplication.notes || []).filter((n) => n.id !== noteId),
+      };
+      upsertSelectedApplication(next);
+    } catch (err) {
+      console.error("Failed to delete note", err);
+      setError("Network error");
+    } finally {
+      setSavingNote(false);
+    }
+  };
 
   const getStatusConfig = (status: string) => {
     return statusConfig[status] || { 
@@ -603,6 +758,20 @@ const RecruiterJobApplications = () => {
                 </div>
               </div>
 
+              {/* Candidate Profile */}
+              {selectedApplication.candidate?.id ? (
+                <div>
+                  <div className="text-sm font-medium mb-2">Candidate Profile</div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/recruiter/candidates/${encodeURIComponent(selectedApplication.candidate!.id)}`)}
+                  >
+                    View full profile
+                  </Button>
+                </div>
+              ) : null}
+
               {/* Resume */}
               {selectedApplication.resumeUrl && (
                 <div>
@@ -629,6 +798,139 @@ const RecruiterJobApplications = () => {
                   </div>
                 </div>
               )}
+
+              {/* Candidate Skills & Experience */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Skills</div>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedApplication.candidate?.skills || [])
+                      .map((cs) => cs?.skill?.name || "")
+                      .filter((n) => n.trim().length > 0)
+                      .slice(0, 16)
+                      .map((name) => (
+                        <Badge key={`skill-${name}`} variant="outline">
+                          {name}
+                        </Badge>
+                      ))}
+                    {(selectedApplication.candidate?.skills || []).length === 0 && (
+                      <div className="text-sm text-muted-foreground">No skills yet.</div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Experience</div>
+                  <div className="space-y-2">
+                    {(selectedApplication.candidate?.experiences || []).slice(0, 3).map((exp) => (
+                      <div key={exp.id} className="rounded-md border bg-muted/20 p-3">
+                        <div className="text-sm font-medium">
+                          {exp.position} • {exp.companyName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(exp.startDate).toLocaleDateString()} –{" "}
+                          {exp.isCurrent || !exp.endDate ? "Present" : new Date(exp.endDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                    {(selectedApplication.candidate?.experiences || []).length === 0 && (
+                      <div className="text-sm text-muted-foreground">No experience yet.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Recruiter Notes */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">Recruiter Notes</div>
+                  <div className="text-xs text-muted-foreground">
+                    {(selectedApplication.notes || []).length} note{(selectedApplication.notes || []).length === 1 ? "" : "s"}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {(selectedApplication.notes || []).map((n) => {
+                    const canEdit = recruiterProfileId && n.authorId === recruiterProfileId;
+                    return (
+                      <div key={n.id} className="rounded-lg border bg-muted/20 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(n.createdAt).toLocaleString()}
+                          </div>
+                          {canEdit && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={savingNote}
+                                onClick={() => handleStartEditNote(n.id, n.content)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-600 hover:text-red-700"
+                                disabled={savingNote}
+                                onClick={() => handleDeleteNote(n.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {editingNoteId === n.id ? (
+                          <div className="mt-2 space-y-2">
+                            <Textarea
+                              value={editingNoteText}
+                              onChange={(e) => setEditingNoteText(e.target.value)}
+                              rows={3}
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={savingNote}
+                                onClick={() => {
+                                  setEditingNoteId(null);
+                                  setEditingNoteText("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button size="sm" disabled={savingNote} onClick={handleSaveEditNote}>
+                                {savingNote ? "Saving..." : "Save"}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{n.content}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {(selectedApplication.notes || []).length === 0 && (
+                    <div className="text-sm text-muted-foreground">No notes yet.</div>
+                  )}
+                </div>
+
+                <div className="space-y-2 rounded-lg border bg-background p-3">
+                  <div className="text-xs font-medium text-muted-foreground">Add note</div>
+                  <Textarea
+                    value={noteDraft}
+                    onChange={(e) => setNoteDraft(e.target.value)}
+                    rows={3}
+                    placeholder="Write an internal note for this candidate..."
+                  />
+                  <div className="flex justify-end">
+                    <Button size="sm" disabled={savingNote || noteDraft.trim().length === 0} onClick={handleAddNote}>
+                      {savingNote ? "Saving..." : "Add note"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-4 border-t">

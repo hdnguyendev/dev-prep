@@ -145,6 +145,7 @@ exports.Prisma.CandidateProfileScalarFieldEnum = {
   linkedin: 'linkedin',
   github: 'github',
   cvUrl: 'cvUrl',
+  isPublic: 'isPublic',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -314,6 +315,8 @@ exports.Prisma.ApplicationNoteScalarFieldEnum = {
 exports.Prisma.InterviewScalarFieldEnum = {
   id: 'id',
   applicationId: 'applicationId',
+  candidateId: 'candidateId',
+  jobId: 'jobId',
   title: 'title',
   type: 'type',
   status: 'status',
@@ -550,6 +553,8 @@ exports.Prisma.JsonNullValueFilter = {
 exports.Prisma.InterviewOrderByRelevanceFieldEnum = {
   id: 'id',
   applicationId: 'applicationId',
+  candidateId: 'candidateId',
+  jobId: 'jobId',
   title: 'title',
   accessCode: 'accessCode',
   sessionUrl: 'sessionUrl',

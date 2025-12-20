@@ -16,6 +16,19 @@ const APPLICATION_STATUSES = [
   "WITHDRAWN",
 ];
 
+async function getUserFromAuth(c: any) {
+  const authHeader = c.req.header("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  if (!token) return null;
+
+  // Recruiter/Admin custom auth: token is user.id
+  const user = await prisma.user.findUnique({
+    where: { id: token },
+    include: { recruiterProfile: true, candidateProfile: true },
+  });
+  return user;
+}
+
 /**
  * Create application for authenticated candidate
  * Automatically gets candidateId from Clerk user
@@ -165,5 +178,159 @@ applicationRoutes.patch("/:id/status", async (c) => {
       },
       500
     );
+  }
+});
+
+/**
+ * Recruiter notes on an application
+ * - Recruiter can add/edit/delete their own notes
+ */
+applicationRoutes.get("/:id/notes", async (c) => {
+  try {
+    const { id } = c.req.param();
+    const user = await getUserFromAuth(c);
+    if (!user) return c.json({ success: false, message: "Not authenticated" }, 401);
+    if (user.role !== "RECRUITER" && user.role !== "ADMIN") {
+      return c.json({ success: false, message: "Forbidden" }, 403);
+    }
+
+    const app = await prisma.application.findUnique({
+      where: { id },
+      include: { job: true },
+    });
+    if (!app) return c.json({ success: false, message: "Application not found" }, 404);
+
+    if (user.role === "RECRUITER") {
+      if (!user.recruiterProfile || app.job.recruiterId !== user.recruiterProfile.id) {
+        return c.json({ success: false, message: "Forbidden" }, 403);
+      }
+    }
+
+    const notes = await prisma.applicationNote.findMany({
+      where: { applicationId: id },
+      orderBy: { createdAt: "desc" },
+    });
+    return c.json({ success: true, data: notes });
+  } catch (error) {
+    console.error("Application notes list error:", error);
+    return c.json({ success: false, message: "Failed to load notes" }, 500);
+  }
+});
+
+applicationRoutes.post("/:id/notes", async (c) => {
+  try {
+    const { id } = c.req.param();
+    const user = await getUserFromAuth(c);
+    if (!user) return c.json({ success: false, message: "Not authenticated" }, 401);
+    if (user.role !== "RECRUITER" && user.role !== "ADMIN") {
+      return c.json({ success: false, message: "Forbidden" }, 403);
+    }
+
+    const body = await c.req.json();
+    const content = (body?.content as string | undefined)?.trim();
+    if (!content) return c.json({ success: false, message: "content is required" }, 400);
+
+    const app = await prisma.application.findUnique({
+      where: { id },
+      include: { job: true },
+    });
+    if (!app) return c.json({ success: false, message: "Application not found" }, 404);
+
+    let authorId = "SYSTEM";
+    if (user.role === "RECRUITER") {
+      if (!user.recruiterProfile || app.job.recruiterId !== user.recruiterProfile.id) {
+        return c.json({ success: false, message: "Forbidden" }, 403);
+      }
+      authorId = user.recruiterProfile.id;
+    }
+
+    const created = await prisma.applicationNote.create({
+      data: { applicationId: id, authorId, content },
+    });
+    return c.json({ success: true, data: created }, 201);
+  } catch (error) {
+    console.error("Application note create error:", error);
+    return c.json({ success: false, message: "Failed to create note" }, 500);
+  }
+});
+
+applicationRoutes.put("/:id/notes/:noteId", async (c) => {
+  try {
+    const { id, noteId } = c.req.param();
+    const user = await getUserFromAuth(c);
+    if (!user) return c.json({ success: false, message: "Not authenticated" }, 401);
+    if (user.role !== "RECRUITER" && user.role !== "ADMIN") {
+      return c.json({ success: false, message: "Forbidden" }, 403);
+    }
+
+    const body = await c.req.json();
+    const content = (body?.content as string | undefined)?.trim();
+    if (!content) return c.json({ success: false, message: "content is required" }, 400);
+
+    const app = await prisma.application.findUnique({
+      where: { id },
+      include: { job: true },
+    });
+    if (!app) return c.json({ success: false, message: "Application not found" }, 404);
+
+    const note = await prisma.applicationNote.findUnique({ where: { id: noteId } });
+    if (!note || note.applicationId !== id) {
+      return c.json({ success: false, message: "Note not found" }, 404);
+    }
+
+    if (user.role === "RECRUITER") {
+      if (!user.recruiterProfile || app.job.recruiterId !== user.recruiterProfile.id) {
+        return c.json({ success: false, message: "Forbidden" }, 403);
+      }
+      if (note.authorId !== user.recruiterProfile.id) {
+        return c.json({ success: false, message: "Can only edit your own notes" }, 403);
+      }
+    }
+
+    const updated = await prisma.applicationNote.update({
+      where: { id: noteId },
+      data: { content },
+    });
+    return c.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Application note update error:", error);
+    return c.json({ success: false, message: "Failed to update note" }, 500);
+  }
+});
+
+applicationRoutes.delete("/:id/notes/:noteId", async (c) => {
+  try {
+    const { id, noteId } = c.req.param();
+    const user = await getUserFromAuth(c);
+    if (!user) return c.json({ success: false, message: "Not authenticated" }, 401);
+    if (user.role !== "RECRUITER" && user.role !== "ADMIN") {
+      return c.json({ success: false, message: "Forbidden" }, 403);
+    }
+
+    const app = await prisma.application.findUnique({
+      where: { id },
+      include: { job: true },
+    });
+    if (!app) return c.json({ success: false, message: "Application not found" }, 404);
+
+    const note = await prisma.applicationNote.findUnique({ where: { id: noteId } });
+    if (!note || note.applicationId !== id) {
+      return c.json({ success: false, message: "Note not found" }, 404);
+    }
+
+    if (user.role === "RECRUITER") {
+      if (!user.recruiterProfile || app.job.recruiterId !== user.recruiterProfile.id) {
+        return c.json({ success: false, message: "Forbidden" }, 403);
+      }
+      if (note.authorId !== user.recruiterProfile.id) {
+        return c.json({ success: false, message: "Can only delete your own notes" }, 403);
+      }
+    }
+
+    const deleted = await prisma.applicationNote.delete({ where: { id: noteId } });
+    return c.json({ success: true, data: deleted });
+  } catch (error) {
+    console.error("Application note delete error:", error);
+    return c.json({ success: false, message: "Failed to delete note" }, 500);
   }
 });

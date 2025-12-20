@@ -107,8 +107,11 @@ filteredRoutes.get("/applications", async (c) => {
           candidate: {
             include: {
               user: true,
+              skills: { include: { skill: true } },
+              experiences: true,
             },
           },
+          notes: { orderBy: { createdAt: "desc" } },
         },
         orderBy: { appliedAt: "desc" },
       }),
@@ -174,7 +177,7 @@ filteredRoutes.get("/interviews", async (c) => {
 
     // Filter based on role
     if (user.role === "CANDIDATE") {
-      // CANDIDATE: Only see their own interviews
+      // CANDIDATE: Interviews linked to their Applications OR standalone interviews linked by candidateId
       if (!user.candidateProfile) {
         return c.json({ 
           success: true, 
@@ -183,9 +186,10 @@ filteredRoutes.get("/interviews", async (c) => {
         });
       }
       whereClause = {
-        application: {
-          candidateId: user.candidateProfile.id,
-        },
+        OR: [
+          { application: { candidateId: user.candidateProfile.id } },
+          { candidateId: user.candidateProfile.id },
+        ],
       };
     } else if (user.role === "RECRUITER") {
       // RECRUITER: See interviews for jobs they posted
@@ -196,6 +200,7 @@ filteredRoutes.get("/interviews", async (c) => {
           meta: { total: 0, page, pageSize: take } 
         });
       }
+      // For now, recruiters only see application-linked interviews (standalone interviews are candidate-private)
       whereClause = {
         application: {
           job: {
@@ -234,6 +239,8 @@ filteredRoutes.get("/interviews", async (c) => {
               },
             },
           },
+          candidate: { include: { user: true } },
+          job: { include: { company: true } },
         },
         orderBy: { createdAt: "desc" },
       }),

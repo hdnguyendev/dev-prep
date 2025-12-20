@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { adminResources } from "@/lib/adminResources";
 import { adminClient, useAdminToken } from "@/lib/adminClient";
+import { normalizeAdminPayload } from "@/lib/adminNormalize";
+import { getCompanySizeOptions, getFoundedYearOptions } from "@/constants/company";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +45,10 @@ const AdminDetail = () => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
+  const [jobSkillIds, setJobSkillIds] = useState<string[]>([]);
+  const [jobCategoryIds, setJobCategoryIds] = useState<string[]>([]);
+  const [skillOptions, setSkillOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [categoryOptions, setCategoryOptions] = useState<Array<{ value: string; label: string }>>([]);
 
   // Check admin authentication
   useEffect(() => {
@@ -116,6 +122,34 @@ const AdminDetail = () => {
           const payload: Record<string, unknown> = {};
           (resource.allowedFields || resource.columns).forEach((f) => (payload[f] = res.data?.[f] ?? ""));
           setFormData(payload);
+
+          // For jobs: prefill selected skills/categories from included relations
+          if ((resource.key === "jobs" || resource.path === "jobs") && res.data) {
+            const skills = Array.isArray((res.data as any).skills) ? ((res.data as any).skills as any[]) : [];
+            const categories = Array.isArray((res.data as any).categories) ? ((res.data as any).categories as any[]) : [];
+            const sIds = skills
+              .map((it) => (it?.skillId as string | undefined) || (it?.skill?.id as string | undefined))
+              .filter((v): v is string => Boolean(v));
+            const cIds = categories
+              .map((it) => (it?.categoryId as string | undefined) || (it?.category?.id as string | undefined))
+              .filter((v): v is string => Boolean(v));
+            setJobSkillIds(sIds);
+            setJobCategoryIds(cIds);
+          }
+        }
+
+        // For jobs: load selectable options
+        if ((resource.key === "jobs" || resource.path === "jobs") && token) {
+          const [skillsRes, catsRes] = await Promise.all([
+            adminClient.list("skills", { page: 1, pageSize: 200 }, token ?? undefined),
+            adminClient.list("categories", { page: 1, pageSize: 200 }, token ?? undefined),
+          ]);
+          setSkillOptions(
+            (skillsRes.data || []).map((r: AdminRow) => ({ value: String(r.id), label: String(r.name ?? r.id) }))
+          );
+          setCategoryOptions(
+            (catsRes.data || []).map((r: AdminRow) => ({ value: String(r.id), label: String(r.name ?? r.id) }))
+          );
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load detail");
@@ -193,8 +227,62 @@ const AdminDetail = () => {
     try {
       setSaving(true);
       const token = await getToken();
-      await adminClient.update(resource.path, resource.primaryKeys, row, formData, token ?? undefined);
-      navigate(-1);
+      const normalizedFormData = normalizeAdminPayload(resource.key, formData);
+      await adminClient.update(
+        resource.path,
+        resource.primaryKeys,
+        row,
+        normalizedFormData,
+        token ?? undefined
+      );
+
+      // For jobs: sync relations to join tables
+      if ((resource.key === "jobs" || resource.path === "jobs") && id) {
+        const [jobSkillsRes, jobCatsRes] = await Promise.all([
+          adminClient.list("job-skills", { page: 1, pageSize: 500 }, token ?? undefined),
+          adminClient.list("job-categories", { page: 1, pageSize: 500 }, token ?? undefined),
+        ]);
+        const existingSkills = ((jobSkillsRes.data || []) as AdminRow[]).filter((r) => r.jobId === id);
+        const existingCats = ((jobCatsRes.data || []) as AdminRow[]).filter((r) => r.jobId === id);
+
+        const existingSkillIds = new Set(existingSkills.map((r) => String(r.skillId)));
+        const existingCatIds = new Set(existingCats.map((r) => String(r.categoryId)));
+
+        await Promise.all(
+          existingSkills
+            .filter((r) => !jobSkillIds.includes(String(r.skillId)))
+            .map((r) => adminClient.remove("job-skills", ["jobId", "skillId"], r, token ?? undefined))
+        );
+        await Promise.all(
+          jobSkillIds
+            .filter((sid) => !existingSkillIds.has(sid))
+            .map((sid) => adminClient.create("job-skills", { jobId: id, skillId: sid, isRequired: true }, token ?? undefined))
+        );
+
+        await Promise.all(
+          existingCats
+            .filter((r) => !jobCategoryIds.includes(String(r.categoryId)))
+            .map((r) => adminClient.remove("job-categories", ["jobId", "categoryId"], r, token ?? undefined))
+        );
+        await Promise.all(
+          jobCategoryIds
+            .filter((cid) => !existingCatIds.has(cid))
+            .map((cid) => adminClient.create("job-categories", { jobId: id, categoryId: cid }, token ?? undefined))
+        );
+      }
+
+      // Stay on detail page: refetch latest row + refresh form state
+      if (id) {
+        const res = await adminClient.get(resource.path, id, token ?? undefined);
+        if (res?.success) {
+          setRow(res.data);
+          const payload: Record<string, unknown> = {};
+          (resource.allowedFields || resource.columns).forEach(
+            (f) => (payload[f] = res.data?.[f] ?? "")
+          );
+          setFormData(payload);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
@@ -251,6 +339,95 @@ const AdminDetail = () => {
                     </Badge>
                   ))}
                 </div>
+
+                {(resource.key === "jobs" || resource.path === "jobs") && (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-md bg-muted/20 p-3">
+                      <div className="mb-2 text-xs font-semibold text-muted-foreground">Skills</div>
+                      {editing ? (
+                        <div className="flex flex-wrap gap-2">
+                          {skillOptions.map((opt) => {
+                            const active = jobSkillIds.includes(opt.value);
+                            return (
+                              <Badge
+                                key={opt.value}
+                                variant={active ? "default" : "outline"}
+                                className="cursor-pointer"
+                                onClick={() =>
+                                  setJobSkillIds((prev) =>
+                                    prev.includes(opt.value)
+                                      ? prev.filter((v) => v !== opt.value)
+                                      : [...prev, opt.value]
+                                  )
+                                }
+                              >
+                                {opt.label}
+                              </Badge>
+                            );
+                          })}
+                          {skillOptions.length === 0 && (
+                            <span className="text-xs text-muted-foreground">No skills</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {(Array.isArray((row as any).skills) ? ((row as any).skills as any[]) : [])
+                            .map((it) => it?.skill?.name as string | undefined)
+                            .filter((n): n is string => Boolean(n))
+                            .slice(0, 12)
+                            .map((n) => (
+                              <Badge key={`skill-${n}`} variant="outline">
+                                {n}
+                              </Badge>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-md bg-muted/20 p-3">
+                      <div className="mb-2 text-xs font-semibold text-muted-foreground">Categories</div>
+                      {editing ? (
+                        <div className="flex flex-wrap gap-2">
+                          {categoryOptions.map((opt) => {
+                            const active = jobCategoryIds.includes(opt.value);
+                            return (
+                              <Badge
+                                key={opt.value}
+                                variant={active ? "default" : "outline"}
+                                className="cursor-pointer"
+                                onClick={() =>
+                                  setJobCategoryIds((prev) =>
+                                    prev.includes(opt.value)
+                                      ? prev.filter((v) => v !== opt.value)
+                                      : [...prev, opt.value]
+                                  )
+                                }
+                              >
+                                {opt.label}
+                              </Badge>
+                            );
+                          })}
+                          {categoryOptions.length === 0 && (
+                            <span className="text-xs text-muted-foreground">No categories</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {(Array.isArray((row as any).categories) ? ((row as any).categories as any[]) : [])
+                            .map((it) => it?.category?.name as string | undefined)
+                            .filter((n): n is string => Boolean(n))
+                            .slice(0, 12)
+                            .map((n) => (
+                              <Badge key={`cat-${n}`} variant="outline">
+                                {n}
+                              </Badge>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid gap-3 md:grid-cols-2">
                   {(resource.allowedFields || resource.columns).map((col) => {
                     const val = editing ? formData[col] : row[col];
@@ -266,6 +443,58 @@ const AdminDetail = () => {
                           : String(val);
 
                     if (editing) {
+                      const isCompanies = resource.key === "companies" || resource.path === "companies";
+
+                      if (isCompanies && col === "foundedYear") {
+                        const years = getFoundedYearOptions();
+                        return (
+                          <div key={col} className="space-y-1 text-xs">
+                            <span className="font-medium text-foreground">{formatLabel(col)}</span>
+                            <select
+                              value={String(formData[col] ?? "")}
+                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                const v = e.target.value;
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  [col]: v === "" ? null : Number.parseInt(v, 10),
+                                }));
+                              }}
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                              <option value="">—</option>
+                              {years.map((y) => (
+                                <option key={y} value={y}>
+                                  {y}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      }
+
+                      if (isCompanies && col === "companySize") {
+                        const options = getCompanySizeOptions(String(formData[col] ?? ""));
+                        return (
+                          <div key={col} className="space-y-1 text-xs">
+                            <span className="font-medium text-foreground">{formatLabel(col)}</span>
+                            <select
+                              value={String(formData[col] ?? "")}
+                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                                setFormData((prev) => ({ ...prev, [col]: e.target.value }))
+                              }
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                              <option value="">—</option>
+                              {options.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      }
+
                       const type = guessInputType(col, val);
                       if (type === "select" && resource.fieldEnums?.[col]) {
                         return (

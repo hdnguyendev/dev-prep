@@ -8,6 +8,9 @@ import applicationRoutes from "./applications";
 import companyRoutes from "./companies";
 import reviewRoutes from "./reviews";
 import savedJobRoutes from "./savedJobs";
+import candidateProfilesRoutes from "./candidateProfiles";
+import interviewsRoutes from "./interviews";
+import aiRoutes from "./ai";
 
 const routes = new Hono();
 
@@ -19,6 +22,9 @@ routes.route("/companies", companyRoutes); // Company endpoints
 routes.route("/reviews", reviewRoutes); // Review endpoints
 routes.route("/saved-jobs", savedJobRoutes); // Saved jobs endpoints
 routes.route("/upload", uploadRoutes); // Upload endpoints
+routes.route("/", candidateProfilesRoutes);
+routes.route("/", interviewsRoutes);
+routes.route("/", aiRoutes);
 routes.route("/", crudRoutes);
 routes.route("/", swaggerRoutes);
 

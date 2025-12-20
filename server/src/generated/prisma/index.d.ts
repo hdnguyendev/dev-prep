@@ -2939,6 +2939,7 @@ export namespace Prisma {
     applications: number
     savedJobs: number
     companyReviews: number
+    interviews: number
   }
 
   export type CandidateProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2948,6 +2949,7 @@ export namespace Prisma {
     applications?: boolean | CandidateProfileCountOutputTypeCountApplicationsArgs
     savedJobs?: boolean | CandidateProfileCountOutputTypeCountSavedJobsArgs
     companyReviews?: boolean | CandidateProfileCountOutputTypeCountCompanyReviewsArgs
+    interviews?: boolean | CandidateProfileCountOutputTypeCountInterviewsArgs
   }
 
   // Custom InputTypes
@@ -3001,6 +3003,13 @@ export namespace Prisma {
    */
   export type CandidateProfileCountOutputTypeCountCompanyReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CompanyReviewWhereInput
+  }
+
+  /**
+   * CandidateProfileCountOutputType without action
+   */
+  export type CandidateProfileCountOutputTypeCountInterviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InterviewWhereInput
   }
 
 
@@ -3131,6 +3140,7 @@ export namespace Prisma {
   export type JobCountOutputType = {
     skills: number
     applications: number
+    interviews: number
     savedBy: number
     categories: number
   }
@@ -3138,6 +3148,7 @@ export namespace Prisma {
   export type JobCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     skills?: boolean | JobCountOutputTypeCountSkillsArgs
     applications?: boolean | JobCountOutputTypeCountApplicationsArgs
+    interviews?: boolean | JobCountOutputTypeCountInterviewsArgs
     savedBy?: boolean | JobCountOutputTypeCountSavedByArgs
     categories?: boolean | JobCountOutputTypeCountCategoriesArgs
   }
@@ -3165,6 +3176,13 @@ export namespace Prisma {
    */
   export type JobCountOutputTypeCountApplicationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ApplicationWhereInput
+  }
+
+  /**
+   * JobCountOutputType without action
+   */
+  export type JobCountOutputTypeCountInterviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InterviewWhereInput
   }
 
   /**
@@ -4592,6 +4610,7 @@ export namespace Prisma {
     linkedin: string | null
     github: string | null
     cvUrl: string | null
+    isPublic: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -4605,6 +4624,7 @@ export namespace Prisma {
     linkedin: string | null
     github: string | null
     cvUrl: string | null
+    isPublic: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -4618,6 +4638,7 @@ export namespace Prisma {
     linkedin: number
     github: number
     cvUrl: number
+    isPublic: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -4633,6 +4654,7 @@ export namespace Prisma {
     linkedin?: true
     github?: true
     cvUrl?: true
+    isPublic?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -4646,6 +4668,7 @@ export namespace Prisma {
     linkedin?: true
     github?: true
     cvUrl?: true
+    isPublic?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -4659,6 +4682,7 @@ export namespace Prisma {
     linkedin?: true
     github?: true
     cvUrl?: true
+    isPublic?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -4745,6 +4769,7 @@ export namespace Prisma {
     linkedin: string | null
     github: string | null
     cvUrl: string | null
+    isPublic: boolean
     createdAt: Date
     updatedAt: Date
     _count: CandidateProfileCountAggregateOutputType | null
@@ -4775,6 +4800,7 @@ export namespace Prisma {
     linkedin?: boolean
     github?: boolean
     cvUrl?: boolean
+    isPublic?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -4784,6 +4810,7 @@ export namespace Prisma {
     applications?: boolean | CandidateProfile$applicationsArgs<ExtArgs>
     savedJobs?: boolean | CandidateProfile$savedJobsArgs<ExtArgs>
     companyReviews?: boolean | CandidateProfile$companyReviewsArgs<ExtArgs>
+    interviews?: boolean | CandidateProfile$interviewsArgs<ExtArgs>
     _count?: boolean | CandidateProfileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["candidateProfile"]>
 
@@ -4796,6 +4823,7 @@ export namespace Prisma {
     linkedin?: boolean
     github?: boolean
     cvUrl?: boolean
+    isPublic?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -4810,6 +4838,7 @@ export namespace Prisma {
     linkedin?: boolean
     github?: boolean
     cvUrl?: boolean
+    isPublic?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -4824,11 +4853,12 @@ export namespace Prisma {
     linkedin?: boolean
     github?: boolean
     cvUrl?: boolean
+    isPublic?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type CandidateProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "headline" | "bio" | "website" | "linkedin" | "github" | "cvUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["candidateProfile"]>
+  export type CandidateProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "headline" | "bio" | "website" | "linkedin" | "github" | "cvUrl" | "isPublic" | "createdAt" | "updatedAt", ExtArgs["result"]["candidateProfile"]>
   export type CandidateProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     experiences?: boolean | CandidateProfile$experiencesArgs<ExtArgs>
@@ -4837,6 +4867,7 @@ export namespace Prisma {
     applications?: boolean | CandidateProfile$applicationsArgs<ExtArgs>
     savedJobs?: boolean | CandidateProfile$savedJobsArgs<ExtArgs>
     companyReviews?: boolean | CandidateProfile$companyReviewsArgs<ExtArgs>
+    interviews?: boolean | CandidateProfile$interviewsArgs<ExtArgs>
     _count?: boolean | CandidateProfileCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CandidateProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4856,6 +4887,7 @@ export namespace Prisma {
       applications: Prisma.$ApplicationPayload<ExtArgs>[]
       savedJobs: Prisma.$SavedJobPayload<ExtArgs>[]
       companyReviews: Prisma.$CompanyReviewPayload<ExtArgs>[]
+      interviews: Prisma.$InterviewPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4866,6 +4898,7 @@ export namespace Prisma {
       linkedin: string | null
       github: string | null
       cvUrl: string | null
+      isPublic: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["candidateProfile"]>
@@ -5269,6 +5302,7 @@ export namespace Prisma {
     applications<T extends CandidateProfile$applicationsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$applicationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApplicationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     savedJobs<T extends CandidateProfile$savedJobsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$savedJobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SavedJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     companyReviews<T extends CandidateProfile$companyReviewsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$companyReviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    interviews<T extends CandidateProfile$interviewsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$interviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5306,6 +5340,7 @@ export namespace Prisma {
     readonly linkedin: FieldRef<"CandidateProfile", 'String'>
     readonly github: FieldRef<"CandidateProfile", 'String'>
     readonly cvUrl: FieldRef<"CandidateProfile", 'String'>
+    readonly isPublic: FieldRef<"CandidateProfile", 'Boolean'>
     readonly createdAt: FieldRef<"CandidateProfile", 'DateTime'>
     readonly updatedAt: FieldRef<"CandidateProfile", 'DateTime'>
   }
@@ -5845,6 +5880,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: CompanyReviewScalarFieldEnum | CompanyReviewScalarFieldEnum[]
+  }
+
+  /**
+   * CandidateProfile.interviews
+   */
+  export type CandidateProfile$interviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Interview
+     */
+    select?: InterviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Interview
+     */
+    omit?: InterviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewInclude<ExtArgs> | null
+    where?: InterviewWhereInput
+    orderBy?: InterviewOrderByWithRelationInput | InterviewOrderByWithRelationInput[]
+    cursor?: InterviewWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InterviewScalarFieldEnum | InterviewScalarFieldEnum[]
   }
 
   /**
@@ -14201,6 +14260,7 @@ export namespace Prisma {
     recruiter?: boolean | RecruiterProfileDefaultArgs<ExtArgs>
     skills?: boolean | Job$skillsArgs<ExtArgs>
     applications?: boolean | Job$applicationsArgs<ExtArgs>
+    interviews?: boolean | Job$interviewsArgs<ExtArgs>
     savedBy?: boolean | Job$savedByArgs<ExtArgs>
     categories?: boolean | Job$categoriesArgs<ExtArgs>
     _count?: boolean | JobCountOutputTypeDefaultArgs<ExtArgs>
@@ -14300,6 +14360,7 @@ export namespace Prisma {
     recruiter?: boolean | RecruiterProfileDefaultArgs<ExtArgs>
     skills?: boolean | Job$skillsArgs<ExtArgs>
     applications?: boolean | Job$applicationsArgs<ExtArgs>
+    interviews?: boolean | Job$interviewsArgs<ExtArgs>
     savedBy?: boolean | Job$savedByArgs<ExtArgs>
     categories?: boolean | Job$categoriesArgs<ExtArgs>
     _count?: boolean | JobCountOutputTypeDefaultArgs<ExtArgs>
@@ -14320,6 +14381,7 @@ export namespace Prisma {
       recruiter: Prisma.$RecruiterProfilePayload<ExtArgs>
       skills: Prisma.$JobSkillPayload<ExtArgs>[]
       applications: Prisma.$ApplicationPayload<ExtArgs>[]
+      interviews: Prisma.$InterviewPayload<ExtArgs>[]
       savedBy: Prisma.$SavedJobPayload<ExtArgs>[]
       categories: Prisma.$JobCategoryPayload<ExtArgs>[]
     }
@@ -14747,6 +14809,7 @@ export namespace Prisma {
     recruiter<T extends RecruiterProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RecruiterProfileDefaultArgs<ExtArgs>>): Prisma__RecruiterProfileClient<$Result.GetResult<Prisma.$RecruiterProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     skills<T extends Job$skillsArgs<ExtArgs> = {}>(args?: Subset<T, Job$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     applications<T extends Job$applicationsArgs<ExtArgs> = {}>(args?: Subset<T, Job$applicationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApplicationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    interviews<T extends Job$interviewsArgs<ExtArgs> = {}>(args?: Subset<T, Job$interviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     savedBy<T extends Job$savedByArgs<ExtArgs> = {}>(args?: Subset<T, Job$savedByArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SavedJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     categories<T extends Job$categoriesArgs<ExtArgs> = {}>(args?: Subset<T, Job$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -15244,6 +15307,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ApplicationScalarFieldEnum | ApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * Job.interviews
+   */
+  export type Job$interviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Interview
+     */
+    select?: InterviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Interview
+     */
+    omit?: InterviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InterviewInclude<ExtArgs> | null
+    where?: InterviewWhereInput
+    orderBy?: InterviewOrderByWithRelationInput | InterviewOrderByWithRelationInput[]
+    cursor?: InterviewWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InterviewScalarFieldEnum | InterviewScalarFieldEnum[]
   }
 
   /**
@@ -22835,6 +22922,8 @@ export namespace Prisma {
   export type InterviewMinAggregateOutputType = {
     id: string | null
     applicationId: string | null
+    candidateId: string | null
+    jobId: string | null
     title: string | null
     type: $Enums.InterviewType | null
     status: $Enums.InterviewStatus | null
@@ -22856,6 +22945,8 @@ export namespace Prisma {
   export type InterviewMaxAggregateOutputType = {
     id: string | null
     applicationId: string | null
+    candidateId: string | null
+    jobId: string | null
     title: string | null
     type: $Enums.InterviewType | null
     status: $Enums.InterviewStatus | null
@@ -22877,6 +22968,8 @@ export namespace Prisma {
   export type InterviewCountAggregateOutputType = {
     id: number
     applicationId: number
+    candidateId: number
+    jobId: number
     title: number
     type: number
     status: number
@@ -22911,6 +23004,8 @@ export namespace Prisma {
   export type InterviewMinAggregateInputType = {
     id?: true
     applicationId?: true
+    candidateId?: true
+    jobId?: true
     title?: true
     type?: true
     status?: true
@@ -22932,6 +23027,8 @@ export namespace Prisma {
   export type InterviewMaxAggregateInputType = {
     id?: true
     applicationId?: true
+    candidateId?: true
+    jobId?: true
     title?: true
     type?: true
     status?: true
@@ -22953,6 +23050,8 @@ export namespace Prisma {
   export type InterviewCountAggregateInputType = {
     id?: true
     applicationId?: true
+    candidateId?: true
+    jobId?: true
     title?: true
     type?: true
     status?: true
@@ -23061,7 +23160,9 @@ export namespace Prisma {
 
   export type InterviewGroupByOutputType = {
     id: string
-    applicationId: string
+    applicationId: string | null
+    candidateId: string | null
+    jobId: string | null
     title: string
     type: $Enums.InterviewType
     status: $Enums.InterviewStatus
@@ -23103,6 +23204,8 @@ export namespace Prisma {
   export type InterviewSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     applicationId?: boolean
+    candidateId?: boolean
+    jobId?: boolean
     title?: boolean
     type?: boolean
     status?: boolean
@@ -23120,7 +23223,9 @@ export namespace Prisma {
     aiAnalysisData?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    application?: boolean | ApplicationDefaultArgs<ExtArgs>
+    application?: boolean | Interview$applicationArgs<ExtArgs>
+    candidate?: boolean | Interview$candidateArgs<ExtArgs>
+    job?: boolean | Interview$jobArgs<ExtArgs>
     exchanges?: boolean | Interview$exchangesArgs<ExtArgs>
     _count?: boolean | InterviewCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["interview"]>
@@ -23128,6 +23233,8 @@ export namespace Prisma {
   export type InterviewSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     applicationId?: boolean
+    candidateId?: boolean
+    jobId?: boolean
     title?: boolean
     type?: boolean
     status?: boolean
@@ -23145,12 +23252,16 @@ export namespace Prisma {
     aiAnalysisData?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    application?: boolean | ApplicationDefaultArgs<ExtArgs>
+    application?: boolean | Interview$applicationArgs<ExtArgs>
+    candidate?: boolean | Interview$candidateArgs<ExtArgs>
+    job?: boolean | Interview$jobArgs<ExtArgs>
   }, ExtArgs["result"]["interview"]>
 
   export type InterviewSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     applicationId?: boolean
+    candidateId?: boolean
+    jobId?: boolean
     title?: boolean
     type?: boolean
     status?: boolean
@@ -23168,12 +23279,16 @@ export namespace Prisma {
     aiAnalysisData?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    application?: boolean | ApplicationDefaultArgs<ExtArgs>
+    application?: boolean | Interview$applicationArgs<ExtArgs>
+    candidate?: boolean | Interview$candidateArgs<ExtArgs>
+    job?: boolean | Interview$jobArgs<ExtArgs>
   }, ExtArgs["result"]["interview"]>
 
   export type InterviewSelectScalar = {
     id?: boolean
     applicationId?: boolean
+    candidateId?: boolean
+    jobId?: boolean
     title?: boolean
     type?: boolean
     status?: boolean
@@ -23193,28 +23308,38 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type InterviewOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "applicationId" | "title" | "type" | "status" | "accessCode" | "sessionUrl" | "expiresAt" | "startedAt" | "endedAt" | "durationSeconds" | "overallScore" | "summary" | "recommendation" | "recordingUrl" | "fullTranscript" | "aiAnalysisData" | "createdAt" | "updatedAt", ExtArgs["result"]["interview"]>
+  export type InterviewOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "applicationId" | "candidateId" | "jobId" | "title" | "type" | "status" | "accessCode" | "sessionUrl" | "expiresAt" | "startedAt" | "endedAt" | "durationSeconds" | "overallScore" | "summary" | "recommendation" | "recordingUrl" | "fullTranscript" | "aiAnalysisData" | "createdAt" | "updatedAt", ExtArgs["result"]["interview"]>
   export type InterviewInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    application?: boolean | ApplicationDefaultArgs<ExtArgs>
+    application?: boolean | Interview$applicationArgs<ExtArgs>
+    candidate?: boolean | Interview$candidateArgs<ExtArgs>
+    job?: boolean | Interview$jobArgs<ExtArgs>
     exchanges?: boolean | Interview$exchangesArgs<ExtArgs>
     _count?: boolean | InterviewCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type InterviewIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    application?: boolean | ApplicationDefaultArgs<ExtArgs>
+    application?: boolean | Interview$applicationArgs<ExtArgs>
+    candidate?: boolean | Interview$candidateArgs<ExtArgs>
+    job?: boolean | Interview$jobArgs<ExtArgs>
   }
   export type InterviewIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    application?: boolean | ApplicationDefaultArgs<ExtArgs>
+    application?: boolean | Interview$applicationArgs<ExtArgs>
+    candidate?: boolean | Interview$candidateArgs<ExtArgs>
+    job?: boolean | Interview$jobArgs<ExtArgs>
   }
 
   export type $InterviewPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Interview"
     objects: {
-      application: Prisma.$ApplicationPayload<ExtArgs>
+      application: Prisma.$ApplicationPayload<ExtArgs> | null
+      candidate: Prisma.$CandidateProfilePayload<ExtArgs> | null
+      job: Prisma.$JobPayload<ExtArgs> | null
       exchanges: Prisma.$InterviewExchangePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      applicationId: string
+      applicationId: string | null
+      candidateId: string | null
+      jobId: string | null
       title: string
       type: $Enums.InterviewType
       status: $Enums.InterviewStatus
@@ -23626,7 +23751,9 @@ export namespace Prisma {
    */
   export interface Prisma__InterviewClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    application<T extends ApplicationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ApplicationDefaultArgs<ExtArgs>>): Prisma__ApplicationClient<$Result.GetResult<Prisma.$ApplicationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    application<T extends Interview$applicationArgs<ExtArgs> = {}>(args?: Subset<T, Interview$applicationArgs<ExtArgs>>): Prisma__ApplicationClient<$Result.GetResult<Prisma.$ApplicationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    candidate<T extends Interview$candidateArgs<ExtArgs> = {}>(args?: Subset<T, Interview$candidateArgs<ExtArgs>>): Prisma__CandidateProfileClient<$Result.GetResult<Prisma.$CandidateProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    job<T extends Interview$jobArgs<ExtArgs> = {}>(args?: Subset<T, Interview$jobArgs<ExtArgs>>): Prisma__JobClient<$Result.GetResult<Prisma.$JobPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     exchanges<T extends Interview$exchangesArgs<ExtArgs> = {}>(args?: Subset<T, Interview$exchangesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewExchangePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -23659,6 +23786,8 @@ export namespace Prisma {
   interface InterviewFieldRefs {
     readonly id: FieldRef<"Interview", 'String'>
     readonly applicationId: FieldRef<"Interview", 'String'>
+    readonly candidateId: FieldRef<"Interview", 'String'>
+    readonly jobId: FieldRef<"Interview", 'String'>
     readonly title: FieldRef<"Interview", 'String'>
     readonly type: FieldRef<"Interview", 'InterviewType'>
     readonly status: FieldRef<"Interview", 'InterviewStatus'>
@@ -24069,6 +24198,63 @@ export namespace Prisma {
      * Limit how many Interviews to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Interview.application
+   */
+  export type Interview$applicationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Application
+     */
+    select?: ApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Application
+     */
+    omit?: ApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ApplicationInclude<ExtArgs> | null
+    where?: ApplicationWhereInput
+  }
+
+  /**
+   * Interview.candidate
+   */
+  export type Interview$candidateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CandidateProfile
+     */
+    select?: CandidateProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CandidateProfile
+     */
+    omit?: CandidateProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CandidateProfileInclude<ExtArgs> | null
+    where?: CandidateProfileWhereInput
+  }
+
+  /**
+   * Interview.job
+   */
+  export type Interview$jobArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Job
+     */
+    select?: JobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Job
+     */
+    omit?: JobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobInclude<ExtArgs> | null
+    where?: JobWhereInput
   }
 
   /**
@@ -28540,6 +28726,7 @@ export namespace Prisma {
     linkedin: 'linkedin',
     github: 'github',
     cvUrl: 'cvUrl',
+    isPublic: 'isPublic',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -28757,6 +28944,8 @@ export namespace Prisma {
   export const InterviewScalarFieldEnum: {
     id: 'id',
     applicationId: 'applicationId',
+    candidateId: 'candidateId',
+    jobId: 'jobId',
     title: 'title',
     type: 'type',
     status: 'status',
@@ -29074,6 +29263,8 @@ export namespace Prisma {
   export const InterviewOrderByRelevanceFieldEnum: {
     id: 'id',
     applicationId: 'applicationId',
+    candidateId: 'candidateId',
+    jobId: 'jobId',
     title: 'title',
     accessCode: 'accessCode',
     sessionUrl: 'sessionUrl',
@@ -29437,6 +29628,7 @@ export namespace Prisma {
     linkedin?: StringNullableFilter<"CandidateProfile"> | string | null
     github?: StringNullableFilter<"CandidateProfile"> | string | null
     cvUrl?: StringNullableFilter<"CandidateProfile"> | string | null
+    isPublic?: BoolFilter<"CandidateProfile"> | boolean
     createdAt?: DateTimeFilter<"CandidateProfile"> | Date | string
     updatedAt?: DateTimeFilter<"CandidateProfile"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -29446,6 +29638,7 @@ export namespace Prisma {
     applications?: ApplicationListRelationFilter
     savedJobs?: SavedJobListRelationFilter
     companyReviews?: CompanyReviewListRelationFilter
+    interviews?: InterviewListRelationFilter
   }
 
   export type CandidateProfileOrderByWithRelationInput = {
@@ -29457,6 +29650,7 @@ export namespace Prisma {
     linkedin?: SortOrderInput | SortOrder
     github?: SortOrderInput | SortOrder
     cvUrl?: SortOrderInput | SortOrder
+    isPublic?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -29466,6 +29660,7 @@ export namespace Prisma {
     applications?: ApplicationOrderByRelationAggregateInput
     savedJobs?: SavedJobOrderByRelationAggregateInput
     companyReviews?: CompanyReviewOrderByRelationAggregateInput
+    interviews?: InterviewOrderByRelationAggregateInput
     _relevance?: CandidateProfileOrderByRelevanceInput
   }
 
@@ -29481,6 +29676,7 @@ export namespace Prisma {
     linkedin?: StringNullableFilter<"CandidateProfile"> | string | null
     github?: StringNullableFilter<"CandidateProfile"> | string | null
     cvUrl?: StringNullableFilter<"CandidateProfile"> | string | null
+    isPublic?: BoolFilter<"CandidateProfile"> | boolean
     createdAt?: DateTimeFilter<"CandidateProfile"> | Date | string
     updatedAt?: DateTimeFilter<"CandidateProfile"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -29490,6 +29686,7 @@ export namespace Prisma {
     applications?: ApplicationListRelationFilter
     savedJobs?: SavedJobListRelationFilter
     companyReviews?: CompanyReviewListRelationFilter
+    interviews?: InterviewListRelationFilter
   }, "id" | "userId">
 
   export type CandidateProfileOrderByWithAggregationInput = {
@@ -29501,6 +29698,7 @@ export namespace Prisma {
     linkedin?: SortOrderInput | SortOrder
     github?: SortOrderInput | SortOrder
     cvUrl?: SortOrderInput | SortOrder
+    isPublic?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: CandidateProfileCountOrderByAggregateInput
@@ -29520,6 +29718,7 @@ export namespace Prisma {
     linkedin?: StringNullableWithAggregatesFilter<"CandidateProfile"> | string | null
     github?: StringNullableWithAggregatesFilter<"CandidateProfile"> | string | null
     cvUrl?: StringNullableWithAggregatesFilter<"CandidateProfile"> | string | null
+    isPublic?: BoolWithAggregatesFilter<"CandidateProfile"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"CandidateProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CandidateProfile"> | Date | string
   }
@@ -30101,6 +30300,7 @@ export namespace Prisma {
     recruiter?: XOR<RecruiterProfileScalarRelationFilter, RecruiterProfileWhereInput>
     skills?: JobSkillListRelationFilter
     applications?: ApplicationListRelationFilter
+    interviews?: InterviewListRelationFilter
     savedBy?: SavedJobListRelationFilter
     categories?: JobCategoryListRelationFilter
   }
@@ -30135,6 +30335,7 @@ export namespace Prisma {
     recruiter?: RecruiterProfileOrderByWithRelationInput
     skills?: JobSkillOrderByRelationAggregateInput
     applications?: ApplicationOrderByRelationAggregateInput
+    interviews?: InterviewOrderByRelationAggregateInput
     savedBy?: SavedJobOrderByRelationAggregateInput
     categories?: JobCategoryOrderByRelationAggregateInput
     _relevance?: JobOrderByRelevanceInput
@@ -30173,6 +30374,7 @@ export namespace Prisma {
     recruiter?: XOR<RecruiterProfileScalarRelationFilter, RecruiterProfileWhereInput>
     skills?: JobSkillListRelationFilter
     applications?: ApplicationListRelationFilter
+    interviews?: InterviewListRelationFilter
     savedBy?: SavedJobListRelationFilter
     categories?: JobCategoryListRelationFilter
   }, "id" | "slug">
@@ -30648,7 +30850,9 @@ export namespace Prisma {
     OR?: InterviewWhereInput[]
     NOT?: InterviewWhereInput | InterviewWhereInput[]
     id?: StringFilter<"Interview"> | string
-    applicationId?: StringFilter<"Interview"> | string
+    applicationId?: StringNullableFilter<"Interview"> | string | null
+    candidateId?: StringNullableFilter<"Interview"> | string | null
+    jobId?: StringNullableFilter<"Interview"> | string | null
     title?: StringFilter<"Interview"> | string
     type?: EnumInterviewTypeFilter<"Interview"> | $Enums.InterviewType
     status?: EnumInterviewStatusFilter<"Interview"> | $Enums.InterviewStatus
@@ -30666,13 +30870,17 @@ export namespace Prisma {
     aiAnalysisData?: JsonNullableFilter<"Interview">
     createdAt?: DateTimeFilter<"Interview"> | Date | string
     updatedAt?: DateTimeFilter<"Interview"> | Date | string
-    application?: XOR<ApplicationScalarRelationFilter, ApplicationWhereInput>
+    application?: XOR<ApplicationNullableScalarRelationFilter, ApplicationWhereInput> | null
+    candidate?: XOR<CandidateProfileNullableScalarRelationFilter, CandidateProfileWhereInput> | null
+    job?: XOR<JobNullableScalarRelationFilter, JobWhereInput> | null
     exchanges?: InterviewExchangeListRelationFilter
   }
 
   export type InterviewOrderByWithRelationInput = {
     id?: SortOrder
-    applicationId?: SortOrder
+    applicationId?: SortOrderInput | SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    jobId?: SortOrderInput | SortOrder
     title?: SortOrder
     type?: SortOrder
     status?: SortOrder
@@ -30691,6 +30899,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     application?: ApplicationOrderByWithRelationInput
+    candidate?: CandidateProfileOrderByWithRelationInput
+    job?: JobOrderByWithRelationInput
     exchanges?: InterviewExchangeOrderByRelationAggregateInput
     _relevance?: InterviewOrderByRelevanceInput
   }
@@ -30701,7 +30911,9 @@ export namespace Prisma {
     AND?: InterviewWhereInput | InterviewWhereInput[]
     OR?: InterviewWhereInput[]
     NOT?: InterviewWhereInput | InterviewWhereInput[]
-    applicationId?: StringFilter<"Interview"> | string
+    applicationId?: StringNullableFilter<"Interview"> | string | null
+    candidateId?: StringNullableFilter<"Interview"> | string | null
+    jobId?: StringNullableFilter<"Interview"> | string | null
     title?: StringFilter<"Interview"> | string
     type?: EnumInterviewTypeFilter<"Interview"> | $Enums.InterviewType
     status?: EnumInterviewStatusFilter<"Interview"> | $Enums.InterviewStatus
@@ -30718,13 +30930,17 @@ export namespace Prisma {
     aiAnalysisData?: JsonNullableFilter<"Interview">
     createdAt?: DateTimeFilter<"Interview"> | Date | string
     updatedAt?: DateTimeFilter<"Interview"> | Date | string
-    application?: XOR<ApplicationScalarRelationFilter, ApplicationWhereInput>
+    application?: XOR<ApplicationNullableScalarRelationFilter, ApplicationWhereInput> | null
+    candidate?: XOR<CandidateProfileNullableScalarRelationFilter, CandidateProfileWhereInput> | null
+    job?: XOR<JobNullableScalarRelationFilter, JobWhereInput> | null
     exchanges?: InterviewExchangeListRelationFilter
   }, "id" | "accessCode">
 
   export type InterviewOrderByWithAggregationInput = {
     id?: SortOrder
-    applicationId?: SortOrder
+    applicationId?: SortOrderInput | SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    jobId?: SortOrderInput | SortOrder
     title?: SortOrder
     type?: SortOrder
     status?: SortOrder
@@ -30754,7 +30970,9 @@ export namespace Prisma {
     OR?: InterviewScalarWhereWithAggregatesInput[]
     NOT?: InterviewScalarWhereWithAggregatesInput | InterviewScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Interview"> | string
-    applicationId?: StringWithAggregatesFilter<"Interview"> | string
+    applicationId?: StringNullableWithAggregatesFilter<"Interview"> | string | null
+    candidateId?: StringNullableWithAggregatesFilter<"Interview"> | string | null
+    jobId?: StringNullableWithAggregatesFilter<"Interview"> | string | null
     title?: StringWithAggregatesFilter<"Interview"> | string
     type?: EnumInterviewTypeWithAggregatesFilter<"Interview"> | $Enums.InterviewType
     status?: EnumInterviewStatusWithAggregatesFilter<"Interview"> | $Enums.InterviewStatus
@@ -31205,6 +31423,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCandidateProfileInput
@@ -31214,6 +31433,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateInput = {
@@ -31225,6 +31445,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
@@ -31233,6 +31454,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUpdateInput = {
@@ -31243,6 +31465,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
@@ -31252,6 +31475,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateInput = {
@@ -31263,6 +31487,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
@@ -31271,6 +31496,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileCreateManyInput = {
@@ -31282,6 +31508,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -31294,6 +31521,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31307,6 +31535,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31922,6 +32151,7 @@ export namespace Prisma {
     recruiter: RecruiterProfileCreateNestedOneWithoutJobsPostedInput
     skills?: JobSkillCreateNestedManyWithoutJobInput
     applications?: ApplicationCreateNestedManyWithoutJobInput
+    interviews?: InterviewCreateNestedManyWithoutJobInput
     savedBy?: SavedJobCreateNestedManyWithoutJobInput
     categories?: JobCategoryCreateNestedManyWithoutJobInput
   }
@@ -31954,6 +32184,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     skills?: JobSkillUncheckedCreateNestedManyWithoutJobInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutJobInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutJobInput
     savedBy?: SavedJobUncheckedCreateNestedManyWithoutJobInput
     categories?: JobCategoryUncheckedCreateNestedManyWithoutJobInput
   }
@@ -31986,6 +32217,7 @@ export namespace Prisma {
     recruiter?: RecruiterProfileUpdateOneRequiredWithoutJobsPostedNestedInput
     skills?: JobSkillUpdateManyWithoutJobNestedInput
     applications?: ApplicationUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUpdateManyWithoutJobNestedInput
   }
@@ -32018,6 +32250,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     skills?: JobSkillUncheckedUpdateManyWithoutJobNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUncheckedUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUncheckedUpdateManyWithoutJobNestedInput
   }
@@ -32501,13 +32734,17 @@ export namespace Prisma {
     aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    application: ApplicationCreateNestedOneWithoutInterviewsInput
+    application?: ApplicationCreateNestedOneWithoutInterviewsInput
+    candidate?: CandidateProfileCreateNestedOneWithoutInterviewsInput
+    job?: JobCreateNestedOneWithoutInterviewsInput
     exchanges?: InterviewExchangeCreateNestedManyWithoutInterviewInput
   }
 
   export type InterviewUncheckedCreateInput = {
     id?: string
-    applicationId: string
+    applicationId?: string | null
+    candidateId?: string | null
+    jobId?: string | null
     title: string
     type?: $Enums.InterviewType
     status?: $Enums.InterviewStatus
@@ -32547,13 +32784,17 @@ export namespace Prisma {
     aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    application?: ApplicationUpdateOneRequiredWithoutInterviewsNestedInput
+    application?: ApplicationUpdateOneWithoutInterviewsNestedInput
+    candidate?: CandidateProfileUpdateOneWithoutInterviewsNestedInput
+    job?: JobUpdateOneWithoutInterviewsNestedInput
     exchanges?: InterviewExchangeUpdateManyWithoutInterviewNestedInput
   }
 
   export type InterviewUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    applicationId?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
     status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
@@ -32576,7 +32817,9 @@ export namespace Prisma {
 
   export type InterviewCreateManyInput = {
     id?: string
-    applicationId: string
+    applicationId?: string | null
+    candidateId?: string | null
+    jobId?: string | null
     title: string
     type?: $Enums.InterviewType
     status?: $Enums.InterviewStatus
@@ -32619,7 +32862,9 @@ export namespace Prisma {
 
   export type InterviewUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    applicationId?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
     status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
@@ -33230,6 +33475,12 @@ export namespace Prisma {
     none?: CompanyReviewWhereInput
   }
 
+  export type InterviewListRelationFilter = {
+    every?: InterviewWhereInput
+    some?: InterviewWhereInput
+    none?: InterviewWhereInput
+  }
+
   export type ExperienceOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -33254,6 +33505,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type InterviewOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type CandidateProfileOrderByRelevanceInput = {
     fields: CandidateProfileOrderByRelevanceFieldEnum | CandidateProfileOrderByRelevanceFieldEnum[]
     sort: SortOrder
@@ -33269,6 +33524,7 @@ export namespace Prisma {
     linkedin?: SortOrder
     github?: SortOrder
     cvUrl?: SortOrder
+    isPublic?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -33282,6 +33538,7 @@ export namespace Prisma {
     linkedin?: SortOrder
     github?: SortOrder
     cvUrl?: SortOrder
+    isPublic?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -33295,6 +33552,7 @@ export namespace Prisma {
     linkedin?: SortOrder
     github?: SortOrder
     cvUrl?: SortOrder
+    isPublic?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -34042,12 +34300,6 @@ export namespace Prisma {
     not?: NestedEnumApplicationStatusFilter<$PrismaModel> | $Enums.ApplicationStatus
   }
 
-  export type InterviewListRelationFilter = {
-    every?: InterviewWhereInput
-    some?: InterviewWhereInput
-    none?: InterviewWhereInput
-  }
-
   export type ApplicationHistoryListRelationFilter = {
     every?: ApplicationHistoryWhereInput
     some?: ApplicationHistoryWhereInput
@@ -34058,10 +34310,6 @@ export namespace Prisma {
     every?: ApplicationNoteWhereInput
     some?: ApplicationNoteWhereInput
     none?: ApplicationNoteWhereInput
-  }
-
-  export type InterviewOrderByRelationAggregateInput = {
-    _count?: SortOrder
   }
 
   export type ApplicationHistoryOrderByRelationAggregateInput = {
@@ -34234,6 +34482,16 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type ApplicationNullableScalarRelationFilter = {
+    is?: ApplicationWhereInput | null
+    isNot?: ApplicationWhereInput | null
+  }
+
+  export type JobNullableScalarRelationFilter = {
+    is?: JobWhereInput | null
+    isNot?: JobWhereInput | null
+  }
+
   export type InterviewExchangeListRelationFilter = {
     every?: InterviewExchangeWhereInput
     some?: InterviewExchangeWhereInput
@@ -34253,6 +34511,8 @@ export namespace Prisma {
   export type InterviewCountOrderByAggregateInput = {
     id?: SortOrder
     applicationId?: SortOrder
+    candidateId?: SortOrder
+    jobId?: SortOrder
     title?: SortOrder
     type?: SortOrder
     status?: SortOrder
@@ -34280,6 +34540,8 @@ export namespace Prisma {
   export type InterviewMaxOrderByAggregateInput = {
     id?: SortOrder
     applicationId?: SortOrder
+    candidateId?: SortOrder
+    jobId?: SortOrder
     title?: SortOrder
     type?: SortOrder
     status?: SortOrder
@@ -34301,6 +34563,8 @@ export namespace Prisma {
   export type InterviewMinOrderByAggregateInput = {
     id?: SortOrder
     applicationId?: SortOrder
+    candidateId?: SortOrder
+    jobId?: SortOrder
     title?: SortOrder
     type?: SortOrder
     status?: SortOrder
@@ -34806,6 +35070,13 @@ export namespace Prisma {
     connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
   }
 
+  export type InterviewCreateNestedManyWithoutCandidateInput = {
+    create?: XOR<InterviewCreateWithoutCandidateInput, InterviewUncheckedCreateWithoutCandidateInput> | InterviewCreateWithoutCandidateInput[] | InterviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutCandidateInput | InterviewCreateOrConnectWithoutCandidateInput[]
+    createMany?: InterviewCreateManyCandidateInputEnvelope
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+  }
+
   export type ExperienceUncheckedCreateNestedManyWithoutCandidateInput = {
     create?: XOR<ExperienceCreateWithoutCandidateInput, ExperienceUncheckedCreateWithoutCandidateInput> | ExperienceCreateWithoutCandidateInput[] | ExperienceUncheckedCreateWithoutCandidateInput[]
     connectOrCreate?: ExperienceCreateOrConnectWithoutCandidateInput | ExperienceCreateOrConnectWithoutCandidateInput[]
@@ -34846,6 +35117,13 @@ export namespace Prisma {
     connectOrCreate?: CompanyReviewCreateOrConnectWithoutCandidateInput | CompanyReviewCreateOrConnectWithoutCandidateInput[]
     createMany?: CompanyReviewCreateManyCandidateInputEnvelope
     connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+  }
+
+  export type InterviewUncheckedCreateNestedManyWithoutCandidateInput = {
+    create?: XOR<InterviewCreateWithoutCandidateInput, InterviewUncheckedCreateWithoutCandidateInput> | InterviewCreateWithoutCandidateInput[] | InterviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutCandidateInput | InterviewCreateOrConnectWithoutCandidateInput[]
+    createMany?: InterviewCreateManyCandidateInputEnvelope
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
   }
 
   export type UserUpdateOneRequiredWithoutCandidateProfileNestedInput = {
@@ -34940,6 +35218,20 @@ export namespace Prisma {
     deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
   }
 
+  export type InterviewUpdateManyWithoutCandidateNestedInput = {
+    create?: XOR<InterviewCreateWithoutCandidateInput, InterviewUncheckedCreateWithoutCandidateInput> | InterviewCreateWithoutCandidateInput[] | InterviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutCandidateInput | InterviewCreateOrConnectWithoutCandidateInput[]
+    upsert?: InterviewUpsertWithWhereUniqueWithoutCandidateInput | InterviewUpsertWithWhereUniqueWithoutCandidateInput[]
+    createMany?: InterviewCreateManyCandidateInputEnvelope
+    set?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    disconnect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    delete?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    update?: InterviewUpdateWithWhereUniqueWithoutCandidateInput | InterviewUpdateWithWhereUniqueWithoutCandidateInput[]
+    updateMany?: InterviewUpdateManyWithWhereWithoutCandidateInput | InterviewUpdateManyWithWhereWithoutCandidateInput[]
+    deleteMany?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
+  }
+
   export type ExperienceUncheckedUpdateManyWithoutCandidateNestedInput = {
     create?: XOR<ExperienceCreateWithoutCandidateInput, ExperienceUncheckedCreateWithoutCandidateInput> | ExperienceCreateWithoutCandidateInput[] | ExperienceUncheckedCreateWithoutCandidateInput[]
     connectOrCreate?: ExperienceCreateOrConnectWithoutCandidateInput | ExperienceCreateOrConnectWithoutCandidateInput[]
@@ -35022,6 +35314,20 @@ export namespace Prisma {
     update?: CompanyReviewUpdateWithWhereUniqueWithoutCandidateInput | CompanyReviewUpdateWithWhereUniqueWithoutCandidateInput[]
     updateMany?: CompanyReviewUpdateManyWithWhereWithoutCandidateInput | CompanyReviewUpdateManyWithWhereWithoutCandidateInput[]
     deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
+  }
+
+  export type InterviewUncheckedUpdateManyWithoutCandidateNestedInput = {
+    create?: XOR<InterviewCreateWithoutCandidateInput, InterviewUncheckedCreateWithoutCandidateInput> | InterviewCreateWithoutCandidateInput[] | InterviewUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutCandidateInput | InterviewCreateOrConnectWithoutCandidateInput[]
+    upsert?: InterviewUpsertWithWhereUniqueWithoutCandidateInput | InterviewUpsertWithWhereUniqueWithoutCandidateInput[]
+    createMany?: InterviewCreateManyCandidateInputEnvelope
+    set?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    disconnect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    delete?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    update?: InterviewUpdateWithWhereUniqueWithoutCandidateInput | InterviewUpdateWithWhereUniqueWithoutCandidateInput[]
+    updateMany?: InterviewUpdateManyWithWhereWithoutCandidateInput | InterviewUpdateManyWithWhereWithoutCandidateInput[]
+    deleteMany?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutRecruiterProfileInput = {
@@ -35434,6 +35740,13 @@ export namespace Prisma {
     connect?: ApplicationWhereUniqueInput | ApplicationWhereUniqueInput[]
   }
 
+  export type InterviewCreateNestedManyWithoutJobInput = {
+    create?: XOR<InterviewCreateWithoutJobInput, InterviewUncheckedCreateWithoutJobInput> | InterviewCreateWithoutJobInput[] | InterviewUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutJobInput | InterviewCreateOrConnectWithoutJobInput[]
+    createMany?: InterviewCreateManyJobInputEnvelope
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+  }
+
   export type SavedJobCreateNestedManyWithoutJobInput = {
     create?: XOR<SavedJobCreateWithoutJobInput, SavedJobUncheckedCreateWithoutJobInput> | SavedJobCreateWithoutJobInput[] | SavedJobUncheckedCreateWithoutJobInput[]
     connectOrCreate?: SavedJobCreateOrConnectWithoutJobInput | SavedJobCreateOrConnectWithoutJobInput[]
@@ -35460,6 +35773,13 @@ export namespace Prisma {
     connectOrCreate?: ApplicationCreateOrConnectWithoutJobInput | ApplicationCreateOrConnectWithoutJobInput[]
     createMany?: ApplicationCreateManyJobInputEnvelope
     connect?: ApplicationWhereUniqueInput | ApplicationWhereUniqueInput[]
+  }
+
+  export type InterviewUncheckedCreateNestedManyWithoutJobInput = {
+    create?: XOR<InterviewCreateWithoutJobInput, InterviewUncheckedCreateWithoutJobInput> | InterviewCreateWithoutJobInput[] | InterviewUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutJobInput | InterviewCreateOrConnectWithoutJobInput[]
+    createMany?: InterviewCreateManyJobInputEnvelope
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
   }
 
   export type SavedJobUncheckedCreateNestedManyWithoutJobInput = {
@@ -35545,6 +35865,20 @@ export namespace Prisma {
     deleteMany?: ApplicationScalarWhereInput | ApplicationScalarWhereInput[]
   }
 
+  export type InterviewUpdateManyWithoutJobNestedInput = {
+    create?: XOR<InterviewCreateWithoutJobInput, InterviewUncheckedCreateWithoutJobInput> | InterviewCreateWithoutJobInput[] | InterviewUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutJobInput | InterviewCreateOrConnectWithoutJobInput[]
+    upsert?: InterviewUpsertWithWhereUniqueWithoutJobInput | InterviewUpsertWithWhereUniqueWithoutJobInput[]
+    createMany?: InterviewCreateManyJobInputEnvelope
+    set?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    disconnect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    delete?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    update?: InterviewUpdateWithWhereUniqueWithoutJobInput | InterviewUpdateWithWhereUniqueWithoutJobInput[]
+    updateMany?: InterviewUpdateManyWithWhereWithoutJobInput | InterviewUpdateManyWithWhereWithoutJobInput[]
+    deleteMany?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
+  }
+
   export type SavedJobUpdateManyWithoutJobNestedInput = {
     create?: XOR<SavedJobCreateWithoutJobInput, SavedJobUncheckedCreateWithoutJobInput> | SavedJobCreateWithoutJobInput[] | SavedJobUncheckedCreateWithoutJobInput[]
     connectOrCreate?: SavedJobCreateOrConnectWithoutJobInput | SavedJobCreateOrConnectWithoutJobInput[]
@@ -35599,6 +35933,20 @@ export namespace Prisma {
     update?: ApplicationUpdateWithWhereUniqueWithoutJobInput | ApplicationUpdateWithWhereUniqueWithoutJobInput[]
     updateMany?: ApplicationUpdateManyWithWhereWithoutJobInput | ApplicationUpdateManyWithWhereWithoutJobInput[]
     deleteMany?: ApplicationScalarWhereInput | ApplicationScalarWhereInput[]
+  }
+
+  export type InterviewUncheckedUpdateManyWithoutJobNestedInput = {
+    create?: XOR<InterviewCreateWithoutJobInput, InterviewUncheckedCreateWithoutJobInput> | InterviewCreateWithoutJobInput[] | InterviewUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: InterviewCreateOrConnectWithoutJobInput | InterviewCreateOrConnectWithoutJobInput[]
+    upsert?: InterviewUpsertWithWhereUniqueWithoutJobInput | InterviewUpsertWithWhereUniqueWithoutJobInput[]
+    createMany?: InterviewCreateManyJobInputEnvelope
+    set?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    disconnect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    delete?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+    update?: InterviewUpdateWithWhereUniqueWithoutJobInput | InterviewUpdateWithWhereUniqueWithoutJobInput[]
+    updateMany?: InterviewUpdateManyWithWhereWithoutJobInput | InterviewUpdateManyWithWhereWithoutJobInput[]
+    deleteMany?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
   }
 
   export type SavedJobUncheckedUpdateManyWithoutJobNestedInput = {
@@ -35947,6 +36295,18 @@ export namespace Prisma {
     connect?: ApplicationWhereUniqueInput
   }
 
+  export type CandidateProfileCreateNestedOneWithoutInterviewsInput = {
+    create?: XOR<CandidateProfileCreateWithoutInterviewsInput, CandidateProfileUncheckedCreateWithoutInterviewsInput>
+    connectOrCreate?: CandidateProfileCreateOrConnectWithoutInterviewsInput
+    connect?: CandidateProfileWhereUniqueInput
+  }
+
+  export type JobCreateNestedOneWithoutInterviewsInput = {
+    create?: XOR<JobCreateWithoutInterviewsInput, JobUncheckedCreateWithoutInterviewsInput>
+    connectOrCreate?: JobCreateOrConnectWithoutInterviewsInput
+    connect?: JobWhereUniqueInput
+  }
+
   export type InterviewExchangeCreateNestedManyWithoutInterviewInput = {
     create?: XOR<InterviewExchangeCreateWithoutInterviewInput, InterviewExchangeUncheckedCreateWithoutInterviewInput> | InterviewExchangeCreateWithoutInterviewInput[] | InterviewExchangeUncheckedCreateWithoutInterviewInput[]
     connectOrCreate?: InterviewExchangeCreateOrConnectWithoutInterviewInput | InterviewExchangeCreateOrConnectWithoutInterviewInput[]
@@ -35969,12 +36329,34 @@ export namespace Prisma {
     set?: $Enums.InterviewStatus
   }
 
-  export type ApplicationUpdateOneRequiredWithoutInterviewsNestedInput = {
+  export type ApplicationUpdateOneWithoutInterviewsNestedInput = {
     create?: XOR<ApplicationCreateWithoutInterviewsInput, ApplicationUncheckedCreateWithoutInterviewsInput>
     connectOrCreate?: ApplicationCreateOrConnectWithoutInterviewsInput
     upsert?: ApplicationUpsertWithoutInterviewsInput
+    disconnect?: ApplicationWhereInput | boolean
+    delete?: ApplicationWhereInput | boolean
     connect?: ApplicationWhereUniqueInput
     update?: XOR<XOR<ApplicationUpdateToOneWithWhereWithoutInterviewsInput, ApplicationUpdateWithoutInterviewsInput>, ApplicationUncheckedUpdateWithoutInterviewsInput>
+  }
+
+  export type CandidateProfileUpdateOneWithoutInterviewsNestedInput = {
+    create?: XOR<CandidateProfileCreateWithoutInterviewsInput, CandidateProfileUncheckedCreateWithoutInterviewsInput>
+    connectOrCreate?: CandidateProfileCreateOrConnectWithoutInterviewsInput
+    upsert?: CandidateProfileUpsertWithoutInterviewsInput
+    disconnect?: CandidateProfileWhereInput | boolean
+    delete?: CandidateProfileWhereInput | boolean
+    connect?: CandidateProfileWhereUniqueInput
+    update?: XOR<XOR<CandidateProfileUpdateToOneWithWhereWithoutInterviewsInput, CandidateProfileUpdateWithoutInterviewsInput>, CandidateProfileUncheckedUpdateWithoutInterviewsInput>
+  }
+
+  export type JobUpdateOneWithoutInterviewsNestedInput = {
+    create?: XOR<JobCreateWithoutInterviewsInput, JobUncheckedCreateWithoutInterviewsInput>
+    connectOrCreate?: JobCreateOrConnectWithoutInterviewsInput
+    upsert?: JobUpsertWithoutInterviewsInput
+    disconnect?: JobWhereInput | boolean
+    delete?: JobWhereInput | boolean
+    connect?: JobWhereUniqueInput
+    update?: XOR<XOR<JobUpdateToOneWithWhereWithoutInterviewsInput, JobUpdateWithoutInterviewsInput>, JobUncheckedUpdateWithoutInterviewsInput>
   }
 
   export type InterviewExchangeUpdateManyWithoutInterviewNestedInput = {
@@ -36441,6 +36823,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceCreateNestedManyWithoutCandidateInput
@@ -36449,6 +36832,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutUserInput = {
@@ -36459,6 +36843,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
@@ -36467,6 +36852,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutUserInput = {
@@ -36606,6 +36992,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUpdateManyWithoutCandidateNestedInput
@@ -36614,6 +37001,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutUserInput = {
@@ -36624,6 +37012,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
@@ -36632,6 +37021,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type RecruiterProfileUpsertWithoutUserInput = {
@@ -36970,6 +37360,64 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type InterviewCreateWithoutCandidateInput = {
+    id?: string
+    title: string
+    type?: $Enums.InterviewType
+    status?: $Enums.InterviewStatus
+    accessCode: string
+    sessionUrl?: string | null
+    expiresAt: Date | string
+    startedAt?: Date | string | null
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    overallScore?: number | null
+    summary?: string | null
+    recommendation?: string | null
+    recordingUrl?: string | null
+    fullTranscript?: string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    application?: ApplicationCreateNestedOneWithoutInterviewsInput
+    job?: JobCreateNestedOneWithoutInterviewsInput
+    exchanges?: InterviewExchangeCreateNestedManyWithoutInterviewInput
+  }
+
+  export type InterviewUncheckedCreateWithoutCandidateInput = {
+    id?: string
+    applicationId?: string | null
+    jobId?: string | null
+    title: string
+    type?: $Enums.InterviewType
+    status?: $Enums.InterviewStatus
+    accessCode: string
+    sessionUrl?: string | null
+    expiresAt: Date | string
+    startedAt?: Date | string | null
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    overallScore?: number | null
+    summary?: string | null
+    recommendation?: string | null
+    recordingUrl?: string | null
+    fullTranscript?: string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    exchanges?: InterviewExchangeUncheckedCreateNestedManyWithoutInterviewInput
+  }
+
+  export type InterviewCreateOrConnectWithoutCandidateInput = {
+    where: InterviewWhereUniqueInput
+    create: XOR<InterviewCreateWithoutCandidateInput, InterviewUncheckedCreateWithoutCandidateInput>
+  }
+
+  export type InterviewCreateManyCandidateInputEnvelope = {
+    data: InterviewCreateManyCandidateInput | InterviewCreateManyCandidateInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutCandidateProfileInput = {
     update: XOR<UserUpdateWithoutCandidateProfileInput, UserUncheckedUpdateWithoutCandidateProfileInput>
     create: XOR<UserCreateWithoutCandidateProfileInput, UserUncheckedCreateWithoutCandidateProfileInput>
@@ -37201,6 +37649,49 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"CompanyReview"> | Date | string
   }
 
+  export type InterviewUpsertWithWhereUniqueWithoutCandidateInput = {
+    where: InterviewWhereUniqueInput
+    update: XOR<InterviewUpdateWithoutCandidateInput, InterviewUncheckedUpdateWithoutCandidateInput>
+    create: XOR<InterviewCreateWithoutCandidateInput, InterviewUncheckedCreateWithoutCandidateInput>
+  }
+
+  export type InterviewUpdateWithWhereUniqueWithoutCandidateInput = {
+    where: InterviewWhereUniqueInput
+    data: XOR<InterviewUpdateWithoutCandidateInput, InterviewUncheckedUpdateWithoutCandidateInput>
+  }
+
+  export type InterviewUpdateManyWithWhereWithoutCandidateInput = {
+    where: InterviewScalarWhereInput
+    data: XOR<InterviewUpdateManyMutationInput, InterviewUncheckedUpdateManyWithoutCandidateInput>
+  }
+
+  export type InterviewScalarWhereInput = {
+    AND?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
+    OR?: InterviewScalarWhereInput[]
+    NOT?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
+    id?: StringFilter<"Interview"> | string
+    applicationId?: StringNullableFilter<"Interview"> | string | null
+    candidateId?: StringNullableFilter<"Interview"> | string | null
+    jobId?: StringNullableFilter<"Interview"> | string | null
+    title?: StringFilter<"Interview"> | string
+    type?: EnumInterviewTypeFilter<"Interview"> | $Enums.InterviewType
+    status?: EnumInterviewStatusFilter<"Interview"> | $Enums.InterviewStatus
+    accessCode?: StringFilter<"Interview"> | string
+    sessionUrl?: StringNullableFilter<"Interview"> | string | null
+    expiresAt?: DateTimeFilter<"Interview"> | Date | string
+    startedAt?: DateTimeNullableFilter<"Interview"> | Date | string | null
+    endedAt?: DateTimeNullableFilter<"Interview"> | Date | string | null
+    durationSeconds?: IntNullableFilter<"Interview"> | number | null
+    overallScore?: FloatNullableFilter<"Interview"> | number | null
+    summary?: StringNullableFilter<"Interview"> | string | null
+    recommendation?: StringNullableFilter<"Interview"> | string | null
+    recordingUrl?: StringNullableFilter<"Interview"> | string | null
+    fullTranscript?: StringNullableFilter<"Interview"> | string | null
+    aiAnalysisData?: JsonNullableFilter<"Interview">
+    createdAt?: DateTimeFilter<"Interview"> | Date | string
+    updatedAt?: DateTimeFilter<"Interview"> | Date | string
+  }
+
   export type UserCreateWithoutRecruiterProfileInput = {
     id?: string
     email: string
@@ -37320,6 +37811,7 @@ export namespace Prisma {
     company: CompanyCreateNestedOneWithoutJobsInput
     skills?: JobSkillCreateNestedManyWithoutJobInput
     applications?: ApplicationCreateNestedManyWithoutJobInput
+    interviews?: InterviewCreateNestedManyWithoutJobInput
     savedBy?: SavedJobCreateNestedManyWithoutJobInput
     categories?: JobCategoryCreateNestedManyWithoutJobInput
   }
@@ -37351,6 +37843,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     skills?: JobSkillUncheckedCreateNestedManyWithoutJobInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutJobInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutJobInput
     savedBy?: SavedJobUncheckedCreateNestedManyWithoutJobInput
     categories?: JobCategoryUncheckedCreateNestedManyWithoutJobInput
   }
@@ -37524,6 +38017,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCandidateProfileInput
@@ -37532,6 +38026,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutExperiencesInput = {
@@ -37543,6 +38038,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     educations?: EducationUncheckedCreateNestedManyWithoutCandidateInput
@@ -37550,6 +38046,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutExperiencesInput = {
@@ -37576,6 +38073,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
@@ -37584,6 +38082,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutExperiencesInput = {
@@ -37595,6 +38094,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     educations?: EducationUncheckedUpdateManyWithoutCandidateNestedInput
@@ -37602,6 +38102,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileCreateWithoutEducationsInput = {
@@ -37612,6 +38113,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCandidateProfileInput
@@ -37620,6 +38122,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutEducationsInput = {
@@ -37631,6 +38134,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
@@ -37638,6 +38142,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutEducationsInput = {
@@ -37664,6 +38169,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
@@ -37672,6 +38178,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutEducationsInput = {
@@ -37683,6 +38190,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
@@ -37690,6 +38198,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateSkillCreateWithoutSkillInput = {
@@ -37783,6 +38292,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCandidateProfileInput
@@ -37791,6 +38301,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutSkillsInput = {
@@ -37802,6 +38313,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
@@ -37809,6 +38321,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutSkillsInput = {
@@ -37854,6 +38367,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
@@ -37862,6 +38376,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutSkillsInput = {
@@ -37873,6 +38388,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
@@ -37880,6 +38396,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type SkillUpsertWithoutCandidatesInput = {
@@ -37962,6 +38479,7 @@ export namespace Prisma {
     recruiter: RecruiterProfileCreateNestedOneWithoutJobsPostedInput
     skills?: JobSkillCreateNestedManyWithoutJobInput
     applications?: ApplicationCreateNestedManyWithoutJobInput
+    interviews?: InterviewCreateNestedManyWithoutJobInput
     savedBy?: SavedJobCreateNestedManyWithoutJobInput
     categories?: JobCategoryCreateNestedManyWithoutJobInput
   }
@@ -37993,6 +38511,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     skills?: JobSkillUncheckedCreateNestedManyWithoutJobInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutJobInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutJobInput
     savedBy?: SavedJobUncheckedCreateNestedManyWithoutJobInput
     categories?: JobCategoryUncheckedCreateNestedManyWithoutJobInput
   }
@@ -38160,6 +38679,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCandidateProfileInput
@@ -38168,6 +38688,7 @@ export namespace Prisma {
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutCompanyReviewsInput = {
@@ -38179,6 +38700,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
@@ -38186,6 +38708,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutCompanyReviewsInput = {
@@ -38265,6 +38788,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
@@ -38273,6 +38797,7 @@ export namespace Prisma {
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput = {
@@ -38284,6 +38809,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
@@ -38291,6 +38817,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CompanyCreateWithoutJobsInput = {
@@ -38418,6 +38945,64 @@ export namespace Prisma {
 
   export type ApplicationCreateManyJobInputEnvelope = {
     data: ApplicationCreateManyJobInput | ApplicationCreateManyJobInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InterviewCreateWithoutJobInput = {
+    id?: string
+    title: string
+    type?: $Enums.InterviewType
+    status?: $Enums.InterviewStatus
+    accessCode: string
+    sessionUrl?: string | null
+    expiresAt: Date | string
+    startedAt?: Date | string | null
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    overallScore?: number | null
+    summary?: string | null
+    recommendation?: string | null
+    recordingUrl?: string | null
+    fullTranscript?: string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    application?: ApplicationCreateNestedOneWithoutInterviewsInput
+    candidate?: CandidateProfileCreateNestedOneWithoutInterviewsInput
+    exchanges?: InterviewExchangeCreateNestedManyWithoutInterviewInput
+  }
+
+  export type InterviewUncheckedCreateWithoutJobInput = {
+    id?: string
+    applicationId?: string | null
+    candidateId?: string | null
+    title: string
+    type?: $Enums.InterviewType
+    status?: $Enums.InterviewStatus
+    accessCode: string
+    sessionUrl?: string | null
+    expiresAt: Date | string
+    startedAt?: Date | string | null
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    overallScore?: number | null
+    summary?: string | null
+    recommendation?: string | null
+    recordingUrl?: string | null
+    fullTranscript?: string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    exchanges?: InterviewExchangeUncheckedCreateNestedManyWithoutInterviewInput
+  }
+
+  export type InterviewCreateOrConnectWithoutJobInput = {
+    where: InterviewWhereUniqueInput
+    create: XOR<InterviewCreateWithoutJobInput, InterviewUncheckedCreateWithoutJobInput>
+  }
+
+  export type InterviewCreateManyJobInputEnvelope = {
+    data: InterviewCreateManyJobInput | InterviewCreateManyJobInput[]
     skipDuplicates?: boolean
   }
 
@@ -38575,6 +39160,22 @@ export namespace Prisma {
     data: XOR<ApplicationUpdateManyMutationInput, ApplicationUncheckedUpdateManyWithoutJobInput>
   }
 
+  export type InterviewUpsertWithWhereUniqueWithoutJobInput = {
+    where: InterviewWhereUniqueInput
+    update: XOR<InterviewUpdateWithoutJobInput, InterviewUncheckedUpdateWithoutJobInput>
+    create: XOR<InterviewCreateWithoutJobInput, InterviewUncheckedCreateWithoutJobInput>
+  }
+
+  export type InterviewUpdateWithWhereUniqueWithoutJobInput = {
+    where: InterviewWhereUniqueInput
+    data: XOR<InterviewUpdateWithoutJobInput, InterviewUncheckedUpdateWithoutJobInput>
+  }
+
+  export type InterviewUpdateManyWithWhereWithoutJobInput = {
+    where: InterviewScalarWhereInput
+    data: XOR<InterviewUpdateManyMutationInput, InterviewUncheckedUpdateManyWithoutJobInput>
+  }
+
   export type SavedJobUpsertWithWhereUniqueWithoutJobInput = {
     where: SavedJobWhereUniqueInput
     update: XOR<SavedJobUpdateWithoutJobInput, SavedJobUncheckedUpdateWithoutJobInput>
@@ -38677,6 +39278,7 @@ export namespace Prisma {
     recruiter: RecruiterProfileCreateNestedOneWithoutJobsPostedInput
     skills?: JobSkillCreateNestedManyWithoutJobInput
     applications?: ApplicationCreateNestedManyWithoutJobInput
+    interviews?: InterviewCreateNestedManyWithoutJobInput
     savedBy?: SavedJobCreateNestedManyWithoutJobInput
   }
 
@@ -38708,6 +39310,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     skills?: JobSkillUncheckedCreateNestedManyWithoutJobInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutJobInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutJobInput
     savedBy?: SavedJobUncheckedCreateNestedManyWithoutJobInput
   }
 
@@ -38772,6 +39375,7 @@ export namespace Prisma {
     recruiter?: RecruiterProfileUpdateOneRequiredWithoutJobsPostedNestedInput
     skills?: JobSkillUpdateManyWithoutJobNestedInput
     applications?: ApplicationUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUpdateManyWithoutJobNestedInput
   }
 
@@ -38803,6 +39407,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     skills?: JobSkillUncheckedUpdateManyWithoutJobNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUncheckedUpdateManyWithoutJobNestedInput
   }
 
@@ -38856,6 +39461,7 @@ export namespace Prisma {
     company: CompanyCreateNestedOneWithoutJobsInput
     recruiter: RecruiterProfileCreateNestedOneWithoutJobsPostedInput
     applications?: ApplicationCreateNestedManyWithoutJobInput
+    interviews?: InterviewCreateNestedManyWithoutJobInput
     savedBy?: SavedJobCreateNestedManyWithoutJobInput
     categories?: JobCategoryCreateNestedManyWithoutJobInput
   }
@@ -38887,6 +39493,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     applications?: ApplicationUncheckedCreateNestedManyWithoutJobInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutJobInput
     savedBy?: SavedJobUncheckedCreateNestedManyWithoutJobInput
     categories?: JobCategoryUncheckedCreateNestedManyWithoutJobInput
   }
@@ -38953,6 +39560,7 @@ export namespace Prisma {
     company?: CompanyUpdateOneRequiredWithoutJobsNestedInput
     recruiter?: RecruiterProfileUpdateOneRequiredWithoutJobsPostedNestedInput
     applications?: ApplicationUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUpdateManyWithoutJobNestedInput
   }
@@ -38984,6 +39592,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     applications?: ApplicationUncheckedUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUncheckedUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUncheckedUpdateManyWithoutJobNestedInput
   }
@@ -39021,6 +39630,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCandidateProfileInput
@@ -39029,6 +39639,7 @@ export namespace Prisma {
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutSavedJobsInput = {
@@ -39040,6 +39651,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
@@ -39047,6 +39659,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutSavedJobsInput = {
@@ -39082,6 +39695,7 @@ export namespace Prisma {
     recruiter: RecruiterProfileCreateNestedOneWithoutJobsPostedInput
     skills?: JobSkillCreateNestedManyWithoutJobInput
     applications?: ApplicationCreateNestedManyWithoutJobInput
+    interviews?: InterviewCreateNestedManyWithoutJobInput
     categories?: JobCategoryCreateNestedManyWithoutJobInput
   }
 
@@ -39113,6 +39727,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     skills?: JobSkillUncheckedCreateNestedManyWithoutJobInput
     applications?: ApplicationUncheckedCreateNestedManyWithoutJobInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutJobInput
     categories?: JobCategoryUncheckedCreateNestedManyWithoutJobInput
   }
 
@@ -39140,6 +39755,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
@@ -39148,6 +39764,7 @@ export namespace Prisma {
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutSavedJobsInput = {
@@ -39159,6 +39776,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
@@ -39166,6 +39784,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type JobUpsertWithoutSavedByInput = {
@@ -39207,6 +39826,7 @@ export namespace Prisma {
     recruiter?: RecruiterProfileUpdateOneRequiredWithoutJobsPostedNestedInput
     skills?: JobSkillUpdateManyWithoutJobNestedInput
     applications?: ApplicationUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUpdateManyWithoutJobNestedInput
   }
 
@@ -39238,6 +39858,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     skills?: JobSkillUncheckedUpdateManyWithoutJobNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUncheckedUpdateManyWithoutJobNestedInput
   }
 
@@ -39268,6 +39889,7 @@ export namespace Prisma {
     company: CompanyCreateNestedOneWithoutJobsInput
     recruiter: RecruiterProfileCreateNestedOneWithoutJobsPostedInput
     skills?: JobSkillCreateNestedManyWithoutJobInput
+    interviews?: InterviewCreateNestedManyWithoutJobInput
     savedBy?: SavedJobCreateNestedManyWithoutJobInput
     categories?: JobCategoryCreateNestedManyWithoutJobInput
   }
@@ -39299,6 +39921,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     skills?: JobSkillUncheckedCreateNestedManyWithoutJobInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutJobInput
     savedBy?: SavedJobUncheckedCreateNestedManyWithoutJobInput
     categories?: JobCategoryUncheckedCreateNestedManyWithoutJobInput
   }
@@ -39316,6 +39939,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCandidateProfileInput
@@ -39324,6 +39948,7 @@ export namespace Prisma {
     skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutApplicationsInput = {
@@ -39335,6 +39960,7 @@ export namespace Prisma {
     linkedin?: string | null
     github?: string | null
     cvUrl?: string | null
+    isPublic?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
@@ -39342,6 +39968,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutApplicationsInput = {
@@ -39368,11 +39995,15 @@ export namespace Prisma {
     aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    candidate?: CandidateProfileCreateNestedOneWithoutInterviewsInput
+    job?: JobCreateNestedOneWithoutInterviewsInput
     exchanges?: InterviewExchangeCreateNestedManyWithoutInterviewInput
   }
 
   export type InterviewUncheckedCreateWithoutApplicationInput = {
     id?: string
+    candidateId?: string | null
+    jobId?: string | null
     title: string
     type?: $Enums.InterviewType
     status?: $Enums.InterviewStatus
@@ -39491,6 +40122,7 @@ export namespace Prisma {
     company?: CompanyUpdateOneRequiredWithoutJobsNestedInput
     recruiter?: RecruiterProfileUpdateOneRequiredWithoutJobsPostedNestedInput
     skills?: JobSkillUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUpdateManyWithoutJobNestedInput
   }
@@ -39522,6 +40154,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     skills?: JobSkillUncheckedUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUncheckedUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUncheckedUpdateManyWithoutJobNestedInput
   }
@@ -39545,6 +40178,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
@@ -39553,6 +40187,7 @@ export namespace Prisma {
     skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutApplicationsInput = {
@@ -39564,6 +40199,7 @@ export namespace Prisma {
     linkedin?: NullableStringFieldUpdateOperationsInput | string | null
     github?: NullableStringFieldUpdateOperationsInput | string | null
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
@@ -39571,6 +40207,7 @@ export namespace Prisma {
     skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type InterviewUpsertWithWhereUniqueWithoutApplicationInput = {
@@ -39587,31 +40224,6 @@ export namespace Prisma {
   export type InterviewUpdateManyWithWhereWithoutApplicationInput = {
     where: InterviewScalarWhereInput
     data: XOR<InterviewUpdateManyMutationInput, InterviewUncheckedUpdateManyWithoutApplicationInput>
-  }
-
-  export type InterviewScalarWhereInput = {
-    AND?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
-    OR?: InterviewScalarWhereInput[]
-    NOT?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
-    id?: StringFilter<"Interview"> | string
-    applicationId?: StringFilter<"Interview"> | string
-    title?: StringFilter<"Interview"> | string
-    type?: EnumInterviewTypeFilter<"Interview"> | $Enums.InterviewType
-    status?: EnumInterviewStatusFilter<"Interview"> | $Enums.InterviewStatus
-    accessCode?: StringFilter<"Interview"> | string
-    sessionUrl?: StringNullableFilter<"Interview"> | string | null
-    expiresAt?: DateTimeFilter<"Interview"> | Date | string
-    startedAt?: DateTimeNullableFilter<"Interview"> | Date | string | null
-    endedAt?: DateTimeNullableFilter<"Interview"> | Date | string | null
-    durationSeconds?: IntNullableFilter<"Interview"> | number | null
-    overallScore?: FloatNullableFilter<"Interview"> | number | null
-    summary?: StringNullableFilter<"Interview"> | string | null
-    recommendation?: StringNullableFilter<"Interview"> | string | null
-    recordingUrl?: StringNullableFilter<"Interview"> | string | null
-    fullTranscript?: StringNullableFilter<"Interview"> | string | null
-    aiAnalysisData?: JsonNullableFilter<"Interview">
-    createdAt?: DateTimeFilter<"Interview"> | Date | string
-    updatedAt?: DateTimeFilter<"Interview"> | Date | string
   }
 
   export type ApplicationHistoryUpsertWithWhereUniqueWithoutApplicationInput = {
@@ -39846,6 +40458,120 @@ export namespace Prisma {
     create: XOR<ApplicationCreateWithoutInterviewsInput, ApplicationUncheckedCreateWithoutInterviewsInput>
   }
 
+  export type CandidateProfileCreateWithoutInterviewsInput = {
+    id?: string
+    headline?: string | null
+    bio?: string | null
+    website?: string | null
+    linkedin?: string | null
+    github?: string | null
+    cvUrl?: string | null
+    isPublic?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutCandidateProfileInput
+    experiences?: ExperienceCreateNestedManyWithoutCandidateInput
+    educations?: EducationCreateNestedManyWithoutCandidateInput
+    skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
+    applications?: ApplicationCreateNestedManyWithoutCandidateInput
+    savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+  }
+
+  export type CandidateProfileUncheckedCreateWithoutInterviewsInput = {
+    id?: string
+    userId: string
+    headline?: string | null
+    bio?: string | null
+    website?: string | null
+    linkedin?: string | null
+    github?: string | null
+    cvUrl?: string | null
+    isPublic?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
+    educations?: EducationUncheckedCreateNestedManyWithoutCandidateInput
+    skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
+    applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
+    savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+  }
+
+  export type CandidateProfileCreateOrConnectWithoutInterviewsInput = {
+    where: CandidateProfileWhereUniqueInput
+    create: XOR<CandidateProfileCreateWithoutInterviewsInput, CandidateProfileUncheckedCreateWithoutInterviewsInput>
+  }
+
+  export type JobCreateWithoutInterviewsInput = {
+    id?: string
+    slug: string
+    title: string
+    description: string
+    requirements?: string | null
+    benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
+    type?: $Enums.JobType
+    status?: $Enums.JobStatus
+    location?: string | null
+    isRemote?: boolean
+    salaryMin?: number | null
+    salaryMax?: number | null
+    currency?: $Enums.Currency
+    isSalaryNegotiable?: boolean
+    experienceLevel?: string | null
+    quantity?: number
+    viewsCount?: number
+    clicksCount?: number
+    publishedAt?: Date | string | null
+    deadline?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    company: CompanyCreateNestedOneWithoutJobsInput
+    recruiter: RecruiterProfileCreateNestedOneWithoutJobsPostedInput
+    skills?: JobSkillCreateNestedManyWithoutJobInput
+    applications?: ApplicationCreateNestedManyWithoutJobInput
+    savedBy?: SavedJobCreateNestedManyWithoutJobInput
+    categories?: JobCategoryCreateNestedManyWithoutJobInput
+  }
+
+  export type JobUncheckedCreateWithoutInterviewsInput = {
+    id?: string
+    slug: string
+    title: string
+    companyId: string
+    recruiterId: string
+    description: string
+    requirements?: string | null
+    benefits?: string | null
+    interviewQuestions?: JobCreateinterviewQuestionsInput | string[]
+    type?: $Enums.JobType
+    status?: $Enums.JobStatus
+    location?: string | null
+    isRemote?: boolean
+    salaryMin?: number | null
+    salaryMax?: number | null
+    currency?: $Enums.Currency
+    isSalaryNegotiable?: boolean
+    experienceLevel?: string | null
+    quantity?: number
+    viewsCount?: number
+    clicksCount?: number
+    publishedAt?: Date | string | null
+    deadline?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    skills?: JobSkillUncheckedCreateNestedManyWithoutJobInput
+    applications?: ApplicationUncheckedCreateNestedManyWithoutJobInput
+    savedBy?: SavedJobUncheckedCreateNestedManyWithoutJobInput
+    categories?: JobCategoryUncheckedCreateNestedManyWithoutJobInput
+  }
+
+  export type JobCreateOrConnectWithoutInterviewsInput = {
+    where: JobWhereUniqueInput
+    create: XOR<JobCreateWithoutInterviewsInput, JobUncheckedCreateWithoutInterviewsInput>
+  }
+
   export type InterviewExchangeCreateWithoutInterviewInput = {
     id?: string
     orderIndex: number
@@ -39921,6 +40647,132 @@ export namespace Prisma {
     notes?: ApplicationNoteUncheckedUpdateManyWithoutApplicationNestedInput
   }
 
+  export type CandidateProfileUpsertWithoutInterviewsInput = {
+    update: XOR<CandidateProfileUpdateWithoutInterviewsInput, CandidateProfileUncheckedUpdateWithoutInterviewsInput>
+    create: XOR<CandidateProfileCreateWithoutInterviewsInput, CandidateProfileUncheckedCreateWithoutInterviewsInput>
+    where?: CandidateProfileWhereInput
+  }
+
+  export type CandidateProfileUpdateToOneWithWhereWithoutInterviewsInput = {
+    where?: CandidateProfileWhereInput
+    data: XOR<CandidateProfileUpdateWithoutInterviewsInput, CandidateProfileUncheckedUpdateWithoutInterviewsInput>
+  }
+
+  export type CandidateProfileUpdateWithoutInterviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    headline?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedin?: NullableStringFieldUpdateOperationsInput | string | null
+    github?: NullableStringFieldUpdateOperationsInput | string | null
+    cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
+    experiences?: ExperienceUpdateManyWithoutCandidateNestedInput
+    educations?: EducationUpdateManyWithoutCandidateNestedInput
+    skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
+    applications?: ApplicationUpdateManyWithoutCandidateNestedInput
+    savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+  }
+
+  export type CandidateProfileUncheckedUpdateWithoutInterviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    headline?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedin?: NullableStringFieldUpdateOperationsInput | string | null
+    github?: NullableStringFieldUpdateOperationsInput | string | null
+    cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
+    educations?: EducationUncheckedUpdateManyWithoutCandidateNestedInput
+    skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
+    applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
+    savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+  }
+
+  export type JobUpsertWithoutInterviewsInput = {
+    update: XOR<JobUpdateWithoutInterviewsInput, JobUncheckedUpdateWithoutInterviewsInput>
+    create: XOR<JobCreateWithoutInterviewsInput, JobUncheckedCreateWithoutInterviewsInput>
+    where?: JobWhereInput
+  }
+
+  export type JobUpdateToOneWithWhereWithoutInterviewsInput = {
+    where?: JobWhereInput
+    data: XOR<JobUpdateWithoutInterviewsInput, JobUncheckedUpdateWithoutInterviewsInput>
+  }
+
+  export type JobUpdateWithoutInterviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
+    type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
+    status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    isRemote?: BoolFieldUpdateOperationsInput | boolean
+    salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
+    salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
+    currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
+    isSalaryNegotiable?: BoolFieldUpdateOperationsInput | boolean
+    experienceLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    quantity?: IntFieldUpdateOperationsInput | number
+    viewsCount?: IntFieldUpdateOperationsInput | number
+    clicksCount?: IntFieldUpdateOperationsInput | number
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    company?: CompanyUpdateOneRequiredWithoutJobsNestedInput
+    recruiter?: RecruiterProfileUpdateOneRequiredWithoutJobsPostedNestedInput
+    skills?: JobSkillUpdateManyWithoutJobNestedInput
+    applications?: ApplicationUpdateManyWithoutJobNestedInput
+    savedBy?: SavedJobUpdateManyWithoutJobNestedInput
+    categories?: JobCategoryUpdateManyWithoutJobNestedInput
+  }
+
+  export type JobUncheckedUpdateWithoutInterviewsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    recruiterId?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    benefits?: NullableStringFieldUpdateOperationsInput | string | null
+    interviewQuestions?: JobUpdateinterviewQuestionsInput | string[]
+    type?: EnumJobTypeFieldUpdateOperationsInput | $Enums.JobType
+    status?: EnumJobStatusFieldUpdateOperationsInput | $Enums.JobStatus
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    isRemote?: BoolFieldUpdateOperationsInput | boolean
+    salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
+    salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
+    currency?: EnumCurrencyFieldUpdateOperationsInput | $Enums.Currency
+    isSalaryNegotiable?: BoolFieldUpdateOperationsInput | boolean
+    experienceLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    quantity?: IntFieldUpdateOperationsInput | number
+    viewsCount?: IntFieldUpdateOperationsInput | number
+    clicksCount?: IntFieldUpdateOperationsInput | number
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    skills?: JobSkillUncheckedUpdateManyWithoutJobNestedInput
+    applications?: ApplicationUncheckedUpdateManyWithoutJobNestedInput
+    savedBy?: SavedJobUncheckedUpdateManyWithoutJobNestedInput
+    categories?: JobCategoryUncheckedUpdateManyWithoutJobNestedInput
+  }
+
   export type InterviewExchangeUpsertWithWhereUniqueWithoutInterviewInput = {
     where: InterviewExchangeWhereUniqueInput
     update: XOR<InterviewExchangeUpdateWithoutInterviewInput, InterviewExchangeUncheckedUpdateWithoutInterviewInput>
@@ -39973,12 +40825,16 @@ export namespace Prisma {
     aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    application: ApplicationCreateNestedOneWithoutInterviewsInput
+    application?: ApplicationCreateNestedOneWithoutInterviewsInput
+    candidate?: CandidateProfileCreateNestedOneWithoutInterviewsInput
+    job?: JobCreateNestedOneWithoutInterviewsInput
   }
 
   export type InterviewUncheckedCreateWithoutExchangesInput = {
     id?: string
-    applicationId: string
+    applicationId?: string | null
+    candidateId?: string | null
+    jobId?: string | null
     title: string
     type?: $Enums.InterviewType
     status?: $Enums.InterviewStatus
@@ -40033,12 +40889,16 @@ export namespace Prisma {
     aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    application?: ApplicationUpdateOneRequiredWithoutInterviewsNestedInput
+    application?: ApplicationUpdateOneWithoutInterviewsNestedInput
+    candidate?: CandidateProfileUpdateOneWithoutInterviewsNestedInput
+    job?: JobUpdateOneWithoutInterviewsNestedInput
   }
 
   export type InterviewUncheckedUpdateWithoutExchangesInput = {
     id?: StringFieldUpdateOperationsInput | string
-    applicationId?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
     status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
@@ -40526,6 +41386,29 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type InterviewCreateManyCandidateInput = {
+    id?: string
+    applicationId?: string | null
+    jobId?: string | null
+    title: string
+    type?: $Enums.InterviewType
+    status?: $Enums.InterviewStatus
+    accessCode: string
+    sessionUrl?: string | null
+    expiresAt: Date | string
+    startedAt?: Date | string | null
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    overallScore?: number | null
+    summary?: string | null
+    recommendation?: string | null
+    recordingUrl?: string | null
+    fullTranscript?: string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type ExperienceUpdateWithoutCandidateInput = {
     id?: StringFieldUpdateOperationsInput | string
     companyName?: StringFieldUpdateOperationsInput | string
@@ -40712,6 +41595,77 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type InterviewUpdateWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
+    status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+    accessCode?: StringFieldUpdateOperationsInput | string
+    sessionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    overallScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    recommendation?: NullableStringFieldUpdateOperationsInput | string | null
+    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fullTranscript?: NullableStringFieldUpdateOperationsInput | string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    application?: ApplicationUpdateOneWithoutInterviewsNestedInput
+    job?: JobUpdateOneWithoutInterviewsNestedInput
+    exchanges?: InterviewExchangeUpdateManyWithoutInterviewNestedInput
+  }
+
+  export type InterviewUncheckedUpdateWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
+    status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+    accessCode?: StringFieldUpdateOperationsInput | string
+    sessionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    overallScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    recommendation?: NullableStringFieldUpdateOperationsInput | string | null
+    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fullTranscript?: NullableStringFieldUpdateOperationsInput | string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    exchanges?: InterviewExchangeUncheckedUpdateManyWithoutInterviewNestedInput
+  }
+
+  export type InterviewUncheckedUpdateManyWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
+    status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+    accessCode?: StringFieldUpdateOperationsInput | string
+    sessionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    overallScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    recommendation?: NullableStringFieldUpdateOperationsInput | string | null
+    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fullTranscript?: NullableStringFieldUpdateOperationsInput | string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type JobCreateManyRecruiterInput = {
     id?: string
     slug: string
@@ -40766,6 +41720,7 @@ export namespace Prisma {
     company?: CompanyUpdateOneRequiredWithoutJobsNestedInput
     skills?: JobSkillUpdateManyWithoutJobNestedInput
     applications?: ApplicationUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUpdateManyWithoutJobNestedInput
   }
@@ -40797,6 +41752,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     skills?: JobSkillUncheckedUpdateManyWithoutJobNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUncheckedUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUncheckedUpdateManyWithoutJobNestedInput
   }
@@ -40974,6 +41930,7 @@ export namespace Prisma {
     recruiter?: RecruiterProfileUpdateOneRequiredWithoutJobsPostedNestedInput
     skills?: JobSkillUpdateManyWithoutJobNestedInput
     applications?: ApplicationUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUpdateManyWithoutJobNestedInput
   }
@@ -41005,6 +41962,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     skills?: JobSkillUncheckedUpdateManyWithoutJobNestedInput
     applications?: ApplicationUncheckedUpdateManyWithoutJobNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutJobNestedInput
     savedBy?: SavedJobUncheckedUpdateManyWithoutJobNestedInput
     categories?: JobCategoryUncheckedUpdateManyWithoutJobNestedInput
   }
@@ -41094,6 +42052,29 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type InterviewCreateManyJobInput = {
+    id?: string
+    applicationId?: string | null
+    candidateId?: string | null
+    title: string
+    type?: $Enums.InterviewType
+    status?: $Enums.InterviewStatus
+    accessCode: string
+    sessionUrl?: string | null
+    expiresAt: Date | string
+    startedAt?: Date | string | null
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    overallScore?: number | null
+    summary?: string | null
+    recommendation?: string | null
+    recordingUrl?: string | null
+    fullTranscript?: string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type SavedJobCreateManyJobInput = {
     id?: string
     candidateId: string
@@ -41158,6 +42139,77 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type InterviewUpdateWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
+    status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+    accessCode?: StringFieldUpdateOperationsInput | string
+    sessionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    overallScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    recommendation?: NullableStringFieldUpdateOperationsInput | string | null
+    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fullTranscript?: NullableStringFieldUpdateOperationsInput | string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    application?: ApplicationUpdateOneWithoutInterviewsNestedInput
+    candidate?: CandidateProfileUpdateOneWithoutInterviewsNestedInput
+    exchanges?: InterviewExchangeUpdateManyWithoutInterviewNestedInput
+  }
+
+  export type InterviewUncheckedUpdateWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
+    status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+    accessCode?: StringFieldUpdateOperationsInput | string
+    sessionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    overallScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    recommendation?: NullableStringFieldUpdateOperationsInput | string | null
+    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fullTranscript?: NullableStringFieldUpdateOperationsInput | string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    exchanges?: InterviewExchangeUncheckedUpdateManyWithoutInterviewNestedInput
+  }
+
+  export type InterviewUncheckedUpdateManyWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
+    status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+    accessCode?: StringFieldUpdateOperationsInput | string
+    sessionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    overallScore?: NullableFloatFieldUpdateOperationsInput | number | null
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    recommendation?: NullableStringFieldUpdateOperationsInput | string | null
+    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fullTranscript?: NullableStringFieldUpdateOperationsInput | string | null
+    aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type SavedJobUpdateWithoutJobInput = {
     id?: StringFieldUpdateOperationsInput | string
     savedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -41206,6 +42258,8 @@ export namespace Prisma {
 
   export type InterviewCreateManyApplicationInput = {
     id?: string
+    candidateId?: string | null
+    jobId?: string | null
     title: string
     type?: $Enums.InterviewType
     status?: $Enums.InterviewStatus
@@ -41259,11 +42313,15 @@ export namespace Prisma {
     aiAnalysisData?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidate?: CandidateProfileUpdateOneWithoutInterviewsNestedInput
+    job?: JobUpdateOneWithoutInterviewsNestedInput
     exchanges?: InterviewExchangeUpdateManyWithoutInterviewNestedInput
   }
 
   export type InterviewUncheckedUpdateWithoutApplicationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
     status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
@@ -41286,6 +42344,8 @@ export namespace Prisma {
 
   export type InterviewUncheckedUpdateManyWithoutApplicationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     type?: EnumInterviewTypeFieldUpdateOperationsInput | $Enums.InterviewType
     status?: EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus

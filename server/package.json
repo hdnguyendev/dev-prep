@@ -7,6 +7,7 @@
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
     "seed": "bun run prisma/seed.ts",
+    "seed:companies": "bun run scripts/seedCompaniesRecruitersJobs.ts",
     "deploy": "wrangler deploy",
     "deploy:dev": "wrangler deploy --env development",
     "deploy:prod": "wrangler deploy --env production",
@@ -21,17 +22,21 @@
     "wrangler": "^4.54.0"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.49",
     "@clerk/backend": "^2.19.0",
+    "@google/genai": "^1.6.0",
     "@hono/clerk-auth": "^3.0.3",
     "@neondatabase/serverless": "^1.0.2",
     "@prisma/adapter-neon": "^7.1.0",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
     "@prisma/extension-accelerate": "^3.0.1",
+    "ai": "^5.0.115",
     "dotenv": "^17.2.3",
     "hono": "^4.10.3",
     "nanoid": "^5.1.6",
     "pg": "^8.16.3",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "zod": "4.2.1"
   }
 }

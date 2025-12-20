@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, UserButton, useAuth } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, UserButton, useAuth, useUser } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import logo from "@/assets/logo.svg";
@@ -6,30 +6,54 @@ import { getCurrentUser, logout } from "@/lib/auth";
 import { 
   Briefcase, 
   Building2, 
-  ClipboardList, 
-  Calendar, 
-  LayoutDashboard,
-  Shield,
-  Users,
   Home,
-  FileText,
   LogOut,
-  Heart,
   Menu,
-  X
+  X,
+  FileText,
 } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+
+const isPlaceholderCandidateName = (firstName?: string | null, lastName?: string | null, email?: string | null) => {
+  const fn = (firstName || "").trim();
+  const ln = (lastName || "").trim();
+  const em = (email || "").trim().toLowerCase();
+  if (!fn || !ln) return true;
+  if (fn.toLowerCase() === "candidate" && ln.toLowerCase() === "user") return true;
+  if (em.startsWith("clerk_user_") || em.endsWith("@candidate.temp")) return true;
+  return false;
+};
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoMenuOpen, setLogoMenuOpen] = useState(false);
   const { getToken, isSignedIn } = useAuth();
+  const { user: clerkUser } = useUser();
   
   // Use state to force re-render when auth changes
   const [customUser, setCustomUser] = useState(getCurrentUser());
   const isStaffLoggedIn = customUser !== null;
   const isAdmin = customUser?.role === "ADMIN";
   const isRecruiter = customUser?.role === "RECRUITER"; // Only RECRUITER, not ADMIN
+
+  const [needCandidateName, setNeedCandidateName] = useState(false);
+  const [candidateEmail, setCandidateEmail] = useState<string>("");
+  const [candidateFirstName, setCandidateFirstName] = useState("");
+  const [candidateLastName, setCandidateLastName] = useState("");
+  const [savingCandidateName, setSavingCandidateName] = useState(false);
+  const [candidateNameError, setCandidateNameError] = useState<string | null>(null);
+
+  const candidateDisplayName =
+    `${clerkUser?.firstName ?? ""} ${clerkUser?.lastName ?? ""}`.trim() ||
+    `${candidateFirstName} ${candidateLastName}`.trim() ||
+    "Account";
 
   // Listen for auth changes
   useEffect(() => {
@@ -61,13 +85,31 @@ const Navbar = () => {
       try {
         const token = await getToken();
         if (!token) return;
-        await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:9999"}/auth/sync-candidate`, {
+        await fetch(`${API_BASE}/auth/sync-candidate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
+
+        const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+        const meJson = await meRes.json();
+        if (meJson?.success) {
+          const fn = meJson?.firstName as string | null | undefined;
+          const ln = meJson?.lastName as string | null | undefined;
+          const em = meJson?.email as string | null | undefined;
+          setCandidateEmail(String(em || ""));
+          if (isPlaceholderCandidateName(fn, ln, em)) {
+            setCandidateFirstName(fn && fn !== "Candidate" ? String(fn) : "");
+            setCandidateLastName(ln && ln !== "User" ? String(ln) : "");
+            setNeedCandidateName(true);
+          } else {
+            // Keep local display name in sync with DB, in case Clerk lacks names
+            setCandidateFirstName(String(fn || ""));
+            setCandidateLastName(String(ln || ""));
+          }
+        }
         sessionStorage.setItem(syncedKey, "1");
       } catch (err) {
         console.error("Failed to sync candidate", err);
@@ -75,6 +117,40 @@ const Navbar = () => {
     };
     syncClerkCandidate();
   }, [getToken, isSignedIn]);
+
+  const saveCandidateName = async () => {
+    try {
+      setSavingCandidateName(true);
+      setCandidateNameError(null);
+      const token = await getToken();
+      if (!token) return;
+      const firstName = candidateFirstName.trim();
+      const lastName = candidateLastName.trim();
+      if (!firstName || !lastName) {
+        setCandidateNameError("Please enter both first name and last name.");
+        return;
+      }
+      const res = await fetch(`${API_BASE}/auth/name`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ firstName, lastName }),
+      });
+      const json = await res.json();
+      if (!json?.success) {
+        setCandidateNameError(json?.message || "Failed to save name.");
+        return;
+      }
+      // Update local display name immediately (Clerk name might not be set)
+      setCandidateFirstName(firstName);
+      setCandidateLastName(lastName);
+      setNeedCandidateName(false);
+    } catch (e) {
+      console.error(e);
+      setCandidateNameError("Failed to save name.");
+    } finally {
+      setSavingCandidateName(false);
+    }
+  };
 
   // Handle staff logout
   const handleLogout = () => {
@@ -112,77 +188,140 @@ const Navbar = () => {
           <span className={mobile ? "" : "hidden md:inline"}>Companies</span>
         </Button>
       </Link>
-
-      {/* Candidate-only Links (Clerk authenticated) */}
-      <SignedIn>
-        <Link to="/saved-jobs" onClick={onLinkClick}>
-          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
-            <Heart className="h-4 w-4" />
-            <span className={mobile ? "" : "hidden md:inline"}>Saved</span>
-          </Button>
-        </Link>
-
-        <Link to="/interview" onClick={onLinkClick}>
-          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
-            <FileText className="h-4 w-4" />
-            <span className={mobile ? "" : "hidden md:inline"}>Prep</span>
-          </Button>
-        </Link>
-
-        <Link to="/applications" onClick={onLinkClick}>
-          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
-            <ClipboardList className="h-4 w-4" />
-            <span className={mobile ? "" : "hidden md:inline"}>Applications</span>
-          </Button>
-        </Link>
-
-        <Link to="/interviews" onClick={onLinkClick}>
-          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
-            <Calendar className="h-4 w-4" />
-            <span className={mobile ? "" : "hidden md:inline"}>Interviews</span>
-          </Button>
-        </Link>
-
-        <Link to="/dashboard" onClick={onLinkClick}>
-          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
-            <LayoutDashboard className="h-4 w-4" />
-            <span className={mobile ? "" : "hidden md:inline"}>Dashboard</span>
-          </Button>
-        </Link>
-      </SignedIn>
-
-      {/* Recruiter Links (Custom auth) */}
-      {isRecruiter && (
-        <Link to="/recruiter" onClick={onLinkClick}>
-          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
-            <Users className="h-4 w-4" />
-            <span className={mobile ? "" : "hidden md:inline"}>Recruiter</span>
-          </Button>
-        </Link>
-      )}
-
-      {/* Admin Links (Custom auth) */}
-      {isAdmin && (
-        <Link to="/admin" onClick={onLinkClick}>
-          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
-            <Shield className="h-4 w-4" />
-            <span className={mobile ? "" : "hidden md:inline"}>Admin</span>
-          </Button>
-        </Link>
-      )}
     </>
   );
 
+  const resolveDashboardPath = () => {
+    if (isSignedIn) return "/candidate/dashboard";
+    if (customUser?.role === "ADMIN") return "/admin/dashboard";
+    if (customUser?.role === "RECRUITER") return "/recruiter/dashboard";
+    return null;
+  };
+
+  const dashboardPath = resolveDashboardPath();
+
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <>
+      <Dialog open={needCandidateName} onOpenChange={() => {}}>
+        <DialogContent className="max-w-lg" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Complete your profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground break-words">
+              Please enter your first name and last name to continue. {candidateEmail ? `(${candidateEmail})` : ""}
+            </div>
+            {candidateNameError ? <div className="text-sm text-destructive">{candidateNameError}</div> : null}
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1">
+                <Label>First name</Label>
+                <Input value={candidateFirstName} onChange={(e) => setCandidateFirstName(e.target.value)} placeholder="First name" />
+              </div>
+              <div className="space-y-1">
+                <Label>Last name</Label>
+                <Input value={candidateLastName} onChange={(e) => setCandidateLastName(e.target.value)} placeholder="Last name" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={saveCandidateName} disabled={savingCandidateName}>
+              {savingCandidateName ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={logoMenuOpen} onOpenChange={setLogoMenuOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Menu</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-2">
+              <Button
+                variant="outline"
+                className="justify-start"
+                onClick={() => {
+                  setLogoMenuOpen(false);
+                  navigate("/");
+                }}
+              >
+                Home
+              </Button>
+              <Button
+                variant="outline"
+                className="justify-start"
+                onClick={() => {
+                  setLogoMenuOpen(false);
+                  navigate("/jobs");
+                }}
+              >
+                Jobs
+              </Button>
+              <Button
+                variant="outline"
+                className="justify-start"
+                onClick={() => {
+                  setLogoMenuOpen(false);
+                  navigate("/companies");
+                }}
+              >
+                Companies
+              </Button>
+            </div>
+
+            {isSignedIn && (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setLogoMenuOpen(false);
+                  navigate("/interview");
+                }}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Interview Prep
+              </Button>
+            )}
+            {dashboardPath ? (
+              <Button
+                className="w-full justify-start"
+                onClick={() => {
+                  setLogoMenuOpen(false);
+                  navigate(dashboardPath);
+                }}
+              >
+                Go to Dashboard
+              </Button>
+            ) : (
+              <Button
+                className="w-full justify-start"
+                onClick={() => {
+                  setLogoMenuOpen(false);
+                  navigate("/login");
+                }}
+              >
+                Login
+              </Button>
+            )}
+          </div>
+          <DialogFooter />
+        </DialogContent>
+      </Dialog>
+
+      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition">
+        <button
+          type="button"
+          onClick={() => setLogoMenuOpen(true)}
+          className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition"
+        >
           <img src={logo} alt="Logo" className="h-8 w-8" />
           <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent hidden sm:inline">
             DevPrep
           </span>
-        </Link>
+        </button>
 
         {/* Desktop Navigation Links - Hidden on mobile */}
         <div className="hidden lg:flex items-center gap-1">
@@ -194,7 +333,27 @@ const Navbar = () => {
           {/* Clerk User (Candidate) */}
           <SignedIn>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground hidden lg:inline">Candidate</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/interview")}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="hidden lg:inline">Prep</span>
+              </Button>
+              {dashboardPath ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(dashboardPath)}
+                  className="gap-2"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="hidden lg:inline">Dashboard</span>
+                </Button>
+              ) : null}
+              <span className="text-sm text-muted-foreground hidden lg:inline">{candidateDisplayName}</span>
               <UserButton afterSignOutUrl="/" />
             </div>
           </SignedIn>
@@ -202,6 +361,17 @@ const Navbar = () => {
           {/* Staff User (Admin/Recruiter) */}
           {isStaffLoggedIn && (
             <div className="flex items-center gap-2">
+              {dashboardPath ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(dashboardPath)}
+                  className="gap-2"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="hidden lg:inline">Dashboard</span>
+                </Button>
+              ) : null}
               <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 bg-primary/5">
                 <div className="flex flex-col items-end hidden lg:flex">
                   <span className="text-xs font-medium">{customUser.firstName} {customUser.lastName}</span>
@@ -249,14 +419,29 @@ const Navbar = () => {
         <div className="flex md:hidden items-center gap-2">
           {/* Mobile Auth - Show UserButton or Login */}
           <SignedIn>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/interview")} className="p-2">
+              <FileText className="h-5 w-5" />
+            </Button>
+            {dashboardPath ? (
+              <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)} className="p-2">
+                <LayoutDashboard className="h-5 w-5" />
+              </Button>
+            ) : null}
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
           {isStaffLoggedIn && (
+            <>
+              {dashboardPath ? (
+                <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)} className="p-2">
+                  <LayoutDashboard className="h-5 w-5" />
+                </Button>
+              ) : null}
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
               <span className="text-xs font-semibold">
                 {customUser.firstName?.[0]}{customUser.lastName?.[0]}
               </span>
             </div>
+            </>
           )}
           <SignedOut>
             {!isStaffLoggedIn && (
@@ -289,6 +474,22 @@ const Navbar = () => {
           <div className="container mx-auto px-4 py-4 space-y-2">
             <NavLinks mobile={true} onLinkClick={() => setMobileMenuOpen(false)} />
             
+            {/* Mobile Prep Button for Candidates */}
+            <SignedIn>
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigate("/interview");
+                }}
+                className="w-full justify-start gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Interview Prep
+              </Button>
+            </SignedIn>
+            
             {/* Mobile Staff Logout */}
             {isStaffLoggedIn && (
               <Button 
@@ -304,7 +505,8 @@ const Navbar = () => {
           </div>
         </div>
       )}
-    </nav>
+      </nav>
+    </>
   );
 };
 

@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import {
   BriefcaseBusiness,
@@ -12,13 +11,11 @@ import {
   Edit,
   Trash2,
   Eye,
-  X,
-  Save,
   CheckCircle2,
   Clock,
   XCircle,
+  Search,
   MapPin,
-  DollarSign,
   Building2,
 } from "lucide-react";
 
@@ -31,6 +28,7 @@ type Job = {
   description: string;
   requirements?: string;
   responsibilities?: string;
+  benefits?: string;
   interviewQuestions?: string[];
   location?: string;
   locationType?: string;
@@ -50,51 +48,24 @@ type Job = {
   };
 };
 
-type JobFormData = {
-  title: string;
-  slug: string;
-  description: string;
-  requirements: string;
-  responsibilities: string;
-  interviewQuestions: string[];
-  location: string;
-  locationType: string;
-  employmentType: string;
-  experienceLevel: string;
-  salaryMin: string;
-  salaryMax: string;
-  salaryCurrency: string;
-  status: string;
-};
-
 const RecruiterJobs = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
   
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [formData, setFormData] = useState<JobFormData>({
-    title: "",
-    slug: "",
-    description: "",
-    requirements: "",
-    responsibilities: "",
-    interviewQuestions: [],
-    location: "",
-    locationType: "REMOTE",
-    employmentType: "FULL_TIME",
-    experienceLevel: "MID_LEVEL",
-    salaryMin: "",
-    salaryMax: "",
-    salaryCurrency: "USD",
-    status: "DRAFT",
-  });
-  const [questionInput, setQuestionInput] = useState("");
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // List UI state
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState<string>("");
+  const [locationTypeFilter, setLocationTypeFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title">("newest");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   // Check auth
   useEffect(() => {
@@ -135,194 +106,75 @@ const RecruiterJobs = () => {
     fetchJobs();
   }, [currentUser?.id]);
 
-  // Auto-generate slug from title
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  };
+  // Support being opened from dashboard (navigate to create/edit page)
+  useEffect(() => {
+    const state = location.state as { openJobId?: string; mode?: "create" } | undefined;
+    if (!state) return;
+    if (loading) return;
 
-  // Handle form input
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
-      // Auto-generate slug when title changes
-      if (name === "title") {
-        updated.slug = generateSlug(value);
-      }
-      return updated;
-    });
-  };
-
-  /**
-   * Append a recruiter-defined interview question to the form state.
-   */
-  const handleAddQuestion = () => {
-    const trimmed = questionInput.trim();
-    if (!trimmed) return;
-    setFormData((prev) => ({
-      ...prev,
-      interviewQuestions: [...prev.interviewQuestions, trimmed],
-    }));
-    setQuestionInput("");
-  };
-
-  /**
-   * Remove an interview question at a given index.
-   */
-  const handleRemoveQuestion = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      interviewQuestions: prev.interviewQuestions.filter((_, i) => i !== index),
-    }));
-  };
-
-  // Open create modal
-  const handleCreate = async () => {
-    if (!currentUser) return;
-
-    try {
-      // Fetch recruiter profile to get companyId
-      const response = await fetch(`${API_BASE}/auth/me`, {
-        headers: {
-          "Authorization": `Bearer ${currentUser.id}`,
-        },
-      });
-      const data = await response.json();
-      
-      if (!data.recruiterProfile) {
-        setError("Recruiter profile not found");
-        return;
-      }
-
-      setModalMode("create");
-      setFormData({
-        title: "",
-        slug: "",
-        description: "",
-        requirements: "",
-        responsibilities: "",
-        interviewQuestions: [],
-        location: "",
-        locationType: "REMOTE",
-        employmentType: "FULL_TIME",
-        experienceLevel: "MID_LEVEL",
-        salaryMin: "",
-        salaryMax: "",
-        salaryCurrency: "USD",
-        status: "DRAFT",
-      });
-      setQuestionInput("");
-      setShowModal(true);
-    } catch (err) {
-      console.error("Failed to prepare create:", err);
-      setError("Failed to prepare create form");
+    if (state.mode === "create") {
+      navigate("/recruiter/jobs/new", { replace: true });
+      return;
     }
+
+    if (state.openJobId) {
+      navigate(`/recruiter/jobs/${state.openJobId}/edit`, { replace: true });
+    }
+  }, [loading, location.state, navigate]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, employmentTypeFilter, locationTypeFilter, sortBy]);
+
+  const filteredJobs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const next = jobs.filter((j) => {
+      if (q) {
+        const hay = `${j.title ?? ""} ${j.slug ?? ""} ${j.company?.name ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (statusFilter && String(j.status) !== statusFilter) return false;
+      if (employmentTypeFilter && String(j.employmentType ?? "") !== employmentTypeFilter) return false;
+      if (locationTypeFilter && String(j.locationType ?? "") !== locationTypeFilter) return false;
+      return true;
+    });
+
+    next.sort((a, b) => {
+      if (sortBy === "title") return String(a.title ?? "").localeCompare(String(b.title ?? ""));
+      const at = new Date(a.createdAt).getTime();
+      const bt = new Date(b.createdAt).getTime();
+      return sortBy === "newest" ? bt - at : at - bt;
+    });
+    return next;
+  }, [employmentTypeFilter, jobs, locationTypeFilter, search, sortBy, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedJobs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredJobs.slice(start, start + pageSize);
+  }, [currentPage, filteredJobs]);
+
+  const employmentTypeOptions = useMemo(() => {
+    const base = ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"];
+    const extra = Array.from(new Set(jobs.map((j) => j.employmentType).filter(Boolean) as string[]));
+    return Array.from(new Set([...base, ...extra]));
+  }, [jobs]);
+
+  const locationTypeOptions = useMemo(() => {
+    const base = ["REMOTE", "ONSITE", "HYBRID"];
+    const extra = Array.from(new Set(jobs.map((j) => j.locationType).filter(Boolean) as string[]));
+    return Array.from(new Set([...base, ...extra]));
+  }, [jobs]);
+
+  // Navigate to create page
+  const handleCreate = () => {
+    navigate("/recruiter/jobs/new");
   };
 
-  // Open edit modal
+  // Navigate to edit page
   const handleEdit = (job: Job) => {
-    setModalMode("edit");
-    setSelectedJob(job);
-    setFormData({
-      title: job.title,
-      slug: job.slug,
-      description: job.description,
-      requirements: job.requirements || "",
-      responsibilities: job.responsibilities || "",
-      interviewQuestions: job.interviewQuestions || [],
-      location: job.location || "",
-      locationType: job.locationType || "REMOTE",
-      employmentType: job.employmentType || "FULL_TIME",
-      experienceLevel: job.experienceLevel || "MID_LEVEL",
-      salaryMin: job.salaryMin?.toString() || "",
-      salaryMax: job.salaryMax?.toString() || "",
-      salaryCurrency: job.salaryCurrency || "USD",
-      status: job.status,
-    });
-    setQuestionInput("");
-    setShowModal(true);
-  };
-
-  // Save job (create or update)
-  const handleSave = async () => {
-    if (!currentUser) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      // Get recruiter profile for companyId and recruiterId
-      const meResponse = await fetch(`${API_BASE}/auth/me`, {
-        headers: { "Authorization": `Bearer ${currentUser.id}` },
-      });
-      const meData = await meResponse.json();
-      
-      if (!meData.recruiterProfile) {
-        setError("Recruiter profile not found");
-        return;
-      }
-
-      const payload: any = {
-        title: formData.title,
-        slug: formData.slug || generateSlug(formData.title),
-        description: formData.description,
-        requirements: formData.requirements || null,
-        responsibilities: formData.responsibilities || null,
-        interviewQuestions: formData.interviewQuestions.filter((q) => q.trim().length > 0),
-        location: formData.location || null,
-        locationType: formData.locationType,
-        employmentType: formData.employmentType,
-        experienceLevel: formData.experienceLevel,
-        salaryMin: formData.salaryMin ? parseInt(formData.salaryMin) : null,
-        salaryMax: formData.salaryMax ? parseInt(formData.salaryMax) : null,
-        salaryCurrency: formData.salaryCurrency,
-        status: formData.status,
-        companyId: meData.recruiterProfile.companyId,
-        recruiterId: meData.recruiterProfile.id,
-      };
-
-      const url = modalMode === "create" 
-        ? `${API_BASE}/jobs`
-        : `${API_BASE}/jobs/${selectedJob?.id}`;
-      
-      const method = modalMode === "create" ? "POST" : "PUT";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${currentUser.id}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Refresh jobs list
-        const jobsResponse = await fetch(`${API_BASE}/api/jobs?pageSize=100`, {
-          headers: { "Authorization": `Bearer ${currentUser.id}` },
-        });
-        const jobsData = await jobsResponse.json();
-        
-        if (jobsData.success) {
-          setJobs(jobsData.data || []);
-        }
-        
-        setShowModal(false);
-        setSelectedJob(null);
-      } else {
-        setError(data.message || "Failed to save job");
-      }
-    } catch (err) {
-      console.error("Failed to save job:", err);
-      setError("Network error");
-    } finally {
-      setSaving(false);
-    }
+    navigate(`/recruiter/jobs/${job.id}/edit`);
   };
 
   // Delete job
@@ -404,22 +256,130 @@ const RecruiterJobs = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((job) => (
-              <Card key={job.id} className="flex flex-col">
+          <Card className="overflow-hidden">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <CardTitle className="text-base line-clamp-2">
-                        {job.title}
-                      </CardTitle>
-                      {job.company && (
-                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                          <Building2 className="h-3 w-3" />
-                          {job.company.name}
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <CardTitle className="text-lg">Jobs</CardTitle>
+                  <div className="text-xs text-muted-foreground">
+                    {filteredJobs.length} result{filteredJobs.length === 1 ? "" : "s"}
                         </div>
+                </div>
+
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+                  <div className="relative w-full lg:w-[360px]">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search by title, slug, company..."
+                      className="pl-9"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="">All status</option>
+                      <option value="DRAFT">DRAFT</option>
+                      <option value="PUBLISHED">PUBLISHED</option>
+                      <option value="CLOSED">CLOSED</option>
+                      <option value="ARCHIVED">ARCHIVED</option>
+                    </select>
+
+                    <select
+                      value={employmentTypeFilter}
+                      onChange={(e) => setEmploymentTypeFilter(e.target.value)}
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="">All employment</option>
+                      {employmentTypeOptions.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={locationTypeFilter}
+                      onChange={(e) => setLocationTypeFilter(e.target.value)}
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="">All location</option>
+                      {locationTypeOptions.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                      <option value="title">Title</option>
+                    </select>
+
+                    {(search || statusFilter || employmentTypeFilter || locationTypeFilter) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSearch("");
+                          setStatusFilter("");
+                          setEmploymentTypeFilter("");
+                          setLocationTypeFilter("");
+                        }}
+                      >
+                        Clear
+                      </Button>
                       )}
                     </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-muted/70 text-muted-foreground">
+                    <tr className="border-b text-xs font-semibold uppercase tracking-wide">
+                      <th className="px-4 py-3 text-left w-[40%]">Job</th>
+                      <th className="px-4 py-3 text-center w-[14%]">Status</th>
+                      <th className="px-4 py-3 text-left w-[14%]">Type</th>
+                      <th className="px-4 py-3 text-left w-[18%]">Location</th>
+                      <th className="px-4 py-3 text-right w-[14%]">Created</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {pagedJobs.map((job) => (
+                      <tr
+                        key={job.id}
+                        className="hover:bg-muted/40 transition cursor-pointer"
+                        onClick={() => handleEdit(job)}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="space-y-1">
+                            <div className="font-semibold break-words">{job.title}</div>
+                            <div className="text-xs text-muted-foreground break-words">
+                              <span className="inline-flex items-center gap-2">
+                                <Building2 className="h-3 w-3" />
+                                {job.company?.name || "Company"}
+                              </span>
+                              <span className="mx-2">•</span>
+                              <span className="font-mono">{job.slug}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center">
                     <Badge
                       variant={
                         job.status === "PUBLISHED"
@@ -428,354 +388,104 @@ const RecruiterJobs = () => {
                           ? "outline"
                           : "outline"
                       }
-                      className="gap-1 shrink-0"
+                              className="inline-flex h-8 items-center gap-2 px-3 text-sm font-medium"
                     >
                       {job.status === "PUBLISHED" ? (
-                        <CheckCircle2 className="h-3 w-3" />
+                                <CheckCircle2 className="h-4 w-4" />
                       ) : job.status === "DRAFT" ? (
-                        <Clock className="h-3 w-3" />
+                                <Clock className="h-4 w-4" />
                       ) : (
-                        <XCircle className="h-3 w-3" />
+                                <XCircle className="h-4 w-4" />
                       )}
                       {job.status}
                     </Badge>
                   </div>
-                </CardHeader>
-                <CardContent className="flex-1 space-y-3 text-sm">
-                  <div className="space-y-1 text-muted-foreground">
-                    {job.location && (
-                      <div className="flex items-center gap-2">
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          <div className="space-y-1">
+                            <div>{job.employmentType || "—"}</div>
+                            <div className="text-xs">{job.experienceLevel || ""}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          <div className="space-y-1">
+                            <div className="inline-flex items-center gap-2">
                         <MapPin className="h-3 w-3" />
-                        {job.location}
+                              <span className="break-words">{job.location || "—"}</span>
                       </div>
-                    )}
-                    {(job.salaryMin || job.salaryMax) && (
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-3 w-3" />
-                        {job.salaryMin && job.salaryMax
-                          ? `${job.salaryMin} - ${job.salaryMax} ${job.salaryCurrency || "USD"}`
-                          : job.salaryMin
-                          ? `From ${job.salaryMin} ${job.salaryCurrency || "USD"}`
-                          : `Up to ${job.salaryMax} ${job.salaryCurrency || "USD"}`}
+                            <div className="text-xs">{job.locationType || ""}</div>
                       </div>
-                    )}
-                    <div className="text-xs">
-                      Posted {new Date(job.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 pt-2">
+                        </td>
+                        <td className="px-4 py-3 text-right text-muted-foreground whitespace-nowrap">
+                          {new Date(job.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="inline-flex items-center gap-2 justify-end">
                     <Button
                       variant="outline"
                       size="sm"
+                              className="gap-2"
                       onClick={() => handleViewApplications(job)}
-                      className="gap-1 flex-1"
                     >
-                      <Eye className="h-3 w-3" />
+                              <Eye className="h-4 w-4" />
                       Applications
                     </Button>
+                            <Button variant="ghost" size="sm" className="gap-2" onClick={() => handleEdit(job)}>
+                              <Edit className="h-4 w-4" />
+                              Edit
+                            </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleEdit(job)}
-                      className="gap-1"
+                              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDelete(job)}
                     >
-                      <Edit className="h-3 w-3" />
-                      Edit
+                              <Trash2 className="h-4 w-4" />
+                              Delete
                     </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {pagedJobs.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                          No jobs match your filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+                <div>
+                  Page {currentPage} / {totalPages}
+                </div>
+                <div className="flex items-center gap-2">
                     <Button
+                    size="sm"
                       variant="ghost"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Prev
+                  </Button>
+                  <Button
                       size="sm"
-                      onClick={() => handleDelete(job)}
-                      className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    variant="ghost"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
                     >
-                      <Trash2 className="h-3 w-3" />
-                      Delete
+                    Next
                     </Button>
+                </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
         )}
       </div>
 
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between border-b">
-              <CardTitle>
-                {modalMode === "create" ? "Create New Job" : "Edit Job"}
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowModal(false);
-                  setSelectedJob(null);
-                  setError(null);
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              {error && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">
-                  {error}
-                </div>
-              )}
-
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Job Title <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Senior Frontend Developer"
-                  required
-                />
-              </div>
-
-              {/* Slug */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Slug</label>
-                <Input
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleInputChange}
-                  placeholder="auto-generated-from-title"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Auto-generated from title, or customize
-                </p>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <Textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Job description..."
-                  rows={4}
-                  required
-                />
-              </div>
-
-              {/* Requirements */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Requirements</label>
-                <Textarea
-                  name="requirements"
-                  value={formData.requirements}
-                  onChange={handleInputChange}
-                  placeholder="Job requirements..."
-                  rows={3}
-                />
-              </div>
-
-              {/* Responsibilities */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Responsibilities</label>
-                <Textarea
-                  name="responsibilities"
-                  value={formData.responsibilities}
-                  onChange={handleInputChange}
-                  placeholder="Key responsibilities..."
-                  rows={3}
-                />
-              </div>
-
-              {/* Interview Questions */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Interview Questions</label>
-                  <span className="text-xs text-muted-foreground">
-                    {formData.interviewQuestions.length} saved
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    value={questionInput}
-                    onChange={(e) => setQuestionInput(e.target.value)}
-                    placeholder="Add a question candidates will practice"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddQuestion();
-                      }
-                    }}
-                  />
-                  <Button type="button" onClick={handleAddQuestion} variant="secondary">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {formData.interviewQuestions.length > 0 && (
-                  <div className="space-y-2 rounded-md border border-dashed border-muted p-3">
-                    {formData.interviewQuestions.map((question, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <Badge variant="default" className="mt-0.5">
-                          #{index + 1}
-                        </Badge>
-                        <div className="flex-1 text-sm leading-5">{question}</div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveQuestion(index)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          title="Remove question"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Location & Type */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Location</label>
-                  <Input
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    placeholder="e.g. San Francisco, CA"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Location Type</label>
-                  <select
-                    name="locationType"
-                    value={formData.locationType}
-                    onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="REMOTE">Remote</option>
-                    <option value="ONSITE">On-site</option>
-                    <option value="HYBRID">Hybrid</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Employment & Experience */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Employment Type</label>
-                  <select
-                    name="employmentType"
-                    value={formData.employmentType}
-                    onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="FULL_TIME">Full-time</option>
-                    <option value="PART_TIME">Part-time</option>
-                    <option value="CONTRACT">Contract</option>
-                    <option value="INTERNSHIP">Internship</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Experience Level</label>
-                  <select
-                    name="experienceLevel"
-                    value={formData.experienceLevel}
-                    onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="ENTRY_LEVEL">Entry Level</option>
-                    <option value="MID_LEVEL">Mid Level</option>
-                    <option value="SENIOR_LEVEL">Senior Level</option>
-                    <option value="LEAD">Lead</option>
-                    <option value="EXECUTIVE">Executive</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Salary */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Salary Min</label>
-                  <Input
-                    name="salaryMin"
-                    type="number"
-                    value={formData.salaryMin}
-                    onChange={handleInputChange}
-                    placeholder="50000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Salary Max</label>
-                  <Input
-                    name="salaryMax"
-                    type="number"
-                    value={formData.salaryMax}
-                    onChange={handleInputChange}
-                    placeholder="100000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Currency</label>
-                  <select
-                    name="salaryCurrency"
-                    value={formData.salaryCurrency}
-                    onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="VND">VND</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="DRAFT">Draft</option>
-                  <option value="PUBLISHED">Published</option>
-                  <option value="CLOSED">Closed</option>
-                  <option value="ARCHIVED">Archived</option>
-                </select>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowModal(false);
-                    setSelectedJob(null);
-                    setError(null);
-                  }}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={saving} className="gap-2">
-                  <Save className="h-4 w-4" />
-                  {saving ? "Saving..." : modalMode === "create" ? "Create" : "Update"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </main>
   );
 };

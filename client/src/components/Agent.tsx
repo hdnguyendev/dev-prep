@@ -1,6 +1,7 @@
 import { useUser } from "@clerk/clerk-react";
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 import logo from "@/assets/logo.svg";
 import clerkFallback from "../assets/clerk.svg";
@@ -33,9 +34,11 @@ import {
   SavedMessage,
 } from "@/lib/actions/general.action";
 import { vapi } from "@/lib/vapi.sdk";
-import { createPracticeInterview, updatePracticeInterview } from "@/lib/actions/interviews.action";
+import { analyzeInterview, createPracticeInterview, createStandaloneInterview, updatePracticeInterview } from "@/lib/actions/interviews.action";
 import type { Interview } from "@/lib/api";
 import { createInterviewExchange } from "@/lib/actions/interviews.action";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
 // --- Types & Interfaces ---
 
@@ -274,13 +277,18 @@ interface AgentProps {
   initialQuestions?: string[];
   jobTitle?: string;
   applicationId?: string;
+  jobId?: string;
+  initialTechstack?: string;
 }
 
 function Agent({
   initialQuestions,
   jobTitle,
   applicationId,
+  jobId,
+  initialTechstack,
 }: AgentProps) {
+  const navigate = useNavigate();
   const { user } = useUser();
   const { getToken } = useAuth();
 
@@ -298,7 +306,17 @@ function Agent({
   const [workflow, setWorkflow] = useState<InterviewWorkflowValues>(() => ({
     ...DEFAULT_INTERVIEW_WORKFLOW_VALUES,
     ...(jobTitle ? { role: jobTitle } : null),
+    ...(initialTechstack && initialTechstack.trim().length > 0 ? { techstack: initialTechstack } : null),
   }));
+
+  // If we navigated in with job skills, prefill techstack unless the user already typed something
+  useEffect(() => {
+    if (!initialTechstack || initialTechstack.trim().length === 0) return;
+    setWorkflow((prev) => {
+      if (prev.techstack.trim().length > 0) return prev;
+      return { ...prev, techstack: initialTechstack };
+    });
+  }, [initialTechstack]);
 
   const initialTypeChoice = useMemo(() => {
     const match = INTERVIEW_TYPE_OPTIONS.some((o) => o.value === workflow.type);
@@ -412,6 +430,16 @@ function Agent({
         try {
           if (!applicationId) return;
           const token = await getToken().catch(() => undefined);
+          let candidateId: string | undefined = undefined;
+          try {
+            if (token) {
+              const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+              const meJson = await meRes.json();
+              candidateId = meJson?.candidateProfile?.id ? String(meJson.candidateProfile.id) : undefined;
+            }
+          } catch {
+            // ignore
+          }
           const now = new Date();
           const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
           const accessCode = crypto.randomUUID().slice(0, 8);
@@ -420,6 +448,8 @@ function Agent({
           const created = await createPracticeInterview(
             {
               applicationId,
+              candidateId,
+              jobId,
               title,
               type: "AI_VOICE",
               status: "IN_PROGRESS",
@@ -433,6 +463,43 @@ function Agent({
           persistedInterviewRef.current = created;
         } catch (err) {
           console.warn("[Interview] failed to create practice interview:", err);
+          persistedInterviewRef.current = null;
+        }
+      })();
+
+      // Create Interview record for standalone mock interviews (not tied to application)
+      ;(async () => {
+        try {
+          if (applicationId) return;
+          const token = await getToken().catch(() => undefined);
+          if (!token) return;
+
+          const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+          const meJson = await meRes.json();
+          const candidateId = meJson?.candidateProfile?.id ? String(meJson.candidateProfile.id) : "";
+          if (!candidateId) return;
+
+          const now = new Date();
+          const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          const accessCode = crypto.randomUUID().slice(0, 8);
+          const title = `Mock: ${workflow.role}`;
+
+          const created = await createStandaloneInterview(
+            {
+              candidateId,
+              jobId,
+              title,
+              type: "AI_VOICE",
+              status: "IN_PROGRESS",
+              accessCode,
+              expiresAt: expiresAt.toISOString(),
+              startedAt: now.toISOString(),
+            },
+            token ?? undefined
+          );
+          persistedInterviewRef.current = created;
+        } catch (err) {
+          console.warn("[Interview] failed to create standalone interview:", err);
           persistedInterviewRef.current = null;
         }
       })();
@@ -453,49 +520,72 @@ function Agent({
 
           const token = await getToken().catch(() => undefined);
           const transcript = buildFullTranscript(messagesRef.current);
-          const feedback = extractFeedbackJson(messagesRef.current);
           const turns = extractInterviewTurns(messagesRef.current);
 
           // Fallback: nếu call-start chưa tạo được interview thì tạo ngay ở call-end
           if (!persisted) {
-            if (!applicationId) return;
             const now = new Date();
             const startedAt = new Date(now.getTime() - callSeconds * 1000);
             const expiresAt = new Date(startedAt.getTime() + 7 * 24 * 60 * 60 * 1000);
             const accessCode = crypto.randomUUID().slice(0, 8);
-            const title = `Practice: ${jobTitle || workflow.role}`;
 
-            persisted = await createPracticeInterview(
-              {
-                applicationId,
-                title,
-                type: "AI_VOICE",
-                status: "IN_PROGRESS",
-                accessCode,
-                expiresAt: expiresAt.toISOString(),
-                startedAt: startedAt.toISOString(),
-              },
-              token ?? undefined
-            );
-            persistedInterviewRef.current = persisted;
+            if (applicationId) {
+              const title = `Practice: ${jobTitle || workflow.role}`;
+              persisted = await createPracticeInterview(
+                {
+                  applicationId,
+                  jobId,
+                  title,
+                  type: "AI_VOICE",
+                  status: "IN_PROGRESS",
+                  accessCode,
+                  expiresAt: expiresAt.toISOString(),
+                  startedAt: startedAt.toISOString(),
+                },
+                token ?? undefined
+              );
+              persistedInterviewRef.current = persisted;
+            } else {
+              const token2 = token ?? undefined;
+              if (!token2) return;
+
+              const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token2}` } });
+              const meJson = await meRes.json();
+              const candidateId = meJson?.candidateProfile?.id ? String(meJson.candidateProfile.id) : "";
+              if (!candidateId) return;
+
+              const title = `Mock: ${workflow.role}`;
+              persisted = await createStandaloneInterview(
+                {
+                  candidateId,
+                  jobId,
+                  title,
+                  type: "AI_VOICE",
+                  status: "IN_PROGRESS",
+                  accessCode,
+                  expiresAt: expiresAt.toISOString(),
+                  startedAt: startedAt.toISOString(),
+                },
+                token2
+              );
+              persistedInterviewRef.current = persisted;
+            }
           }
 
           await updatePracticeInterview(
             {
               id: persisted.id,
-              status: "COMPLETED",
+              status: "PROCESSING",
               endedAt: new Date().toISOString(),
               durationSeconds: callSeconds,
               fullTranscript: transcript,
-              aiAnalysisData: feedback ?? undefined,
-              overallScore: typeof feedback?.totalScore === "number" ? feedback.totalScore : undefined,
-              summary: typeof feedback?.finalAssessment === "string" ? feedback.finalAssessment : undefined,
             },
             token ?? undefined
           );
 
-          // Save Q/A pairs as InterviewExchange (turn-by-turn)
-          await Promise.allSettled(
+          // Save Q/A pairs as InterviewExchange (turn-by-turn) in the background
+          // so we can navigate to the feedback page immediately.
+          void Promise.allSettled(
             turns.map((t) =>
               createInterviewExchange(
                 {
@@ -509,6 +599,14 @@ function Agent({
               )
             )
           );
+
+          // Trigger analysis (async). It will update Interview + per-question scores.
+          analyzeInterview(persisted.id, token ?? undefined).catch((err) => {
+            console.warn("[Interview] analyze failed:", err);
+          });
+
+          // Move user to feedback immediately; the page will show a loading state and auto-refresh.
+          navigate(`/interviews/${persisted.id}/feedback`);
         } catch (err) {
           console.warn("[Interview] failed to persist transcript/feedback:", err);
         }

@@ -16,19 +16,20 @@ import {
   Trash2,
 } from "lucide-react";
 
-const SavedJobs = () => {
+const SavedJobs = ({ embedded }: { embedded?: boolean }) => {
   const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if not signed in
+  // Redirect if not signed in (skip when embedded - parent layout already handles auth)
   useEffect(() => {
+    if (embedded) return;
     if (!isSignedIn) {
       navigate("/login");
     }
-  }, [isSignedIn, navigate]);
+  }, [embedded, isSignedIn, navigate]);
 
   // Fetch saved jobs
   useEffect(() => {
@@ -139,13 +140,14 @@ const SavedJobs = () => {
     return colors[index % colors.length];
   };
 
-  if (!isSignedIn) {
+  if (!isSignedIn && !embedded) {
     return null;
   }
 
-  return (
-    <main className="min-h-dvh bg-gradient-to-b from-background via-purple-500/5 to-background">
+  const content = (
+    <>
       {/* Header */}
+      {!embedded && (
       <section className="border-b bg-gradient-to-br from-purple-500/5 via-background to-primary/5">
         <div className="container mx-auto px-4 py-12 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 mb-4">
@@ -160,8 +162,9 @@ const SavedJobs = () => {
           </p>
         </div>
       </section>
+      )}
 
-      <div className="container mx-auto px-4 py-8">
+      <div className={embedded ? "" : "container mx-auto px-4 py-8"}>
         {/* Loading State */}
         {loading && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -335,6 +338,27 @@ const SavedJobs = () => {
           </>
         )}
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="inline-flex items-center gap-2">
+            <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+            <CardTitle className="text-lg">Saved jobs</CardTitle>
+          </div>
+          <CardDescription>Jobs you've saved</CardDescription>
+        </CardHeader>
+        <CardContent>{content}</CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <main className="min-h-dvh bg-gradient-to-b from-background via-purple-500/5 to-background">
+      {content}
     </main>
   );
 };

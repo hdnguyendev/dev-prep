@@ -185,6 +185,7 @@ export const resources: ResourceConfig[] = [
       "linkedin",
       "github",
       "cvUrl",
+      "isPublic",
       "createdAt",
       "updatedAt",
     ],
@@ -396,6 +397,8 @@ export const resources: ResourceConfig[] = [
     allowedFields: [
       "id",
       "applicationId",
+      "candidateId",
+      "jobId",
       "title",
       "type",
       "status",
@@ -414,7 +417,7 @@ export const resources: ResourceConfig[] = [
       "createdAt",
       "updatedAt",
     ],
-    include: { application: true, exchanges: true },
+    include: { application: true, candidate: { include: { user: true } }, job: { include: { company: true } }, exchanges: true },
     orderBy: { createdAt: "desc" },
   },
   {

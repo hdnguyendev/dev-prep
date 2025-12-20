@@ -272,8 +272,6 @@ Question flow rules:
 
 After the last main question is answered:
 - Provide a concise final assessment.
-- Then output exactly one line in this format (no extra text before/after):
-FEEDBACK_JSON: {"totalScore":0,"categoryScores":[{"name":"Communication Skills","score":0,"comment":""},{"name":"Technical Knowledge","score":0,"comment":""},{"name":"Problem Solving","score":0,"comment":""},{"name":"Cultural Fit","score":0,"comment":""},{"name":"Confidence and Clarity","score":0,"comment":""}],"strengths":[""],"areasForImprovement":[""],"finalAssessment":""}
 
 Conclude the interview properly:
 - Thank the candidate for their time.

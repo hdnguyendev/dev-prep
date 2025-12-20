@@ -371,9 +371,9 @@ const ApplicationsList = ({ applications, interviews = [], page, pageSize, total
 
                     return (
                       <tr
-                        key={app.id}
+                    key={app.id}
                         className="align-top hover:bg-muted/60 transition cursor-pointer"
-                        onClick={() => onSelect(app)}
+                    onClick={() => onSelect(app)}
                       >
                         <td className="px-5 py-3">
                           <div className="space-y-1">
@@ -381,9 +381,9 @@ const ApplicationsList = ({ applications, interviews = [], page, pageSize, total
                               {app.job?.title || "Job"}
                             </div>
                             <div className="text-sm text-muted-foreground break-words">
-                              {app.job?.company?.name || app.job?.slug || "Company not set"}
-                            </div>
-                          </div>
+                        {app.job?.company?.name || app.job?.slug || "Company not set"}
+                      </div>
+                    </div>
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-start justify-center">
@@ -397,32 +397,33 @@ const ApplicationsList = ({ applications, interviews = [], page, pageSize, total
                                 >
                                   <Icon className="h-4 w-4" />
                                   <span>{meta.label}</span>
-                                </Badge>
+                          </Badge>
                               );
                             })()}
-                          </div>
+                    </div>
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex justify-center">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate("/interview", {
-                                  state: {
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate("/interview", {
+                            state: {
                                     applicationId: app.id,
-                                    questions,
-                                    jobTitle: app.job?.title,
-                                  },
-                                });
-                              }}
-                            >
-                              <Sparkles className="h-4 w-4" />
-                              Practice
-                            </Button>
-                          </div>
+                                    jobId: app.jobId,
+                              questions,
+                              jobTitle: app.job?.title,
+                            },
+                          });
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Practice
+                      </Button>
+                    </div>
                         </td>
                         <td className="px-5 py-3 text-right text-sm text-muted-foreground whitespace-nowrap">
                           {new Date(app.appliedAt).toLocaleDateString()}
