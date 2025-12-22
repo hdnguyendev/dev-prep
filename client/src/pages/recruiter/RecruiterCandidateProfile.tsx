@@ -145,7 +145,7 @@ export default function RecruiterCandidateProfile() {
   }
 
   if (error || !profile) {
-    return (
+  return (
       <main className="min-h-dvh bg-muted/40 py-8">
         <div className="container mx-auto px-4">
           <Card className="border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20">
@@ -154,10 +154,10 @@ export default function RecruiterCandidateProfile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-red-600 dark:text-red-400">{error || "Profile not found"}</div>
-              <Button variant="outline" onClick={() => navigate(-1)}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
             </CardContent>
           </Card>
         </div>
@@ -231,7 +231,7 @@ export default function RecruiterCandidateProfile() {
               <Eye className="h-3.5 w-3.5" />
               {profile.isPublic ? "Public Profile" : "Private Profile"}
             </Badge>
-          </div>
+      </div>
 
           {/* Layout 2 columns */}
           <div className="grid gap-6 lg:grid-cols-3">
@@ -245,7 +245,7 @@ export default function RecruiterCandidateProfile() {
                     <CardTitle className="text-lg text-blue-700 dark:text-blue-400">About</CardTitle>
                   </div>
                   <CardDescription>Professional summary and contact information</CardDescription>
-                </CardHeader>
+        </CardHeader>
                 <CardContent className="space-y-4 pt-6">
                   {profile.bio ? (
                     <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
@@ -276,39 +276,39 @@ export default function RecruiterCandidateProfile() {
                   {(profile.website || profile.linkedin || profile.github) && (
                     <div className="space-y-2">
                       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Links</div>
-                      <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
                         {profile.website && (
                           <Button asChild variant="outline" size="sm" className="gap-2">
-                            <a href={profile.website} target="_blank" rel="noreferrer">
+                <a href={profile.website} target="_blank" rel="noreferrer">
                               <Globe className="h-3.5 w-3.5" />
                               Website
                               <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
+                </a>
+              </Button>
                         )}
                         {profile.linkedin && (
                           <Button asChild variant="outline" size="sm" className="gap-2">
-                            <a href={profile.linkedin} target="_blank" rel="noreferrer">
+                <a href={profile.linkedin} target="_blank" rel="noreferrer">
                               <Linkedin className="h-3.5 w-3.5" />
                               LinkedIn
                               <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
+                </a>
+              </Button>
                         )}
                         {profile.github && (
                           <Button asChild variant="outline" size="sm" className="gap-2">
-                            <a href={profile.github} target="_blank" rel="noreferrer">
+                <a href={profile.github} target="_blank" rel="noreferrer">
                               <Github className="h-3.5 w-3.5" />
                               GitHub
                               <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
+                </a>
+              </Button>
                         )}
                       </div>
-                    </div>
+          </div>
                   )}
-                </CardContent>
-              </Card>
+        </CardContent>
+      </Card>
 
               {/* Experience Section */}
               <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
@@ -323,7 +323,7 @@ export default function RecruiterCandidateProfile() {
                     </Badge>
                   </div>
                   <CardDescription>Work experience and professional background</CardDescription>
-                </CardHeader>
+          </CardHeader>
                 <CardContent className="space-y-3 pt-6">
                   {sortedExperiences.length === 0 ? (
                     <div className="text-center py-8 rounded-lg border-2 border-dashed border-amber-200 dark:border-amber-800 bg-amber-50/20 dark:bg-amber-950/10">
@@ -382,15 +382,15 @@ export default function RecruiterCandidateProfile() {
                             {exp.isCurrent && (
                               <Badge variant="default" className="whitespace-nowrap">
                                 Current
-                              </Badge>
+              </Badge>
                             )}
                           </div>
                         </CardContent>
                       </Card>
                     ))
                   )}
-                </CardContent>
-              </Card>
+          </CardContent>
+        </Card>
 
               {/* Education Section */}
               <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/30 via-background to-background dark:from-purple-950/10">
@@ -405,7 +405,7 @@ export default function RecruiterCandidateProfile() {
                     </Badge>
                   </div>
                   <CardDescription>Educational background</CardDescription>
-                </CardHeader>
+          </CardHeader>
                 <CardContent className="space-y-3 pt-6">
                   {(profile.educations || []).length === 0 ? (
                     <div className="text-center py-8 rounded-lg border-2 border-dashed border-purple-200 dark:border-purple-800 bg-purple-50/20 dark:bg-purple-950/10">
@@ -467,8 +467,8 @@ export default function RecruiterCandidateProfile() {
                     </div>
                     <Badge variant="outline" className="text-xs">
                       {(profile.projects || []).length} {(profile.projects || []).length === 1 ? 'project' : 'projects'}
-                    </Badge>
-                  </div>
+                  </Badge>
+                </div>
                   <CardDescription>Portfolio and projects</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-6">
@@ -557,11 +557,11 @@ export default function RecruiterCandidateProfile() {
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                       <CardTitle className="text-lg text-emerald-700 dark:text-emerald-400">Skills</CardTitle>
-                    </div>
+                </div>
                     <Badge variant="outline" className="text-xs">
                       {skills.length} {skills.length === 1 ? 'skill' : 'skills'}
                     </Badge>
-                  </div>
+                </div>
                   <CardDescription>Technical and professional skills</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -569,7 +569,7 @@ export default function RecruiterCandidateProfile() {
                     <div className="text-center py-8 rounded-lg border-2 border-dashed border-emerald-200 dark:border-emerald-800 bg-emerald-50/20 dark:bg-emerald-950/10">
                       <Sparkles className="h-12 w-12 mx-auto text-emerald-400 mb-3" />
                       <div className="text-sm text-muted-foreground">No skills listed</div>
-                    </div>
+              </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {skills.map((s) => (
@@ -583,10 +583,10 @@ export default function RecruiterCandidateProfile() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
         </div>
       </div>
     </main>

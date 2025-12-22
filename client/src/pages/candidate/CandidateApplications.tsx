@@ -446,7 +446,7 @@ export default function CandidateApplications() {
                     className="group border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50/50 via-background to-background dark:from-slate-950/10 transition-all hover:shadow-lg hover:border-primary/50 cursor-pointer"
                     onClick={() => app.job?.id && navigate(`/jobs/${app.job.id}`)}
                   >
-                    <CardHeader className="pb-3">
+        <CardHeader className="pb-3">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
                           <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors">
@@ -651,7 +651,7 @@ export default function CandidateApplications() {
           <div className="grid gap-3 md:grid-cols-3">
             <div className="relative flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input 
                   value={qInput} 
                   onChange={(e) => setQInput(e.target.value)}
@@ -782,7 +782,7 @@ export default function CandidateApplications() {
                             )}
                           </div>
                         </div>
-                      </td>
+                    </td>
                       <td className="px-4 py-4">
                         <Badge 
                           variant={statusVariant(status)}
@@ -791,7 +791,7 @@ export default function CandidateApplications() {
                           <StatusIcon className="h-3 w-3" />
                           <span>{meta.label}</span>
                         </Badge>
-                      </td>
+                    </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" />
@@ -811,10 +811,10 @@ export default function CandidateApplications() {
                             })}
                           </div>
                         )}
-                      </td>
+                    </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {r.job?.id ? (
+                      {r.job?.id ? (
                             <>
                               <Button 
                                 variant="ghost" 
@@ -826,8 +826,8 @@ export default function CandidateApplications() {
                                 }}
                               >
                                 <Eye className="h-3.5 w-3.5" />
-                                View
-                              </Button>
+                          View
+                        </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm" 
@@ -840,10 +840,10 @@ export default function CandidateApplications() {
                                 <ExternalLink className="h-3.5 w-3.5" />
                               </Button>
                             </>
-                          ) : null}
+                      ) : null}
                         </div>
-                      </td>
-                    </tr>
+                    </td>
+                  </tr>
                   );
                 })}
                 {filtered.length === 0 && (

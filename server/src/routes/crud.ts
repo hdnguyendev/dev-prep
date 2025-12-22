@@ -111,9 +111,24 @@ const createCrudRouter = (config: ResourceConfig) => {
       }
     }
     
-    // Support filtering by foreign key IDs (e.g., jobId, candidateId, etc.)
+    // Support filtering by common fields
     for (const [key, value] of Object.entries(queryParams)) {
-      if (key.endsWith('Id') && value && typeof value === 'string' && key !== 'q' && key !== 'search') {
+      if (!value || key === 'q' || key === 'search' || key === 'page' || key === 'pageSize') continue;
+      
+      // Filter by foreign key IDs (e.g., jobId, candidateId, etc.)
+      if (key.endsWith('Id')) {
+        dynamicWhere[key] = value;
+      }
+      // Filter by status fields (e.g., status, role, type)
+      else if (key === 'status' || key === 'role' || key === 'type' || key === 'currency') {
+        dynamicWhere[key] = value;
+      }
+      // Filter by boolean fields (e.g., isVerified, isActive, isPublic, isRemote)
+      else if (key.startsWith('is') && (value === 'true' || value === 'false')) {
+        dynamicWhere[key] = value === 'true';
+      }
+      // Filter by enum fields
+      else if (config.allowedFields?.includes(key)) {
         dynamicWhere[key] = value;
       }
     }
@@ -201,6 +216,7 @@ export const resources: ResourceConfig[] = [
       "createdAt",
       "updatedAt",
     ],
+    searchableFields: ["email", "firstName", "lastName", "phone"],
     include: { candidateProfile: true, recruiterProfile: true },
     orderBy: { createdAt: "desc" },
   },
@@ -221,6 +237,7 @@ export const resources: ResourceConfig[] = [
       "createdAt",
       "updatedAt",
     ],
+    searchableFields: ["headline", "bio", "user.firstName", "user.lastName", "user.email"],
     include: {
       user: true,
       experiences: true,
@@ -300,6 +317,7 @@ export const resources: ResourceConfig[] = [
     model: Prisma.ModelName.Skill,
     primaryKeys: ["id"],
     allowedFields: ["id", "name", "iconUrl"],
+    searchableFields: ["name"],
     include: { candidates: true, jobs: true },
     orderBy: { name: "asc" },
   },
@@ -377,13 +395,13 @@ export const resources: ResourceConfig[] = [
       savedBy: true,
     },
     orderBy: { createdAt: "desc" },
-    where: { status: "PUBLISHED" }, // Only show published jobs
   },
   {
     path: "categories",
     model: Prisma.ModelName.Category,
     primaryKeys: ["id"],
     allowedFields: ["id", "name", "iconUrl"],
+    searchableFields: ["name"],
     include: { jobs: { include: { job: true } } },
     orderBy: { name: "asc" },
   },
@@ -424,7 +442,8 @@ export const resources: ResourceConfig[] = [
       "appliedAt",
       "updatedAt",
     ],
-    include: { job: true, candidate: true, interviews: true, history: true, notes: true },
+    searchableFields: ["status", "coverLetter", "candidate.user.firstName", "candidate.user.lastName", "candidate.user.email", "job.title", "job.company.name"],
+    include: { job: { include: { company: true } }, candidate: { include: { user: true } }, interviews: true, history: true, notes: true },
     orderBy: { appliedAt: "desc" },
   },
   {
@@ -470,6 +489,7 @@ export const resources: ResourceConfig[] = [
       "createdAt",
       "updatedAt",
     ],
+    searchableFields: ["title", "type", "status", "accessCode", "candidate.user.firstName", "candidate.user.lastName", "job.title"],
     include: { application: true, candidate: { include: { user: true } }, job: { include: { company: true } }, exchanges: true },
     orderBy: { createdAt: "desc" },
   },

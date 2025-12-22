@@ -84,15 +84,15 @@ candidateProfilesRoutes.get("/public/candidate-profiles/:id", async (c) => {
       if (dbError?.message?.includes('projects') || dbError?.code === 'P2021') {
         console.log("⚠️ Projects relation might not exist, trying without it...");
         profile = await prisma.candidateProfile.findFirst({
-          where: { id, isPublic: true },
-          include: {
-            user: { select: { firstName: true, lastName: true, avatarUrl: true } },
-            skills: { include: { skill: true } },
-            experiences: true,
-            educations: true,
+      where: { id, isPublic: true },
+      include: {
+        user: { select: { firstName: true, lastName: true, avatarUrl: true } },
+        skills: { include: { skill: true } },
+        experiences: true,
+        educations: true,
             // projects: true, // Skip projects if table doesn't exist
-          },
-        });
+      },
+    });
       } else {
         throw dbError;
       }
@@ -196,15 +196,15 @@ candidateProfilesRoutes.get("/candidate-profiles/:id/view", async (c) => {
       if (dbError?.message?.includes('projects') || dbError?.code === 'P2021') {
         console.log("⚠️ Projects relation might not exist, trying without it...");
         profile = await prisma.candidateProfile.findUnique({
-          where: { id },
-          include: {
-            user: true,
-            skills: { include: { skill: true } },
-            experiences: true,
-            educations: true,
+      where: { id },
+      include: {
+        user: true,
+        skills: { include: { skill: true } },
+        experiences: true,
+        educations: true,
             // projects: true, // Skip projects if table doesn't exist
-          },
-        });
+      },
+    });
       } else {
         throw dbError;
       }

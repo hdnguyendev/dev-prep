@@ -201,18 +201,18 @@ authRoutes.get("/me", async (c) => {
     let user;
     try {
       user = await prisma.user.findUnique({
-        where: { id: token },
-        include: {
-          recruiterProfile: {
-            include: {
-              company: true,
-            },
+      where: { id: token },
+      include: {
+        recruiterProfile: {
+          include: {
+            company: true,
           },
-          candidateProfile: {
-            include: {
-              skills: { include: { skill: true } },
-              experiences: true,
-              educations: true,
+        },
+        candidateProfile: {
+          include: {
+            skills: { include: { skill: true } },
+            experiences: true,
+            educations: true,
               projects: true,
             },
           },
@@ -237,10 +237,10 @@ authRoutes.get("/me", async (c) => {
                 experiences: true,
                 educations: true,
                 // projects: true, // Skip projects if table doesn't exist
-              },
-            },
           },
-        });
+        },
+      },
+    });
       } else {
         throw dbError;
       }

@@ -468,30 +468,30 @@ const RecruiterJobApplications = () => {
     <main className="min-h-dvh bg-muted/40 py-8">
       <div className="container mx-auto px-4 space-y-6">
         {/* Back Button - Floating */}
-        <Button
+          <Button
           variant="outline"
           size="icon"
-          onClick={() => navigate("/recruiter/jobs")}
+            onClick={() => navigate("/recruiter/jobs")}
           className="fixed top-24 left-4 z-50 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg hover:bg-primary/10 hover:scale-110 transition-all group"
-        >
+          >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-        </Button>
+          </Button>
 
         {job && (
           <Card>
             <CardHeader>
-              <div className="space-y-1">
+          <div className="space-y-1">
                 <CardTitle className="text-2xl">
                   {job.title}
                 </CardTitle>
-                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                  <span>{job.company?.name}</span>
-                  <span>•</span>
-                  <span>
-                    {applications.length} application{applications.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              </div>
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <span>{job.company?.name}</span>
+              <span>•</span>
+              <span>
+                {applications.length} application{applications.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
             </CardHeader>
           </Card>
         )}
@@ -641,18 +641,18 @@ const RecruiterJobApplications = () => {
 
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <div className="relative inline-flex items-center">
-                          <select
-                            value={app.status}
-                            onChange={(e) => handleInlineStatusUpdate(app.id, e.target.value)}
+                        <select
+                          value={app.status}
+                          onChange={(e) => handleInlineStatusUpdate(app.id, e.target.value)}
                             className={`inline-flex h-8 items-center gap-1.5 pl-8 pr-8 text-sm font-medium rounded-md border cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-offset-2 ${config.color}`}
-                            disabled={updating && inlineEditingId === app.id}
-                          >
-                            {Object.keys(statusConfig).map((key) => (
-                              <option key={key} value={key}>
-                                {statusConfig[key].label}
-                              </option>
-                            ))}
-                          </select>
+                          disabled={updating && inlineEditingId === app.id}
+                        >
+                          {Object.keys(statusConfig).map((key) => (
+                            <option key={key} value={key}>
+                              {statusConfig[key].label}
+                            </option>
+                          ))}
+                        </select>
                           <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
                             {config.icon}
                           </div>
@@ -661,11 +661,11 @@ const RecruiterJobApplications = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                           </div>
-                          {updating && inlineEditingId === app.id && (
+                        {updating && inlineEditingId === app.id && (
                             <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             </div>
-                          )}
+                        )}
                         </div>
                       </div>
                     </div>

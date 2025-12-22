@@ -451,11 +451,11 @@ const Navbar = () => {
             {!isStaffLoggedIn && (
               <>
                 <ThemeToggle />
-                <Link to="/login">
-                  <Button size="sm" variant="default">
-                    Login
-                  </Button>
-                </Link>
+              <Link to="/login">
+                <Button size="sm" variant="default">
+                  Login
+                </Button>
+              </Link>
               </>
             )}
           </SignedOut>

@@ -624,7 +624,7 @@ export default function CandidateDashboard() {
             ) : (
               <div className="space-y-4">
                 <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
+                <PieChart>
                     <Pie 
                       dataKey="value" 
                       data={appsByStatus} 
@@ -633,10 +633,10 @@ export default function CandidateDashboard() {
                       outerRadius={90}
                       paddingAngle={2}
                     >
-                      {appsByStatus.map((_, idx) => (
-                        <Cell key={idx} fill={chartColors[idx % chartColors.length]} />
-                      ))}
-                    </Pie>
+                    {appsByStatus.map((_, idx) => (
+                      <Cell key={idx} fill={chartColors[idx % chartColors.length]} />
+                    ))}
+                  </Pie>
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: "hsl(var(--background))",
@@ -644,8 +644,8 @@ export default function CandidateDashboard() {
                         borderRadius: "8px"
                       }}
                     />
-                  </PieChart>
-                </ResponsiveContainer>
+                </PieChart>
+              </ResponsiveContainer>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {appsByStatus.map((item, idx) => (
                     <div key={item.name} className="flex items-center gap-2">

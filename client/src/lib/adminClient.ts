@@ -33,7 +33,7 @@ const buildIdPath = (primaryKeys: string[], row: Record<string, unknown>) => {
 };
 
 export const adminClient = {
-  async list(resourcePath: string, params?: { page?: number; pageSize?: number }, token?: string) {
+  async list(resourcePath: string, params?: Record<string, string | number | undefined>, token?: string) {
     const url = `${API_BASE_URL}/${resourcePath}${buildQuery(params)}`;
     const res = await fetch(url, {
       headers: {
@@ -41,7 +41,18 @@ export const adminClient = {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
-    if (!res.ok) throw new Error(`List failed ${res.status}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      let errorMessage = `List failed ${res.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.message || errorMessage;
+      } catch {
+        // If not JSON, use the text
+        if (errorText) errorMessage = errorText;
+      }
+      throw new Error(errorMessage);
+    }
     return (await res.json()) as AdminListResponse;
   },
   async get(resourcePath: string, idPath: string, token?: string) {
@@ -83,7 +94,17 @@ export const adminClient = {
       },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(`Update failed ${res.status}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      let errorMessage = `Update failed ${res.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.message || errorJson.error || errorMessage;
+      } catch {
+        if (errorText) errorMessage = errorText;
+      }
+      throw new Error(errorMessage);
+    }
     return res.json();
   },
   async remove(resourcePath: string, primaryKeys: string[], row: Record<string, unknown>, token?: string) {

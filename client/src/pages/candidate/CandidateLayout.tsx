@@ -86,38 +86,38 @@ export default function CandidateLayout() {
               <Card className={`${mobileMenuOpen ? "p-4" : "p-3"}`}>
                 <div className={`${mobileMenuOpen ? "text-base" : "text-sm"} font-semibold`}>Candidate</div>
                 <div className={`${mobileMenuOpen ? "text-sm" : "text-xs"} text-muted-foreground`}>Dashboard</div>
-              </Card>
+                </Card>
 
               <Card className={`${mobileMenuOpen ? "p-4 space-y-3" : "p-2 space-y-1"}`}>
-                <NavItem
-                  to="/candidate/dashboard"
-                  label="Dashboard"
+                  <NavItem
+                    to="/candidate/dashboard"
+                    label="Dashboard"
                   icon={<LayoutDashboard className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
                   onNavigate={() => setMobileMenuOpen(false)}
                   mobileMenuOpen={mobileMenuOpen}
-                />
-                <NavItem
-                  to="/candidate/applications"
-                  label="Applications"
+                  />
+                  <NavItem
+                    to="/candidate/applications"
+                    label="Applications"
                   icon={<ClipboardList className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
                   onNavigate={() => setMobileMenuOpen(false)}
                   mobileMenuOpen={mobileMenuOpen}
-                />
-                <NavItem
-                  to="/candidate/interviews"
-                  label="Interviews"
+                  />
+                  <NavItem
+                    to="/candidate/interviews"
+                    label="Interviews"
                   icon={<Calendar className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
                   onNavigate={() => setMobileMenuOpen(false)}
                   mobileMenuOpen={mobileMenuOpen}
-                />
-                <NavItem
-                  to="/candidate/profile"
-                  label="Profile"
+                  />
+                  <NavItem
+                    to="/candidate/profile"
+                    label="Profile"
                   icon={<UserRound className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
                   onNavigate={() => setMobileMenuOpen(false)}
                   mobileMenuOpen={mobileMenuOpen}
-                />
-              </Card>
+                  />
+                </Card>
 
               <Card className={`${mobileMenuOpen ? "p-4 space-y-3" : "p-2 space-y-1"}`}>
                 <div className={`${mobileMenuOpen ? "text-sm px-2 py-2" : "text-xs px-2 py-1"} font-medium text-muted-foreground`}>Quick</div>
@@ -131,8 +131,8 @@ export default function CandidateLayout() {
                   }}
                 >
                   <FileText className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />
-                  Prep
-                </Button>
+                      Prep
+                    </Button>
                 <Button 
                   variant="outline" 
                   size={mobileMenuOpen ? "lg" : "sm"} 
@@ -143,9 +143,9 @@ export default function CandidateLayout() {
                   }}
                 >
                   <Heart className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />
-                  Saved jobs
-                </Button>
-              </Card>
+                      Saved jobs
+                    </Button>
+                </Card>
               </aside>
 
               <section className="flex-1 min-w-0 w-full lg:w-auto">

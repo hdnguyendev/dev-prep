@@ -169,7 +169,7 @@ export default function CandidateInterviews() {
         const createdDate = new Date(r.createdAt);
         createdDate.setHours(0, 0, 0, 0);
         return createdDate >= fromDate;
-      });
+    });
     }
     
     return result;
@@ -303,7 +303,7 @@ export default function CandidateInterviews() {
                     className="group border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50/50 via-background to-background dark:from-slate-950/10 transition-all hover:shadow-lg hover:border-primary/50 cursor-pointer"
                     onClick={() => navigate(`/interviews/${interview.id}/feedback`)}
                   >
-                    <CardHeader className="pb-3">
+        <CardHeader className="pb-3">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
                           <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors">
@@ -377,8 +377,8 @@ export default function CandidateInterviews() {
         <CardContent className="space-y-3">
           {/* Search and Filters */}
           <div className="grid gap-3 md:grid-cols-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input 
                 value={q} 
                 onChange={(e) => setQ(e.target.value)} 
@@ -512,7 +512,7 @@ export default function CandidateInterviews() {
                             </div>
                           </div>
                         </div>
-                      </td>
+                    </td>
                       <td className="px-4 py-4">
                         <Badge 
                           variant={statusVariant(r.status)}
@@ -525,7 +525,7 @@ export default function CandidateInterviews() {
                           {r.status === "IN_PROGRESS" && <TrendingUp className="h-3 w-3" />}
                           <span>{r.status}</span>
                         </Badge>
-                      </td>
+                    </td>
                       <td className="px-4 py-4">
                         {typeof r.overallScore === "number" ? (
                           <div className="flex items-center gap-2">
@@ -536,7 +536,7 @@ export default function CandidateInterviews() {
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
-                      </td>
+                    </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" />
@@ -553,7 +553,7 @@ export default function CandidateInterviews() {
                             Expires: {new Date(r.expiresAt).toLocaleDateString()}
                           </div>
                         )}
-                      </td>
+                    </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button 
@@ -578,10 +578,10 @@ export default function CandidateInterviews() {
                             }}
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
-                          </Button>
+                      </Button>
                         </div>
-                      </td>
-                    </tr>
+                    </td>
+                  </tr>
                   );
                 })}
                 {filtered.length === 0 && (

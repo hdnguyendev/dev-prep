@@ -237,7 +237,7 @@ const RecruiterJobs = () => {
 
   const handleDeleteConfirm = async () => {
     if (!jobToDelete || !userIdRef.current) return;
-    
+
     try {
       setDeleting(true);
       const response = await fetch(`${API_BASE}/jobs/${jobToDelete.id}`, {
@@ -375,14 +375,14 @@ const RecruiterJobs = () => {
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
                   <div className="relative w-full lg:w-[360px] flex gap-2">
                     <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Search by title, slug, company..."
-                        className="pl-9"
-                      />
+                      placeholder="Search by title, slug, company..."
+                      className="pl-9"
+                    />
                     </div>
                     <Button onClick={handleSearch} size="sm">
                       <Search className="h-4 w-4 mr-2" />
@@ -615,7 +615,7 @@ const RecruiterJobs = () => {
         variant="destructive"
         loading={deleting}
       />
-    </div>
+      </div>
   );
 };
 

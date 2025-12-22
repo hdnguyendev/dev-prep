@@ -294,7 +294,7 @@ const JobDetail = () => {
       setUploading(true);
       const token = await getToken();
       const response = await apiClient.uploadResume(file, token ?? undefined);
-      
+
       if (response.success && response.data.url) {
         return response.data.url;
       } else {
@@ -337,11 +337,11 @@ const JobDetail = () => {
       
       // Create application
       const applicationResponse = await apiClient.createApplication({
-        jobId: job.id,
-        resumeUrl,
-        coverLetter: formData.coverLetter,
+          jobId: job.id,
+          resumeUrl,
+          coverLetter: formData.coverLetter,
       }, token ?? undefined);
-      
+
       if (applicationResponse.success) {
         setApplicationSuccess(true);
         setFormData({ resumeUrl: "", coverLetter: "" });
@@ -679,17 +679,17 @@ const JobDetail = () => {
                       <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
                         <MapPin className="h-4 w-4 shrink-0" />
                         <span className="leading-none">{getLocation(job)}</span>
-                      </Badge>
+                    </Badge>
                       <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
                         <DollarSign className="h-4 w-4 shrink-0" />
                         <span className="leading-none">{getSalaryRange(job)}</span>
-                      </Badge>
-                      {job.experienceLevel && (
+                    </Badge>
+                    {job.experienceLevel && (
                         <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
                           <Award className="h-4 w-4 shrink-0" />
                           <span className="leading-none">{job.experienceLevel}</span>
-                        </Badge>
-                      )}
+                      </Badge>
+                    )}
                     </div>
                     <div className="flex flex-wrap gap-3 items-center">
                       <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
@@ -724,8 +724,8 @@ const JobDetail = () => {
                       if (!s.skill?.name) return null;
                       const hasSkill = candidateSkillIds.has(s.skill.id);
                       return (
-                        <Badge 
-                          key={s.skill.id} 
+                      <Badge 
+                        key={s.skill.id} 
                           variant={hasSkill ? "default" : "outline"}
                           className={`gap-1.5 px-3 py-1.5 text-sm transition-all ${
                             hasSkill 
@@ -735,11 +735,11 @@ const JobDetail = () => {
                         >
                           {hasSkill && <CheckCircle className="h-3.5 w-3.5" />}
                           {!hasSkill && <Zap className="h-3.5 w-3.5" />}
-                          {s.skill.name}
-                          {s.isRequired && (
+                        {s.skill.name}
+                        {s.isRequired && (
                             <span className={`text-xs font-semibold ${hasSkill ? "text-white" : "text-primary"}`}>*</span>
-                          )}
-                        </Badge>
+                        )}
+                      </Badge>
                       );
                     })}
                   </div>
@@ -1209,11 +1209,11 @@ const JobDetail = () => {
                   </div>
                   <div className="flex-1 pb-1">
                     <CardTitle className="text-xl font-bold mb-1">
-                      {job.company?.name || "Company"}
+                        {job.company?.name || "Company"}
                     </CardTitle>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                       <Briefcase className="h-4 w-4 shrink-0" />
-                      <span>{job.company?.industry || "Technology"}</span>
+                        <span>{job.company?.industry || "Technology"}</span>
                       {job.company?.isVerified && (
                         <Badge variant="outline" className="gap-1 ml-2 border-green-500/30 text-green-700 dark:text-green-400">
                           <CheckCircle className="h-3 w-3" />

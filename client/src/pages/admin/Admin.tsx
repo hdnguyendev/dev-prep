@@ -7,9 +7,27 @@ import { getFoundedYearOptions } from "@/constants/company";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router";
 import { isAdminLoggedIn, logout, getCurrentUser } from "@/lib/auth";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   Blocks,
   BriefcaseBusiness,
@@ -30,6 +48,7 @@ import {
   AlertTriangle,
   Ban,
   AlarmClock,
+  Search,
 } from "lucide-react";
 
 type AdminRow = Record<string, unknown>;
@@ -52,14 +71,50 @@ const formatLabel = (field: string) => {
     .replace(/^\w/, (c) => c.toUpperCase());
 };
 
+const chartColors = ["#6366f1", "#22c55e", "#f97316", "#06b6d4", "#a855f7", "#ef4444", "#0ea5e9", "#16a34a", "#ec4899", "#14b8a6"];
+
+const countBy = (rows: any[], field: string) => {
+  const counts: Record<string, number> = {};
+  rows.forEach((r) => {
+    const key = String(r?.[field] ?? "Unknown");
+    counts[key] = (counts[key] ?? 0) + 1;
+  });
+  return Object.entries(counts).map(([name, value]) => ({ name, value }));
+};
+
+const lastNDays = (n: number) => {
+  const out: string[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = n - 1; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+};
+
 // Admin Dashboard Component
-const AdminDashboard = () => {
+const AdminDashboard = ({ 
+  setShowDashboard, 
+  setResource, 
+  adminResources 
+}: { 
+  setShowDashboard: (show: boolean) => void;
+  setResource: (r: AdminResource) => void;
+  adminResources: AdminResource[];
+}) => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCompanies: 0,
     totalJobs: 0,
     totalApplications: 0,
+    totalInterviews: 0,
   });
+  const [users, setUsers] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [interviews, setInterviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,19 +122,26 @@ const AdminDashboard = () => {
       try {
         const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
         
-        const [users, companies, jobs, applications] = await Promise.all([
-          fetch(`${API_BASE}/users?pageSize=1`).then(r => r.json()),
+        const [usersRes, companiesRes, jobsRes, applicationsRes, interviewsRes] = await Promise.all([
+          fetch(`${API_BASE}/users?pageSize=200`).then(r => r.json()),
           fetch(`${API_BASE}/companies?pageSize=1`).then(r => r.json()),
-          fetch(`${API_BASE}/jobs?pageSize=1`).then(r => r.json()),
-          fetch(`${API_BASE}/applications?pageSize=1`).then(r => r.json()),
+          fetch(`${API_BASE}/jobs?pageSize=200`).then(r => r.json()),
+          fetch(`${API_BASE}/applications?pageSize=200`).then(r => r.json()),
+          fetch(`${API_BASE}/interviews?pageSize=200`).then(r => r.json()),
         ]);
 
         setStats({
-          totalUsers: users.meta?.total || 0,
-          totalCompanies: companies.meta?.total || 0,
-          totalJobs: jobs.meta?.total || 0,
-          totalApplications: applications.meta?.total || 0,
+          totalUsers: usersRes.meta?.total || 0,
+          totalCompanies: companiesRes.meta?.total || 0,
+          totalJobs: jobsRes.meta?.total || 0,
+          totalApplications: applicationsRes.meta?.total || 0,
+          totalInterviews: interviewsRes.meta?.total || 0,
         });
+
+        setUsers(usersRes.data || []);
+        setJobs(jobsRes.data || []);
+        setApplications(applicationsRes.data || []);
+        setInterviews(interviewsRes.data || []);
       } catch (error) {
         console.error("Failed to fetch stats:", error);
       } finally {
@@ -89,6 +151,56 @@ const AdminDashboard = () => {
 
     fetchStats();
   }, []);
+
+  const usersByRole = useMemo(() => countBy(users, "role"), [users]);
+  const jobsByStatus = useMemo(() => countBy(jobs, "status"), [jobs]);
+  const applicationsByStatus = useMemo(() => countBy(applications, "status"), [applications]);
+  const interviewsByStatus = useMemo(() => countBy(interviews, "status"), [interviews]);
+  const interviewsByType = useMemo(() => countBy(interviews, "type"), [interviews]);
+
+  // Growth trend data (last 30 days)
+  const growthTrend = useMemo(() => {
+    const days = lastNDays(30);
+    const userCounts: Record<string, number> = {};
+    const jobCounts: Record<string, number> = {};
+    const appCounts: Record<string, number> = {};
+
+    users.forEach((u) => {
+      const day = new Date(u.createdAt).toISOString().slice(0, 10);
+      if (days.includes(day)) {
+        userCounts[day] = (userCounts[day] || 0) + 1;
+      }
+    });
+
+    jobs.forEach((j) => {
+      const day = new Date(j.createdAt).toISOString().slice(0, 10);
+      if (days.includes(day)) {
+        jobCounts[day] = (jobCounts[day] || 0) + 1;
+      }
+    });
+
+    applications.forEach((a) => {
+      const day = new Date(a.appliedAt || a.createdAt).toISOString().slice(0, 10);
+      if (days.includes(day)) {
+        appCounts[day] = (appCounts[day] || 0) + 1;
+      }
+    });
+
+    return days.map((day) => ({
+      date: day.slice(5), // MM-DD format
+      users: userCounts[day] || 0,
+      jobs: jobCounts[day] || 0,
+      applications: appCounts[day] || 0,
+    }));
+  }, [users, jobs, applications]);
+
+  const handleQuickAccess = (resourceKey: string) => {
+    const resource = adminResources.find((r) => r.key === resourceKey);
+    if (resource) {
+      setShowDashboard(false);
+      setResource(resource);
+    }
+  };
 
   if (loading) {
     return (
@@ -106,11 +218,11 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/30 via-background to-background dark:from-blue-950/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <UserRound className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">Total Users</CardTitle>
+            <UserRound className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalUsers}</div>
@@ -118,10 +230,10 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/30 via-background to-background dark:from-emerald-950/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Total Companies</CardTitle>
+            <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCompanies}</div>
@@ -129,10 +241,10 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/30 via-background to-background dark:from-purple-950/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-            <BriefcaseBusiness className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-400">Total Jobs</CardTitle>
+            <BriefcaseBusiness className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalJobs}</div>
@@ -140,49 +252,296 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Total Applications</CardTitle>
+            <ClipboardList className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalApplications}</div>
             <p className="text-xs text-muted-foreground">All application submissions</p>
           </CardContent>
         </Card>
+
+        <Card className="border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/30 via-background to-background dark:from-cyan-950/10">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-cyan-700 dark:text-cyan-400">Total Interviews</CardTitle>
+            <Sparkles className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalInterviews}</div>
+            <p className="text-xs text-muted-foreground">All interviews conducted</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Access */}
-      <Card>
+      <Card className="border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/30 via-background to-background dark:from-indigo-950/10">
         <CardHeader>
-          <CardTitle>Quick Access</CardTitle>
+          <CardTitle className="text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-indigo-500" />
+            Quick Access
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
-              <UserRound className="h-5 w-5" />
-              <span className="text-sm">Manage Users</span>
+            <Button 
+              variant="outline" 
+              className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+              onClick={() => handleQuickAccess("users")}
+            >
+              <UserRound className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-medium">Manage Users</span>
             </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
-              <Building2 className="h-5 w-5" />
-              <span className="text-sm">Verify Companies</span>
+            <Button 
+              variant="outline" 
+              className="h-auto flex-col gap-2 py-4 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+              onClick={() => handleQuickAccess("companies")}
+            >
+              <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-sm font-medium">Verify Companies</span>
             </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
-              <BriefcaseBusiness className="h-5 w-5" />
-              <span className="text-sm">Review Jobs</span>
+            <Button 
+              variant="outline" 
+              className="h-auto flex-col gap-2 py-4 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+              onClick={() => handleQuickAccess("jobs")}
+            >
+              <BriefcaseBusiness className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <span className="text-sm font-medium">Review Jobs</span>
             </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 py-4">
-              <ShieldCheck className="h-5 w-5" />
-              <span className="text-sm">System Settings</span>
+            <Button 
+              variant="outline" 
+              className="h-auto flex-col gap-2 py-4 hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+              onClick={() => handleQuickAccess("applications")}
+            >
+              <ClipboardList className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <span className="text-sm font-medium">View Applications</span>
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Charts Section */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Users by Role */}
+        <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/30 via-background to-background dark:from-blue-950/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-blue-700 dark:text-blue-400">Users by Role</CardTitle>
+            <p className="text-xs text-muted-foreground">Distribution of user types</p>
+          </CardHeader>
+          <CardContent className="h-80">
+            {usersByRole.length === 0 ? (
+              <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart>
+                  <Pie
+                    data={usersByRole}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {usersByRole.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Jobs by Status */}
+        <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/30 via-background to-background dark:from-purple-950/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-purple-700 dark:text-purple-400">Jobs by Status</CardTitle>
+            <p className="text-xs text-muted-foreground">Current job statuses</p>
+          </CardHeader>
+          <CardContent className="h-80">
+            {jobsByStatus.length === 0 ? (
+              <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={jobsByStatus}>
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px"
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {jobsByStatus.map((_, idx) => (
+                      <Cell key={idx} fill={chartColors[idx % chartColors.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Applications by Status */}
+        <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-amber-700 dark:text-amber-400">Applications by Status</CardTitle>
+            <p className="text-xs text-muted-foreground">Application status distribution</p>
+          </CardHeader>
+          <CardContent className="h-80">
+            {applicationsByStatus.length === 0 ? (
+              <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart>
+                  <Pie
+                    data={applicationsByStatus}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {applicationsByStatus.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Interviews by Status */}
+        <Card className="border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/30 via-background to-background dark:from-cyan-950/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-cyan-700 dark:text-cyan-400">Interviews by Status</CardTitle>
+            <p className="text-xs text-muted-foreground">Interview status breakdown</p>
+          </CardHeader>
+          <CardContent className="h-80">
+            {interviewsByStatus.length === 0 ? (
+              <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={interviewsByStatus}>
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px"
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {interviewsByStatus.map((_, idx) => (
+                      <Cell key={idx} fill={chartColors[idx % chartColors.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Growth Trend Chart */}
+      <Card className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/30 via-background to-background dark:from-emerald-950/10">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base text-emerald-700 dark:text-emerald-400">Growth Trend (Last 30 Days)</CardTitle>
+          <p className="text-xs text-muted-foreground">Daily growth of users, jobs, and applications</p>
+        </CardHeader>
+        <CardContent className="h-80">
+          {growthTrend.length === 0 ? (
+            <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart data={growthTrend}>
+                <defs>
+                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorJobs" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorApplications" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px"
+                  }}
+                />
+                <Legend />
+                <Area type="monotone" dataKey="users" stackId="1" stroke="#6366f1" fill="url(#colorUsers)" />
+                <Area type="monotone" dataKey="jobs" stackId="1" stroke="#a855f7" fill="url(#colorJobs)" />
+                <Area type="monotone" dataKey="applications" stackId="1" stroke="#f97316" fill="url(#colorApplications)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Interviews by Type */}
+      <Card className="border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50/30 via-background to-background dark:from-pink-950/10">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base text-pink-700 dark:text-pink-400">Interviews by Type</CardTitle>
+          <p className="text-xs text-muted-foreground">Distribution of interview types</p>
+        </CardHeader>
+        <CardContent className="h-80">
+          {interviewsByType.length === 0 ? (
+            <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
+                <Pie
+                  data={interviewsByType}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {interviewsByType.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
       {/* System Health */}
-      <Card>
+      <Card className="border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50/30 via-background to-background dark:from-green-950/10">
         <CardHeader>
-          <CardTitle>Platform Health</CardTitle>
+          <CardTitle className="text-green-700 dark:text-green-400 flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-green-500" />
+            Platform Health
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
@@ -217,6 +576,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const getToken = useAdminToken();
   const [relationOptions, setRelationOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [filterField, setFilterField] = useState<string>("");
@@ -226,6 +586,8 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true); // Start with dashboard view
+  const [companyTab, setCompanyTab] = useState<"unverified" | "verified">("unverified"); // For companies tab
+  const [companyCounts, setCompanyCounts] = useState<{ unverified: number; verified: number }>({ unverified: 0, verified: 0 });
 
   useEffect(() => {
     if (embedded) return;
@@ -257,7 +619,47 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
     "recruiter-profiles": <LayoutPanelLeft className="h-4 w-4" />,
   };
   const filteredAllowed = useMemo(() => {
-    const exclude = new Set<string>(["id", "createdAt", "updatedAt", ...resource.primaryKeys]);
+    // Exclude sensitive/important fields that shouldn't be edited by admin
+    const exclude = new Set<string>([
+      "id", 
+      "createdAt", 
+      "updatedAt", 
+      "passwordHash", // Never allow editing password hash
+      "email", // Email should not be changed
+      "userId", // User ID relationships
+      "candidateId", // Candidate ID relationships
+      "recruiterId", // Recruiter ID relationships
+      "companyId", // Company ID relationships
+      "jobId", // Job ID relationships
+      "applicationId", // Application ID relationships
+      "senderId", // Message sender ID
+      "receiverId", // Message receiver ID
+      "lastLoginAt", // System managed field
+      ...resource.primaryKeys
+    ]);
+    
+    // For companies, only allow editing: description, industry, companySize, foundedYear, address, city, country, logoUrl, coverUrl, website
+    // isVerified should be handled via verify/unverify action, not edit form
+    if (resource.key === "companies") {
+      const allowedCompanyFields = ["description", "industry", "companySize", "foundedYear", "address", "city", "country", "logoUrl", "coverUrl", "website"];
+      return allowedCompanyFields.filter((f) => !exclude.has(f));
+    }
+    
+    // For jobs, only allow editing: description, requirements, benefits, location, salaryMin, salaryMax, currency, isSalaryNegotiable, experienceLevel, quantity
+    // status should be handled via approve/reject action, not edit form
+    if (resource.key === "jobs") {
+      const allowedJobFields = ["description", "requirements", "benefits", "location", "salaryMin", "salaryMax", "currency", "isSalaryNegotiable", "experienceLevel", "quantity"];
+      return allowedJobFields.filter((f) => !exclude.has(f));
+    }
+    
+    // For users, only allow editing: firstName, lastName, phone, avatarUrl, isActive
+    // role, isVerified, email should not be editable
+    if (resource.key === "users") {
+      const allowedUserFields = ["firstName", "lastName", "phone", "avatarUrl", "isActive"];
+      return allowedUserFields.filter((f) => !exclude.has(f));
+    }
+    
+    // For other resources, use allowedFields but still exclude sensitive fields
     return (resource.allowedFields || resource.columns).filter((f) => !exclude.has(f));
   }, [resource]);
 
@@ -432,20 +834,115 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
     [getToken, relationOptions, relationMap]
   );
 
+  const handleVerifyCompany = async (companyId: string, currentVerified: boolean) => {
+    try {
+      const token = await getToken();
+      const row = state.data.find((r) => String(r.id) === companyId);
+      if (!row) {
+        alert("Company not found");
+        return;
+      }
+      await adminClient.update("companies", ["id"], row, { isVerified: !currentVerified }, token ?? undefined);
+      await load(); // Reload to refresh counts
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to verify/unverify company");
+    }
+  };
+
+  const handleApproveJob = async (jobId: string) => {
+    try {
+      const token = await getToken();
+      const row = state.data.find((r) => String(r.id) === jobId);
+      if (!row) {
+        alert("Job not found");
+        return;
+      }
+      await adminClient.update("jobs", ["id"], row, { status: "PUBLISHED" }, token ?? undefined);
+      await load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to approve job");
+    }
+  };
+
+  const handleRejectJob = async (jobId: string) => {
+    try {
+      const token = await getToken();
+      const row = state.data.find((r) => String(r.id) === jobId);
+      if (!row) {
+        alert("Job not found");
+        return;
+      }
+      await adminClient.update("jobs", ["id"], row, { status: "ARCHIVED" }, token ?? undefined);
+      await load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to reject job");
+    }
+  };
+
   const load = useCallback(async () => {
     try {
       setState((s) => ({ ...s, loading: true, error: null }));
       const token = await getToken();
-      const res = await adminClient.list(resource.path, { page, pageSize }, token ?? undefined);
+      
+      // Build query params for server-side search and filter
+      const queryParams: Record<string, string | number> = {
+        page,
+        pageSize,
+      };
+      
+      // Add search query
+      if (search.trim()) {
+        queryParams.q = search.trim();
+      }
+      
+      // Add filter field/value
+      if (filterField && filterValue) {
+        queryParams[filterField] = filterValue;
+      }
+      
+      // For companies, add isVerified filter based on tab
+      if (resource.key === "companies") {
+        queryParams.isVerified = companyTab === "verified" ? "true" : "false";
+      }
+      
+      const res = await adminClient.list(resource.path, queryParams, token ?? undefined);
       if (!res.success) {
         setState({ loading: false, error: res.message || "Failed to load", data: [], meta: res.meta });
         return;
       }
       setState({ loading: false, error: null, data: res.data, meta: res.meta });
+      
+      // Fetch company counts separately if this is companies resource
+      if (resource.key === "companies") {
+        try {
+          // Only fetch counts if no search/filter is applied (to show accurate totals)
+          if (!search.trim() && !filterField) {
+            const [unverifiedRes, verifiedRes] = await Promise.all([
+              adminClient.list(resource.path, { page: 1, pageSize: 1, isVerified: "false" }, token ?? undefined),
+              adminClient.list(resource.path, { page: 1, pageSize: 1, isVerified: "true" }, token ?? undefined),
+            ]);
+            setCompanyCounts({
+              unverified: unverifiedRes.meta?.total || 0,
+              verified: verifiedRes.meta?.total || 0,
+            });
+          } else {
+            // If search/filter is active, use current meta.total for the active tab
+            setCompanyCounts((prev) => {
+              if (companyTab === "unverified") {
+                return { ...prev, unverified: res.meta?.total || 0 };
+              } else {
+                return { ...prev, verified: res.meta?.total || 0 };
+              }
+            });
+          }
+        } catch (err) {
+          console.error("Failed to fetch company counts:", err);
+        }
+      }
     } catch (err) {
       setState({ loading: false, error: err instanceof Error ? err.message : "Unexpected error", data: [] });
     }
-  }, [getToken, page, pageSize, resource.path]);
+  }, [getToken, page, pageSize, resource.path, search, filterField, filterValue, resource.key, companyTab]);
 
   useEffect(() => {
     setPage(1);
@@ -453,6 +950,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
     setFormData({});
     setSelectedSkills([]);
     setSelectedCategories([]);
+    setCompanyCounts({ unverified: 0, verified: 0 });
     const fieldsToLoad = resource.key === "jobs" ? [...filteredAllowed, "skillId", "categoryId"] : filteredAllowed;
     loadRelations(fieldsToLoad);
   }, [resource, filteredAllowed, loadRelations]);
@@ -461,8 +959,248 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
     load();
   }, [load]);
 
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterField, filterValue, companyTab]);
+
   const total = state.meta?.total ?? state.data.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const renderTable = (rows: AdminRow[]) => (
+    <>
+      <div className="overflow-x-auto rounded-lg border shadow-sm">
+        <table className="min-w-full text-sm">
+          <thead className="bg-muted/70 text-muted-foreground sticky top-0 z-10">
+            <tr>
+              {visibleColumns.map((col) => (
+                <th key={col} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[11px]">{formatLabel(col)}</th>
+              ))}
+              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[11px]">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows
+              .filter((row) => resource.primaryKeys.every((k) => row && row[k] !== undefined && row[k] !== null))
+              .map((row, idx) => (
+                <tr
+                  key={resource.primaryKeys.map((k) => String(row[k] ?? "")).join("|") || crypto.randomUUID()}
+                  className={`border-b last:border-0 transition hover:bg-muted/40 ${idx % 2 === 0 ? "bg-muted/20" : "bg-background"}`}
+                >
+                  {visibleColumns.map((col) => {
+                    const val = row[col];
+                    const isJobSkillCategoryCell =
+                      resource.key === "jobs" &&
+                      (col === "skills" || col === "categories") &&
+                      Array.isArray(val);
+                    const relLabel = getRelationLabel(col, val);
+                    const isImg = isImageField(col) && typeof val === "string" && /^https?:\/\//i.test(val);
+                    const isBool = typeof val === "boolean";
+                    const isRole = col === "role";
+                    const isAvatar = col === "avatarUrl";
+                    const isEnum = Boolean(resource.fieldEnums?.[col]);
+                    const display =
+                      val === undefined || val === null || val === ""
+                        ? "N/A"
+                        : relLabel
+                          ? relLabel
+                          : typeof val === "object"
+                            ? JSON.stringify(val)
+                            : String(val);
+                    return (
+                      <td key={col} className="px-3 py-2">
+                        {isJobSkillCategoryCell ? (
+                          (() => {
+                            const items = val as Array<Record<string, unknown>>;
+                            const names = items
+                              .map((it) => {
+                                const nested =
+                                  col === "skills"
+                                    ? ((it as any).skill as AdminRow | undefined)
+                                    : ((it as any).category as AdminRow | undefined);
+                                const name = (nested?.name as string | undefined) ?? "";
+                                return name.trim();
+                              })
+                              .filter((n) => n.length > 0);
+                            const shown = names.slice(0, 3);
+                            const rest = names.length - shown.length;
+                            return (
+                              <div className="flex flex-wrap items-center gap-1">
+                                {shown.map((n) => (
+                                  <Badge key={`${col}-${n}`} variant="outline" className="text-[11px]">
+                                    {n}
+                                  </Badge>
+                                ))}
+                                {rest > 0 && (
+                                  <span className="text-[11px] text-muted-foreground">+{rest}</span>
+                                )}
+                                {names.length === 0 && (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
+                              </div>
+                            );
+                          })()
+                        ) : isAvatar ? (
+                          renderAvatar(val, row, 36)
+                        ) : isImg ? (
+                          <img
+                            src={val as string}
+                            alt={col}
+                            className="h-10 w-10 rounded-md border object-cover"
+                            onError={(ev) => ((ev.currentTarget as HTMLImageElement).style.display = "none")}
+                          />
+                        ) : isBool ? (
+                          <div className="flex items-center gap-1 text-xs font-medium">
+                            {val ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                <span className="text-green-700">Yes</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="h-4 w-4 text-red-500" />
+                                <span className="text-red-600">No</span>
+                              </>
+                            )}
+                          </div>
+                        ) : isRole ? (
+                          <Badge variant="outline" className="gap-1">
+                            <Shield className="h-3 w-3" />
+                            {display}
+                          </Badge>
+                        ) : isEnum ? (
+                          renderEnum(col, val)
+                        ) : isIdField(col) ? (
+                          renderIdLink(col, val)
+                        ) : (
+                          <span className="text-muted-foreground line-clamp-2 break-all">{display}</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1">
+                      {/* Verify/Unverify Company */}
+                      {resource.key === "companies" && (
+                        <Button
+                          variant={row.isVerified ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => handleVerifyCompany(String(row.id), Boolean(row.isVerified))}
+                        >
+                          {row.isVerified ? (
+                            <>
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Verified
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Verify
+                            </>
+                          )}
+                        </Button>
+                      )}
+                      
+                      {/* Approve/Reject Job */}
+                      {resource.key === "jobs" && (
+                        <>
+                          {row.status === "DRAFT" && (
+                            <>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                                onClick={() => handleApproveJob(String(row.id))}
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs border-red-300 text-red-600 hover:bg-red-50"
+                                onClick={() => handleRejectJob(String(row.id))}
+                              >
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {row.status === "ARCHIVED" && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                              onClick={() => handleApproveJob(String(row.id))}
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Approve
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* View Details */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          const idPath = resource.primaryKeys.map((k) => encodeURIComponent(String(row[k] ?? ""))).join("/");
+                          navigate(`/admin/${resource.path}/${idPath}`);
+                        }}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={visibleColumns.length + 1} className="px-3 py-6 text-center text-muted-foreground">
+                  No records match.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>Rows per page</span>
+          <select
+            value={pageSize}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+              setPage(1);
+              setPageSize(Number(e.target.value));
+            }}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+          >
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+            Previous
+          </Button>
+          <div className="text-xs text-muted-foreground">Page {page} / {totalPages}</div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </>
+  );
 
   const uploadFile = useCallback(
     async (field: string, file: File) => {
@@ -487,31 +1225,8 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
     [getToken]
   );
 
-  const filteredRows = useMemo(() => {
-    const base = state.data;
-    const q = search.toLowerCase();
-    return base.filter((row) => {
-      const cols = resource.columns || [];
-      const matchesSearch = !q
-        ? true
-        : cols.some((col) => {
-            const val = row[col];
-            if (val === undefined || val === null) return false;
-            return String(val).toLowerCase().includes(q);
-          });
-
-      const matchesField =
-        !filterField || !filterValue
-          ? true
-          : (() => {
-              const val = row[filterField];
-              if (val === undefined || val === null) return false;
-              return String(val) === filterValue;
-            })();
-
-      return matchesSearch && matchesField;
-    });
-  }, [filterField, filterValue, resource.columns, search, state.data]);
+  // No client-side filtering - all filtering is done server-side
+  const filteredRows = state.data;
 
   const openModal = (mode: ModalMode, row?: AdminRow) => {
     setModalMode(mode);
@@ -579,35 +1294,70 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
       }
 
       if (resource.key === "jobs" && jobId) {
+        // Remove duplicates from selectedSkills and selectedCategories
+        const uniqueSkills = Array.from(new Set(selectedSkills.map(String)));
+        const uniqueCategories = Array.from(new Set(selectedCategories.map(String)));
+
         const res = await adminClient.list("job-skills", { page: 1, pageSize: 200 }, token ?? undefined);
-        const existingForJob = ((res.data || []) as AdminRow[]).filter((js) => js.jobId === jobId);
+        const existingForJob = ((res.data || []) as AdminRow[]).filter((js) => String(js.jobId) === String(jobId));
         const existingIds = new Set(existingForJob.map((js) => String(js.skillId)));
 
         // delete removed
         await Promise.all(
           existingForJob
-            .filter((js) => !selectedSkills.includes(String(js.skillId)))
+            .filter((js) => !uniqueSkills.includes(String(js.skillId)))
             .map((js) => adminClient.remove("job-skills", ["jobId", "skillId"], js, token ?? undefined))
+            .map((p) => p.catch((err) => {
+              console.warn("Failed to remove job-skill:", err);
+              return null;
+            }))
         );
-        // add new
+        
+        // add new (only if not already exists)
         await Promise.all(
-          selectedSkills
+          uniqueSkills
             .filter((sid) => !existingIds.has(sid))
-            .map((sid) => adminClient.create("job-skills", { jobId, skillId: sid, isRequired: true }, token ?? undefined))
+            .map((sid) => 
+              adminClient.create("job-skills", { jobId, skillId: sid, isRequired: true }, token ?? undefined)
+                .catch((err) => {
+                  // Ignore unique constraint errors (already exists)
+                  if (err?.message?.includes("Unique constraint") || err?.message?.includes("already exists")) {
+                    console.warn(`Job-skill ${jobId}-${sid} already exists, skipping`);
+                    return null;
+                  }
+                  throw err;
+                })
+            )
         );
 
         const catRes = await adminClient.list("job-categories", { page: 1, pageSize: 200 }, token ?? undefined);
-        const existingCatForJob = ((catRes.data || []) as AdminRow[]).filter((jc) => jc.jobId === jobId);
+        const existingCatForJob = ((catRes.data || []) as AdminRow[]).filter((jc) => String(jc.jobId) === String(jobId));
         const existingCatIds = new Set(existingCatForJob.map((jc) => String(jc.categoryId)));
+        
         await Promise.all(
           existingCatForJob
-            .filter((jc) => !selectedCategories.includes(String(jc.categoryId)))
+            .filter((jc) => !uniqueCategories.includes(String(jc.categoryId)))
             .map((jc) => adminClient.remove("job-categories", ["jobId", "categoryId"], jc, token ?? undefined))
+            .map((p) => p.catch((err) => {
+              console.warn("Failed to remove job-category:", err);
+              return null;
+            }))
         );
+        
         await Promise.all(
-          selectedCategories
+          uniqueCategories
             .filter((cid) => !existingCatIds.has(cid))
-            .map((cid) => adminClient.create("job-categories", { jobId, categoryId: cid }, token ?? undefined))
+            .map((cid) => 
+              adminClient.create("job-categories", { jobId, categoryId: cid }, token ?? undefined)
+                .catch((err) => {
+                  // Ignore unique constraint errors (already exists)
+                  if (err?.message?.includes("Unique constraint") || err?.message?.includes("already exists")) {
+                    console.warn(`Job-category ${jobId}-${cid} already exists, skipping`);
+                    return null;
+                  }
+                  throw err;
+                })
+            )
         );
       }
 
@@ -673,24 +1423,13 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
     </div>
   ) : null;
 
-  return (
-    <main className={embedded ? "" : "min-h-dvh bg-muted/40"}>
-      <div className={embedded ? "w-full" : "mx-auto grid min-h-dvh max-w-7xl grid-cols-1 lg:grid-cols-[260px_1fr]"}>
-        {!embedded ? (
-          <aside className="border-r bg-background/80 backdrop-blur px-4 py-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <div>
-              <h1 className="text-xl font-semibold">Admin</h1>
-              <p className="text-xs text-muted-foreground">{currentUser?.email || "Admin"}</p>
-            </div>
-          </div>
-              <div className="space-y-1">
+  const topNav = !embedded ? (
+    <div className="mb-6 flex flex-wrap items-center gap-2 border-b pb-4">
                 <Button
                   key="dashboard-tab"
-                  variant={showDashboard ? "default" : "ghost"}
+        variant={showDashboard ? "default" : "outline"}
                   size="sm"
-                  className="w-full justify-start gap-2"
+        className="gap-2"
                   onClick={() => setShowDashboard(true)}
                 >
                   <LayoutPanelLeft className="h-4 w-4" /> Dashboard
@@ -698,9 +1437,9 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                 {adminResources.map((r) => (
                   <Button
                     key={r.key}
-                    variant={!showDashboard && resource.key === r.key ? "default" : "ghost"}
+          variant={!showDashboard && resource.key === r.key ? "default" : "outline"}
                     size="sm"
-                    className="w-full justify-start gap-2"
+          className="gap-2"
                     onClick={() => {
                       setShowDashboard(false);
                       setResource(r);
@@ -709,18 +1448,25 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                     {resourceIcons[r.key] ?? <Blocks className="h-4 w-4" />} {r.label}
                   </Button>
                 ))}
-              </div>
-              <Button size="sm" onClick={() => openModal("create")}>+ New {resource.label}</Button>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="mt-auto">
-                Logout
+      {!showDashboard ? (
+        <Button size="sm" onClick={() => openModal("create")} className="ml-auto">
+          + New {resource.label}
               </Button>
-          </aside>
         ) : null}
+    </div>
+  ) : null;
 
-            <div className={embedded ? "" : "px-4 py-6"}>
+  return (
+    <main className={embedded ? "" : "min-h-dvh bg-muted/40"}>
+      <div className={embedded ? "w-full" : "container mx-auto px-4 py-6"}>
+        {topNav}
               {embeddedNav}
               {showDashboard ? (
-                <AdminDashboard />
+                <AdminDashboard 
+                  setShowDashboard={setShowDashboard}
+                  setResource={setResource}
+                  adminResources={adminResources}
+                />
               ) : (
                 <>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -740,12 +1486,30 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                     <label className="space-y-1 text-xs text-muted-foreground">
                       <span>Search</span>
+                      <div className="flex gap-2">
                       <input
-                        value={search}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                        placeholder="Search any column"
-                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                          value={searchInput}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              setSearch(searchInput);
+                              setPage(1);
+                            }
+                          }}
+                          placeholder="Search..."
+                          className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm"
                       />
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            setSearch(searchInput);
+                            setPage(1);
+                          }}
+                        >
+                          <Search className="h-4 w-4 mr-2" />
+                          Search
+                        </Button>
+                      </div>
                     </label>
                     <label className="space-y-1 text-xs text-muted-foreground">
                       <span>Column</span>
@@ -768,7 +1532,10 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                       {filterField && relationOptions[filterField] ? (
                         <select
                           value={filterValue}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterValue(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            setFilterValue(e.target.value);
+                            setPage(1);
+                          }}
                           className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                         >
                           <option value="">Any</option>
@@ -779,7 +1546,10 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                       ) : filterField && resource.fieldEnums?.[filterField] ? (
                         <select
                           value={filterValue}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterValue(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            setFilterValue(e.target.value);
+                            setPage(1);
+                          }}
                           className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                         >
                           <option value="">Any</option>
@@ -788,24 +1558,143 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                           ))}
                         </select>
                       ) : (
+                        <div className="flex gap-2">
                         <input
                           value={filterValue}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterValue(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                setPage(1);
+                              }
+                            }}
                           placeholder={filterField ? "Enter value" : "Select column first"}
-                          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm"
                           disabled={!filterField}
                         />
+                          {filterField && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => setPage(1)}
+                              disabled={!filterValue}
+                            >
+                              Apply
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </label>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setSearch("")}>Clear search</Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setFilterField(""); setFilterValue(""); }}>Reset filter</Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }}>Clear search</Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setFilterField(""); setFilterValue(""); setPage(1); }}>Reset filter</Button>
                   </div>
+                  
+                  {/* Quick Filters */}
+                  {resource.key === "users" && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Quick Filters:</div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant={filterField === "role" && filterValue === "ADMIN" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("role"); setFilterValue("ADMIN"); setPage(1); }}>Admin</Button>
+                        <Button variant={filterField === "role" && filterValue === "CANDIDATE" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("role"); setFilterValue("CANDIDATE"); setPage(1); }}>Candidates</Button>
+                        <Button variant={filterField === "role" && filterValue === "RECRUITER" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("role"); setFilterValue("RECRUITER"); setPage(1); }}>Recruiters</Button>
+                        <Button variant={filterField === "isActive" && filterValue === "false" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("isActive"); setFilterValue("false"); setPage(1); }}>Inactive</Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {resource.key === "jobs" && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Quick Filters:</div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant={filterField === "status" && filterValue === "DRAFT" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("DRAFT"); setPage(1); }}>Draft</Button>
+                        <Button variant={filterField === "status" && filterValue === "PUBLISHED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("PUBLISHED"); setPage(1); }}>Published</Button>
+                        <Button variant={filterField === "status" && filterValue === "ARCHIVED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("ARCHIVED"); setPage(1); }}>Archived</Button>
+                        <Button variant={filterField === "status" && filterValue === "CLOSED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("CLOSED"); setPage(1); }}>Closed</Button>
+                        <Button variant={filterField === "isRemote" && filterValue === "true" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("isRemote"); setFilterValue("true"); setPage(1); }}>Remote</Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {resource.key === "applications" && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Quick Filters:</div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant={filterField === "status" && filterValue === "APPLIED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("APPLIED"); setPage(1); }}>Applied</Button>
+                        <Button variant={filterField === "status" && filterValue === "REVIEWING" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("REVIEWING"); setPage(1); }}>Reviewing</Button>
+                        <Button variant={filterField === "status" && filterValue === "SHORTLISTED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("SHORTLISTED"); setPage(1); }}>Shortlisted</Button>
+                        <Button variant={filterField === "status" && filterValue === "HIRED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("HIRED"); setPage(1); }}>Hired</Button>
+                        <Button variant={filterField === "status" && filterValue === "REJECTED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("REJECTED"); setPage(1); }}>Rejected</Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {resource.key === "interviews" && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Quick Filters:</div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant={filterField === "status" && filterValue === "PENDING" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("PENDING"); setPage(1); }}>Pending</Button>
+                        <Button variant={filterField === "status" && filterValue === "IN_PROGRESS" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("IN_PROGRESS"); setPage(1); }}>In Progress</Button>
+                        <Button variant={filterField === "status" && filterValue === "COMPLETED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("COMPLETED"); setPage(1); }}>Completed</Button>
+                        <Button variant={filterField === "status" && filterValue === "FAILED" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("status"); setFilterValue("FAILED"); setPage(1); }}>Failed</Button>
+                        <Button variant={filterField === "type" && filterValue === "AI_VIDEO" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("type"); setFilterValue("AI_VIDEO"); setPage(1); }}>AI Video</Button>
+                        <Button variant={filterField === "type" && filterValue === "AI_VOICE" ? "default" : "outline"} size="sm" onClick={() => { setFilterField("type"); setFilterValue("AI_VOICE"); setPage(1); }}>AI Voice</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               <div className="mt-6 space-y-4">
+                {resource.key === "companies" ? (
+                  <Tabs value={companyTab} onValueChange={(v) => setCompanyTab(v as "unverified" | "verified")}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="unverified">
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Unverified ({companyCounts.unverified})
+                      </TabsTrigger>
+                      <TabsTrigger value="verified">
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Verified ({companyCounts.verified})
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="unverified" className="mt-4">
+                      <Card className="overflow-hidden">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <XCircle className="h-5 w-5 text-amber-600" />
+                            Unverified Companies
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {state.loading && <div className="text-sm text-muted-foreground">Loading...</div>}
+                          {state.error && <div className="text-sm text-red-600">{state.error}</div>}
+                          {!state.loading && !state.error && filteredRows.length === 0 && (
+                            <div className="text-sm text-muted-foreground">No unverified companies.</div>
+                          )}
+                          {!state.loading && !state.error && filteredRows.length > 0 && renderTable(filteredRows)}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="verified" className="mt-4">
+                      <Card className="overflow-hidden">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            Verified Companies
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {state.loading && <div className="text-sm text-muted-foreground">Loading...</div>}
+                          {state.error && <div className="text-sm text-red-600">{state.error}</div>}
+                          {!state.loading && !state.error && filteredRows.length === 0 && (
+                            <div className="text-sm text-muted-foreground">No verified companies.</div>
+                          )}
+                          {!state.loading && !state.error && filteredRows.length > 0 && renderTable(filteredRows)}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+                ) : (
                 <Card className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">{resource.label}</CardTitle>
@@ -816,192 +1705,37 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                     {!state.loading && !state.error && state.data.length === 0 && (
                       <div className="text-sm text-muted-foreground">No data.</div>
                     )}
-
-                    <div className="overflow-x-auto rounded-lg border shadow-sm">
-                      <table className="min-w-full text-sm">
-                        <thead className="bg-muted/70 text-muted-foreground sticky top-0 z-10">
-                          <tr>
-                          {visibleColumns.map((col) => (
-                              <th key={col} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[11px]">{formatLabel(col)}</th>
-                            ))}
-                            <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[11px]">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredRows
-                            .filter((row) => resource.primaryKeys.every((k) => row && row[k] !== undefined && row[k] !== null))
-                            .map((row, idx) => (
-                              <tr
-                                key={resource.primaryKeys.map((k) => String(row[k] ?? "")).join("|") || crypto.randomUUID()}
-                                className={`border-b last:border-0 transition hover:bg-muted/40 ${idx % 2 === 0 ? "bg-muted/20" : "bg-background"}`}
-                              >
-                                {visibleColumns.map((col) => {
-                                  const val = row[col];
-                                  const isJobSkillCategoryCell =
-                                    resource.key === "jobs" &&
-                                    (col === "skills" || col === "categories") &&
-                                    Array.isArray(val);
-                                  const relLabel = getRelationLabel(col, val);
-                                  const isImg = isImageField(col) && typeof val === "string" && /^https?:\/\//i.test(val);
-                                  const isBool = typeof val === "boolean";
-                                  const isRole = col === "role";
-                                  const isAvatar = col === "avatarUrl";
-                                  const isEnum = Boolean(resource.fieldEnums?.[col]);
-                                  const display =
-                                    val === undefined || val === null || val === ""
-                                      ? "N/A"
-                                      : relLabel
-                                        ? relLabel
-                                        : typeof val === "object"
-                                          ? JSON.stringify(val)
-                                          : String(val);
-                                  return (
-                                    <td key={col} className="px-3 py-2">
-                                      {isJobSkillCategoryCell ? (
-                                        (() => {
-                                          const items = val as Array<Record<string, unknown>>;
-                                          const names = items
-                                            .map((it) => {
-                                              const nested =
-                                                col === "skills"
-                                                  ? ((it as any).skill as AdminRow | undefined)
-                                                  : ((it as any).category as AdminRow | undefined);
-                                              const name = (nested?.name as string | undefined) ?? "";
-                                              return name.trim();
-                                            })
-                                            .filter((n) => n.length > 0);
-                                          const shown = names.slice(0, 3);
-                                          const rest = names.length - shown.length;
-                                          return (
-                                            <div className="flex flex-wrap items-center gap-1">
-                                              {shown.map((n) => (
-                                                <Badge key={`${col}-${n}`} variant="outline" className="text-[11px]">
-                                                  {n}
-                                                </Badge>
-                                              ))}
-                                              {rest > 0 && (
-                                                <span className="text-[11px] text-muted-foreground">+{rest}</span>
-                                              )}
-                                              {names.length === 0 && (
-                                                <span className="text-xs text-muted-foreground">—</span>
-                                              )}
-                                            </div>
-                                          );
-                                        })()
-                                      ) : isAvatar ? (
-                                        renderAvatar(val, row, 36)
-                                      ) : isImg ? (
-                                        <img
-                                          src={val as string}
-                                          alt={col}
-                                          className="h-10 w-10 rounded-md border object-cover"
-                                          onError={(ev) => ((ev.currentTarget as HTMLImageElement).style.display = "none")}
-                                        />
-                                      ) : isBool ? (
-                                        <div className="flex items-center gap-1 text-xs font-medium">
-                                          {val ? (
-                                            <>
-                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                              <span className="text-green-700">Yes</span>
-                                            </>
-                                          ) : (
-                                            <>
-                                              <XCircle className="h-4 w-4 text-red-500" />
-                                              <span className="text-red-600">No</span>
-                                            </>
-                                          )}
-                                        </div>
-                                      ) : isRole ? (
-                                        <Badge variant="outline" className="gap-1">
-                                          <Shield className="h-3 w-3" />
-                                          {display}
-                                        </Badge>
-                                      ) : isEnum ? (
-                                        renderEnum(col, val)
-                                      ) : isIdField(col) ? (
-                                        renderIdLink(col, val)
-                                      ) : (
-                                        <span className="text-muted-foreground line-clamp-2 break-all">{display}</span>
-                                      )}
-                                    </td>
-                                  );
-                                })}
-                                <td className="px-3 py-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => {
-                                  const idPath = resource.primaryKeys.map((k) => encodeURIComponent(String(row[k] ?? ""))).join("/");
-                                  navigate(`/admin/${resource.path}/${idPath}`);
-                                }}
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                                </td>
-                              </tr>
-                            ))}
-                          {filteredRows.length === 0 && (
-                            <tr>
-                              <td colSpan={visibleColumns.length + 1} className="px-3 py-6 text-center text-muted-foreground">
-                                No records match.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>Rows per page</span>
-                        <select
-                          value={pageSize}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                            setPage(1);
-                            setPageSize(Number(e.target.value));
-                          }}
-                          className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                        >
-                          {[5, 10, 20, 50].map((n) => (
-                            <option key={n} value={n}>{n}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
-                          Previous
-                        </Button>
-                        <div className="text-xs text-muted-foreground">Page {page} / {totalPages}</div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                          disabled={page === totalPages}
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    </div>
+                      {!state.loading && !state.error && filteredRows.length > 0 && renderTable(filteredRows)}
                   </CardContent>
                 </Card>
+                )}
               </div>
                 </>
               )}
             </div>
-          </div>
-
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-            <div className="w-full max-w-3xl rounded-xl bg-background shadow-xl">
-              <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-6">
+            <div className="w-full max-w-4xl max-h-[90vh] rounded-xl bg-background shadow-2xl border flex flex-col">
+              <div className="flex items-center justify-between border-b px-6 py-4 bg-muted/30">
+                <div className="flex items-center gap-3">
+                  {resourceIcons[resource.key] && (
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                      {resourceIcons[resource.key]}
+                    </div>
+                  )}
                 <div>
-                  <h2 className="text-lg font-semibold">{modalMode === "create" ? "Create" : "Edit"} {resource.label}</h2>
-                  <p className="text-xs text-muted-foreground">Fill required fields then save</p>
+                    <h2 className="text-xl font-semibold">{modalMode === "create" ? "Create" : "Edit"} {resource.label}</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {modalMode === "create" ? "Fill in the required information" : "Update the fields below"}
+                    </p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={closeModal}>Close</Button>
               </div>
-              <div className="grid gap-4 border-b px-4 py-4 lg:grid-cols-2">
+                <Button variant="ghost" size="icon" onClick={closeModal} className="h-8 w-8">
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                <div className="grid gap-6 lg:grid-cols-2">
                 {filteredAllowed.map((field) => {
                   const type = guessInputType(field, formData[field]);
                   const enumOptions = resource.fieldEnums?.[field];
@@ -1011,9 +1745,9 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
 
                   if (resource.key === "companies" && field === "foundedYear") {
                     return (
-                      <div key={field} className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          {formatLabel(field)}
+                      <div key={field} className="space-y-2">
+                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                          <span>{formatLabel(field)}</span>
                         </label>
                         <select
                           value={String(formData[field] ?? "")}
@@ -1021,9 +1755,9 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                             const v = e.target.value;
                             handleFormChange(field, v === "" ? null : Number.parseInt(v, 10));
                           }}
-                          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                         >
-                          <option value="">—</option>
+                          <option value="">— Select Year —</option>
                           {foundedYearOptions.map((y) => (
                             <option key={y} value={y}>
                               {y}
@@ -1036,14 +1770,14 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
 
                   if (relOptions && relOptions.length > 0) {
                     return (
-                      <div key={field} className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">{formatLabel(field)}</label>
+                      <div key={field} className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">{formatLabel(field)}</label>
                         <select
                           value={String(formData[field] ?? "")}
                           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormChange(field, e.target.value)}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                         >
-                          <option value="">-- select --</option>
+                          <option value="">— Select {formatLabel(field)} —</option>
                           {relOptions.map((opt) => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
@@ -1054,29 +1788,22 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
 
                   if (type === "select" && enumOptions) {
                     return (
-                      <div key={field} className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">{formatLabel(field)}</label>
-                        <select
-                          value={String(formData[field] ?? "")}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormChange(field, e.target.value)}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="">-- select --</option>
-                          {enumOptions.map((opt) => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {enumOptions.map((opt) => (
+                      <div key={field} className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">{formatLabel(field)}</label>
+                        <div className="flex flex-wrap gap-2">
+                          {enumOptions.map((opt) => {
+                            const active = formData[field] === opt;
+                            return (
                             <Badge
                               key={`${field}-chip-${opt}`}
-                              variant={(formData[field] === opt) ? "default" : "outline"}
-                              className="cursor-pointer"
+                                variant={active ? "default" : "outline"}
+                                className="cursor-pointer hover:bg-primary/10 transition-colors px-3 py-1"
                               onClick={() => handleFormChange(field, opt)}
                             >
                               {opt}
                             </Badge>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -1084,26 +1811,32 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
 
                   if (type === "checkbox") {
                     return (
-                      <label key={field} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
+                      <div
+                        key={field}
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-foreground">
+                            {formatLabel(field)}
+                          </span>
+                        </div>
+                        <Switch
                           checked={Boolean(formData[field])}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange(field, e.target.checked)}
-                          className="h-4 w-4"
+                          onCheckedChange={(checked: boolean) => handleFormChange(field, checked)}
                         />
-                        {formatLabel(field)}
-                      </label>
+                      </div>
                     );
                   }
 
                   if (type === "textarea") {
                     return (
-                      <div key={field} className="space-y-1 lg:col-span-2">
-                        <label className="text-xs font-medium text-muted-foreground">{formatLabel(field)}</label>
+                      <div key={field} className="space-y-2 lg:col-span-2">
+                        <label className="text-sm font-medium text-foreground">{formatLabel(field)}</label>
                         <Textarea
                           value={String(formData[field] ?? "")}
                           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleFormChange(field, e.target.value)}
-                          className="min-h-[90px]"
+                          className="min-h-[120px] rounded-lg border-input focus:ring-2 focus:ring-primary focus:border-primary transition-colors resize-y"
+                          placeholder={`Enter ${formatLabel(field).toLowerCase()}...`}
                         />
                       </div>
                     );
@@ -1111,12 +1844,14 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
 
                   const inputVal: string = String(formData[field] ?? "");
                   return (
-                    <div key={field} className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+                    <div key={field} className={`space-y-2 ${imageField ? "lg:col-span-2" : ""}`}>
+                      <label className="text-sm font-medium text-foreground flex items-center justify-between">
                         <span>{formatLabel(field)}</span>
-                        {imageField && <span className="text-[10px] text-muted-foreground">Upload or paste URL</span>}
+                        {imageField && (
+                          <span className="text-xs text-muted-foreground font-normal">Upload image or paste URL</span>
+                        )}
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start gap-3">
                         <input
                           type={type === "number" ? "number" : "text"}
                           value={inputVal}
@@ -1125,9 +1860,11 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                               field,
                               type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value
                             )}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          className="flex-1 h-10 rounded-lg border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                          placeholder={`Enter ${formatLabel(field).toLowerCase()}...`}
                         />
                         {imageField && (
+                          <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-input bg-muted hover:bg-muted/80 cursor-pointer transition-colors text-sm font-medium">
                           <input
                             type="file"
                             accept="image/*"
@@ -1138,25 +1875,42 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                                 .then((url) => handleFormChange(field, url))
                                 .catch((err) => alert(err instanceof Error ? err.message : "Upload failed"));
                             }}
-                            className="w-32 text-xs"
+                              className="hidden"
                           />
+                            <span>Upload</span>
+                          </label>
                         )}
                       </div>
                       {imageField && (
-                        <div className="mt-1 space-y-1">
-                          {uploadingField === field && <div className="text-[11px] text-muted-foreground">Uploading...</div>}
+                        <div className="space-y-2">
+                          {uploadingField === field && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                              Uploading...
+                            </div>
+                          )}
                           {inputVal && inputVal.startsWith("http") && (
-                            <>
+                            <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
                               <img
                                 src={inputVal}
                                 alt={field}
-                                className="h-24 w-24 rounded-md border object-cover"
+                                className="h-20 w-20 rounded-lg border object-cover flex-shrink-0"
                                 onError={(ev) => {
                                   (ev.currentTarget as HTMLImageElement).style.display = "none";
                                 }}
                               />
-                              <div className="text-[10px] text-muted-foreground break-all">{inputVal}</div>
-                            </>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs text-muted-foreground break-all line-clamp-2">{inputVal}</div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-2 h-7 text-xs"
+                                  onClick={() => handleFormChange(field, "")}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}
@@ -1164,14 +1918,15 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                   );
                 })}
                 {resource.key === "jobs" && relationOptions["skillId"] && (
-                  <div className="space-y-1 lg:col-span-2">
-                    <label className="text-xs font-medium text-muted-foreground">Skills</label>
+                  <div className="space-y-2 lg:col-span-2">
+                    <label className="text-sm font-medium text-foreground">Skills</label>
+                    <div className="p-4 rounded-lg border bg-muted/20">
                     <div className="flex flex-wrap gap-2">
                       {relationOptions["skillId"]?.map((opt) => (
                         <Badge
                           key={opt.value}
                           variant={selectedSkills.includes(opt.value) ? "default" : "outline"}
-                          className="cursor-pointer"
+                            className="cursor-pointer hover:bg-primary/10 transition-colors px-3 py-1"
                           onClick={() =>
                             setSelectedSkills((prev) =>
                               prev.includes(opt.value) ? prev.filter((v) => v !== opt.value) : [...prev, opt.value]
@@ -1181,18 +1936,23 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                           {opt.label}
                         </Badge>
                       ))}
+                        {relationOptions["skillId"]?.length === 0 && (
+                          <span className="text-sm text-muted-foreground">No skills available</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
                 {resource.key === "jobs" && relationOptions["categoryId"] && (
-                  <div className="space-y-1 lg:col-span-2">
-                    <label className="text-xs font-medium text-muted-foreground">Categories</label>
+                  <div className="space-y-2 lg:col-span-2">
+                    <label className="text-sm font-medium text-foreground">Categories</label>
+                    <div className="p-4 rounded-lg border bg-muted/20">
                     <div className="flex flex-wrap gap-2">
                       {relationOptions["categoryId"]?.map((opt) => (
                         <Badge
                           key={opt.value}
                           variant={selectedCategories.includes(opt.value) ? "default" : "outline"}
-                          className="cursor-pointer"
+                            className="cursor-pointer hover:bg-primary/10 transition-colors px-3 py-1"
                           onClick={() =>
                             setSelectedCategories((prev) =>
                               prev.includes(opt.value) ? prev.filter((v) => v !== opt.value) : [...prev, opt.value]
@@ -1202,15 +1962,29 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                           {opt.label}
                         </Badge>
                       ))}
+                        {relationOptions["categoryId"]?.length === 0 && (
+                          <span className="text-sm text-muted-foreground">No categories available</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-between px-4 py-3">
-                <div className="text-xs text-muted-foreground">Mode: {modalMode.toUpperCase()}</div>
+              </div>
+              <div className="flex items-center justify-between border-t px-6 py-4 bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {modalMode === "create" ? "CREATE MODE" : "EDIT MODE"}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {filteredAllowed.length} field{filteredAllowed.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={closeModal}>Cancel</Button>
-                  <Button size="sm" onClick={handleSubmit}>{modalMode === "create" ? "Create" : "Save changes"}</Button>
+                  <Button variant="outline" onClick={closeModal}>Cancel</Button>
+                  <Button onClick={handleSubmit} className="min-w-[120px]">
+                    {modalMode === "create" ? "Create" : "Save Changes"}
+                  </Button>
                 </div>
               </div>
             </div>

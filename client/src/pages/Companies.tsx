@@ -300,15 +300,15 @@ const Companies = () => {
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
                   {/* Search */}
                   <div className="relative flex-1 min-w-0 flex gap-2">
-                    <div className="relative flex-1 min-w-0">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Search companies by name, industry, location..."
+                  <div className="relative flex-1 min-w-0">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search companies by name, industry, location..."
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        className="h-11 pl-9"
-                      />
+                      className="h-11 pl-9"
+                    />
                     </div>
                     <Button onClick={handleSearch} className="h-11">
                       <Search className="h-4 w-4 mr-2" />

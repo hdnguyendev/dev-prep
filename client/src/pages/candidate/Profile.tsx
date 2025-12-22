@@ -974,9 +974,9 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                 : user?.email || clerkUser?.emailAddresses?.[0]?.emailAddress || "My Profile"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">Manage your professional profile and CV</p>
-          </div>
         </div>
-        
+      </div>
+
         {/* Public Profile Toggle - Compact */}
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center gap-3">
@@ -989,11 +989,11 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
               </span>
             </div>
             <button
-              type="button"
+                type="button"
               role="switch"
               aria-checked={isPublic}
               aria-label="Toggle profile visibility"
-              onClick={() => setIsPublic((v) => !v)}
+                onClick={() => setIsPublic((v) => !v)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 isPublic 
                   ? "bg-green-500 hover:bg-green-600 focus:ring-green-500 shadow-lg shadow-green-500/50" 
@@ -1015,39 +1015,39 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
             <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 animate-in fade-in slide-in-from-top-2 duration-300">
               <Eye className="h-3 w-3 mr-1 animate-pulse" />
               Public
-            </Badge>
+              </Badge>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
 
       {/* Public Profile Link - Show when public */}
       {isPublic && profile?.id && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
           <LinkIcon className="h-4 w-4 text-primary flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground mb-1">Public Profile Link:</div>
-            <a 
-              className="text-sm text-primary hover:underline break-all font-medium" 
-              href={`/candidates/${profile.id}`} 
-              target="_blank" 
-              rel="noreferrer"
-            >
-              {window.location.origin}/candidates/{profile.id}
-            </a>
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              const url = `${window.location.origin}/candidates/${profile.id}`;
-              navigator.clipboard.writeText(url);
-              alert("Link copied to clipboard!");
-            }}
-          >
-            Copy
-          </Button>
-        </div>
-      )}
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-muted-foreground mb-1">Public Profile Link:</div>
+                <a 
+                  className="text-sm text-primary hover:underline break-all font-medium" 
+                  href={`/candidates/${profile.id}`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                >
+                  {window.location.origin}/candidates/{profile.id}
+                </a>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  const url = `${window.location.origin}/candidates/${profile.id}`;
+                  navigator.clipboard.writeText(url);
+                  alert("Link copied to clipboard!");
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+          )}
 
 
       {loading ? (
@@ -1448,7 +1448,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                           Save Skills
                         </>
                       )}
-                    </Button>
+                      </Button>
                   </div>
                 )}
               </CardContent>
@@ -1458,14 +1458,14 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
             <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
               <CardHeader className="border-b border-amber-200 dark:border-amber-800">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                     <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     <CardTitle className="text-lg text-amber-700 dark:text-amber-400">Experience</CardTitle>
-                  </div>
+                      </div>
                   <Badge variant="outline" className="text-xs">
                     {(profile?.experiences || []).length} {(profile?.experiences || []).length === 1 ? 'entry' : 'entries'}
                   </Badge>
-                </div>
+                      </div>
                 <CardDescription>Add your work experience</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-6">
@@ -1474,22 +1474,22 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                     <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
                       <div className="h-2 w-2 rounded-full bg-red-500" />
                       {experienceError}
-                    </div>
+                      </div>
                   </div>
                 )}
                 <div className="flex justify-end pb-4">
-                  <Button 
-                    size="sm" 
+                    <Button 
+                      size="sm" 
                     variant="outline"
                     onClick={() => {
                       resetExperienceForm();
                       setExpModalOpen(true);
                     }}
-                    className="gap-2"
-                  >
+                      className="gap-2"
+                    >
                     <Plus className="h-4 w-4" />
-                    Add Experience
-                  </Button>
+                          Add Experience
+                    </Button>
                 </div>
 
                 <div className="space-y-3">
@@ -1604,18 +1604,18 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                   </div>
                 )}
                 <div className="flex justify-end pb-4">
-                  <Button 
-                    size="sm" 
+                    <Button 
+                      size="sm" 
                     variant="outline"
                     onClick={() => {
                       resetEducationForm();
                       setEduModalOpen(true);
                     }}
-                    className="gap-2"
-                  >
+                      className="gap-2"
+                    >
                     <Plus className="h-4 w-4" />
-                    Add Education
-                  </Button>
+                          Add Education
+                    </Button>
                 </div>
 
                 <div className="space-y-3">
@@ -1717,18 +1717,18 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                   </div>
                 )}
                 <div className="flex justify-end pb-4">
-                  <Button 
-                    size="sm" 
+                    <Button 
+                      size="sm" 
                     variant="outline"
                     onClick={() => {
                       resetProjectForm();
                       setProjModalOpen(true);
                     }}
-                    className="gap-2"
-                  >
+                      className="gap-2"
+                    >
                     <Plus className="h-4 w-4" />
-                    Add Project
-                  </Button>
+                          Add Project
+                    </Button>
                 </div>
 
                 <div className="space-y-3">
@@ -1868,7 +1868,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
               <input
                 id="exp-current-modal"
                 type="checkbox"
@@ -1876,17 +1876,17 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                 onChange={(e) => setExpIsCurrent(e.target.checked)}
               />
               <Label htmlFor="exp-current-modal">I currently work here</Label>
-            </div>
+                  </div>
 
             <div className="space-y-1">
               <Label>Location (optional)</Label>
               <Input value={expLocation} onChange={(e) => setExpLocation(e.target.value)} placeholder="City, Country" />
-            </div>
+                </div>
 
             <div className="space-y-1">
               <Label>Description (optional)</Label>
               <Textarea value={expDescription} onChange={(e) => setExpDescription(e.target.value)} rows={4} placeholder="What did you work on?" />
-            </div>
+                </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => resetExperienceForm()}>
@@ -1931,7 +1931,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
               <div className="space-y-1">
                 <Label>Institution *</Label>
                 <Input value={eduInstitution} onChange={(e) => setEduInstitution(e.target.value)} placeholder="School/University name" />
-              </div>
+                      </div>
               <div className="space-y-1">
                 <Label>Degree</Label>
                 <Input value={eduDegree} onChange={(e) => setEduDegree(e.target.value)} placeholder="e.g. Bachelor's, Master's" />
@@ -2000,18 +2000,18 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
             <div className="space-y-1">
               <Label>Project Name *</Label>
               <Input value={projName} onChange={(e) => setProjName(e.target.value)} placeholder="Project name" />
-            </div>
+                  </div>
 
             <div className="space-y-1">
               <Label>Description</Label>
               <Textarea value={projDescription} onChange={(e) => setProjDescription(e.target.value)} rows={4} placeholder="Describe your project..." />
-            </div>
+                </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <Label>Project URL</Label>
                 <Input value={projUrl} onChange={(e) => setProjUrl(e.target.value)} placeholder="https://..." />
-              </div>
+                    </div>
               <div className="space-y-1">
                 <Label>Technologies</Label>
                 <div className="flex gap-2">
@@ -2042,18 +2042,18 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                         >
                           ×
                         </button>
-                      </Badge>
-                    ))}
+                        </Badge>
+                      ))}
                   </div>
-                )}
-              </div>
-            </div>
+                      )}
+                    </div>
+                  </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <Label>Start date</Label>
                 <Input type="date" value={projStartDate} onChange={(e) => setProjStartDate(e.target.value)} />
-              </div>
+          </div>
               <div className="space-y-1">
                 <Label>End date</Label>
                 <Input
@@ -2062,7 +2062,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                   onChange={(e) => setProjEndDate(e.target.value)}
                   disabled={projIsCurrent}
                 />
-              </div>
+        </div>
             </div>
 
             <div className="flex items-center gap-2">

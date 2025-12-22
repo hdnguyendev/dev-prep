@@ -308,9 +308,9 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
         const meData = await meRes.json();
         if (meData.success) {
           if (meData.recruiterProfile?.company) {
-            const companyData = meData.recruiterProfile.company;
-            setCompany(companyData);
-            setEditForm(companyData);
+          const companyData = meData.recruiterProfile.company;
+          setCompany(companyData);
+          setEditForm(companyData);
           }
           if (meData.recruiterProfile?.id) {
             setRecruiterProfileId(meData.recruiterProfile.id);
@@ -1250,7 +1250,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
         body: formData,
       });
 
-        const data = await response.json();
+      const data = await response.json();
 
       if (data.success && data.url) {
         if (type === "logo") {
@@ -1593,34 +1593,34 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                           const statusColor = statusColors[job.status] || "bg-muted text-muted-foreground";
                           
                           return (
-                            <div
-                              key={job.id}
+                          <div
+                            key={job.id}
                               className="flex items-center justify-between rounded-lg border border-cyan-200/50 dark:border-cyan-800/50 bg-gradient-to-r from-cyan-50/30 to-background dark:from-cyan-950/10 p-4 hover:from-cyan-50/50 hover:dark:from-cyan-950/20 hover:shadow-md transition-all cursor-pointer group"
-                              onClick={() => navigate(`/recruiter/jobs/${job.id}/applications`)}
-                            >
-                              <div className="flex-1">
+                            onClick={() => navigate(`/recruiter/jobs/${job.id}/applications`)}
+                          >
+                            <div className="flex-1">
                                 <h3 className="font-semibold text-cyan-900 dark:text-cyan-100 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors">{job.title}</h3>
                                 <p className="text-xs text-cyan-700/70 dark:text-cyan-400/70 mt-1">
-                                  {job.location || "Remote"} • Posted {new Date(job.createdAt).toLocaleDateString()}
-                                </p>
-                              </div>
+                                {job.location || "Remote"} • Posted {new Date(job.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
                               <div className="flex items-center gap-4">
-                                <div className="text-right">
+                              <div className="text-right">
                                   <div className="text-lg font-semibold text-cyan-600 dark:text-cyan-400">{job.applicationsCount || 0}</div>
                                   <div className="text-xs text-cyan-600/70 dark:text-cyan-400/70">applications</div>
-                                </div>
-                                <Badge variant="outline" className={`gap-1.5 border ${statusColor}`}>
-                                  {job.status === "PUBLISHED" ? (
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                  ) : job.status === "DRAFT" ? (
-                                    <Clock className="h-3.5 w-3.5" />
-                                  ) : (
-                                    <XCircle className="h-3.5 w-3.5" />
-                                  )}
-                                  {job.status}
-                                </Badge>
                               </div>
+                                <Badge variant="outline" className={`gap-1.5 border ${statusColor}`}>
+                                {job.status === "PUBLISHED" ? (
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                ) : job.status === "DRAFT" ? (
+                                    <Clock className="h-3.5 w-3.5" />
+                                ) : (
+                                    <XCircle className="h-3.5 w-3.5" />
+                                )}
+                                {job.status}
+                              </Badge>
                             </div>
+                          </div>
                           );
                         })}
                       </div>
@@ -1716,14 +1716,14 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                           <div className="relative w-full lg:w-[420px] flex gap-2">
                             <div className="relative flex-1">
-                              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                              <Input
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
                                 value={jobSearchInput}
                                 onChange={(e) => setJobSearchInput(e.target.value)}
                                 onKeyPress={handleJobSearchKeyPress}
-                                placeholder="Search jobs..."
-                                className="pl-9"
-                              />
+                              placeholder="Search jobs..."
+                              className="pl-9"
+                            />
                             </div>
                             <Button onClick={handleJobSearch} size="sm">
                               <Search className="h-4 w-4 mr-2" />
@@ -2407,7 +2407,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
             </CardContent>
           </Card>
         </div>
-      )}
+            )}
     </div>
   );
 };

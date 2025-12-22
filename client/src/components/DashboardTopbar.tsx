@@ -127,11 +127,11 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
             {!isStaff && (
               <>
                 <ThemeToggle />
-                <Link to="/login">
-                  <Button size="sm" variant="default">
-                    Login
-                  </Button>
-                </Link>
+              <Link to="/login">
+                <Button size="sm" variant="default">
+                  Login
+                </Button>
+              </Link>
               </>
             )}
           </SignedOut>
