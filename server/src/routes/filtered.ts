@@ -54,6 +54,9 @@ filteredRoutes.get("/applications", async (c) => {
     const page = Math.max(Number(query.page) || 1, 1);
     const skip = (page - 1) * take;
 
+    // Parse search query
+    const searchQuery = (query.q || query.search || "").trim();
+
     let whereClause: any = {};
 
     // Filter based on role
@@ -90,6 +93,15 @@ filteredRoutes.get("/applications", async (c) => {
     const jobId = query.jobId;
     if (jobId) {
       whereClause.jobId = jobId;
+    }
+
+    // Add search filter if provided
+    if (searchQuery) {
+      whereClause.OR = [
+        { job: { title: { contains: searchQuery, mode: "insensitive" } } },
+        { job: { company: { name: { contains: searchQuery, mode: "insensitive" } } } },
+        { status: { contains: searchQuery, mode: "insensitive" } },
+      ];
     }
 
     const [data, total] = await Promise.all([
@@ -304,7 +316,10 @@ filteredRoutes.get("/jobs", async (c) => {
     const page = Math.max(Number(query.page) || 1, 1);
     const skip = (page - 1) * take;
 
-    let whereClause = {};
+    // Parse search query
+    const searchQuery = (query.q || query.search || "").trim();
+
+    let whereClause: any = {};
 
     // Filter based on role
     if (user.role === "RECRUITER") {
@@ -327,6 +342,31 @@ filteredRoutes.get("/jobs", async (c) => {
       whereClause = {
         status: "PUBLISHED",
       };
+    }
+
+    // Add search filter if provided
+    if (searchQuery) {
+      const searchConditions: any[] = [
+        { title: { contains: searchQuery, mode: "insensitive" } },
+        { description: { contains: searchQuery, mode: "insensitive" } },
+        { requirements: { contains: searchQuery, mode: "insensitive" } },
+        { location: { contains: searchQuery, mode: "insensitive" } },
+        { company: { name: { contains: searchQuery, mode: "insensitive" } } },
+      ];
+      
+      if (whereClause.OR) {
+        // If there's already an OR condition, combine with AND
+        whereClause = {
+          ...whereClause,
+          AND: [
+            { OR: whereClause.OR },
+            { OR: searchConditions },
+          ],
+        };
+        delete whereClause.OR;
+      } else {
+        whereClause.OR = searchConditions;
+      }
     }
 
     const [data, total] = await Promise.all([

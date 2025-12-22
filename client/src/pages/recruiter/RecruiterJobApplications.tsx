@@ -66,51 +66,60 @@ type Job = {
   };
 };
 
-const statusConfig: Record<string, { label: string; variant: "default" | "outline" | "success"; icon: React.ReactNode }> = {
+const statusConfig: Record<string, { label: string; variant: "default" | "outline" | "success"; icon: React.ReactNode; color: string }> = {
   APPLIED: {
     label: "Applied",
     variant: "outline",
-    icon: <Clock className="h-3 w-3" />,
+    icon: <Clock className="h-3.5 w-3.5" />,
+    color: "bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
   },
   REVIEWING: {
     label: "Reviewing",
     variant: "outline",
-    icon: <AlertTriangle className="h-3 w-3" />,
+    icon: <Clock className="h-3.5 w-3.5" />,
+    color: "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
   },
   SHORTLISTED: {
     label: "Shortlisted",
     variant: "success",
-    icon: <CheckCircle2 className="h-3 w-3" />,
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    color: "bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800",
   },
   INTERVIEW_SCHEDULED: {
     label: "Interview Scheduled",
     variant: "default",
-    icon: <Calendar className="h-3 w-3" />,
+    icon: <Calendar className="h-3.5 w-3.5" />,
+    color: "bg-cyan-100 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800",
   },
   INTERVIEWED: {
     label: "Interviewed",
     variant: "default",
-    icon: <CheckCircle2 className="h-3 w-3" />,
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    color: "bg-sky-100 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800",
   },
   OFFER_SENT: {
     label: "Offer Sent",
     variant: "success",
-    icon: <CheckCircle2 className="h-3 w-3" />,
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    color: "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
   },
   HIRED: {
     label: "Hired",
     variant: "success",
-    icon: <CheckCircle2 className="h-3 w-3" />,
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    color: "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
   },
   REJECTED: {
     label: "Rejected",
     variant: "outline",
-    icon: <XCircle className="h-3 w-3" />,
+    icon: <XCircle className="h-3.5 w-3.5" />,
+    color: "bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",
   },
   WITHDRAWN: {
     label: "Withdrawn",
     variant: "outline",
-    icon: <XCircle className="h-3 w-3" />,
+    icon: <XCircle className="h-3.5 w-3.5" />,
+    color: "bg-slate-100 dark:bg-slate-950/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800",
   },
 };
 
@@ -339,7 +348,8 @@ const RecruiterJobApplications = () => {
     return statusConfig[status] || { 
       label: status, 
       variant: "outline" as const,
-      icon: <Clock className="h-3 w-3" />
+      icon: <Clock className="h-3.5 w-3.5" />,
+      color: "bg-muted text-muted-foreground border-border",
     };
   };
 
@@ -457,35 +467,43 @@ const RecruiterJobApplications = () => {
   return (
     <main className="min-h-dvh bg-muted/40 py-8">
       <div className="container mx-auto px-4 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/recruiter/jobs")}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Jobs
-          </Button>
-        </div>
+        {/* Back Button - Floating */}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate("/recruiter/jobs")}
+          className="fixed top-24 left-4 z-50 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg hover:bg-primary/10 hover:scale-110 transition-all group"
+        >
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+        </Button>
 
         {job && (
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold">{job.title}</h1>
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <span>{job.company?.name}</span>
-              <span>•</span>
-              <span>
-                {applications.length} application{applications.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <div className="space-y-1">
+                <CardTitle className="text-2xl">
+                  {job.title}
+                </CardTitle>
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <span>{job.company?.name}</span>
+                  <span>•</span>
+                  <span>
+                    {applications.length} application{applications.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         )}
 
         {/* Filters */}
-        <Card className="border-dashed">
-          <CardContent className="pt-6 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
@@ -591,7 +609,7 @@ const RecruiterJobApplications = () => {
               return (
                 <Card
                   key={app.id}
-                  className="hover:shadow-md transition cursor-pointer"
+                  className="hover:shadow-md transition-all cursor-pointer"
                   onClick={() => setSelectedApplication(app)}
                 >
                   <CardHeader className="pb-3">
@@ -601,11 +619,11 @@ const RecruiterJobApplications = () => {
                           <img
                             src={app.candidate.user.avatarUrl}
                             alt={candidateName}
-                            className="h-12 w-12 rounded-full object-cover"
+                            className="h-12 w-12 rounded-full object-cover border"
                           />
                         ) : (
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-6 w-6 text-primary" />
+                          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center border">
+                            <User className="h-6 w-6 text-muted-foreground" />
                           </div>
                         )}
                         <div className="flex-1 space-y-1">
@@ -622,25 +640,33 @@ const RecruiterJobApplications = () => {
                       </div>
 
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Badge variant={config.variant} className="gap-1">
-                          {config.icon}
-                          {config.label}
-                        </Badge>
-                        <select
-                          value={app.status}
-                          onChange={(e) => handleInlineStatusUpdate(app.id, e.target.value)}
-                          className="flex h-9 rounded-md border border-input bg-background px-2 py-1 text-xs min-w-[150px]"
-                          disabled={updating && inlineEditingId === app.id}
-                        >
-                          {Object.keys(statusConfig).map((key) => (
-                            <option key={key} value={key}>
-                              {statusConfig[key].label}
-                            </option>
-                          ))}
-                        </select>
-                        {updating && inlineEditingId === app.id && (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        )}
+                        <div className="relative inline-flex items-center">
+                          <select
+                            value={app.status}
+                            onChange={(e) => handleInlineStatusUpdate(app.id, e.target.value)}
+                            className={`inline-flex h-8 items-center gap-1.5 pl-8 pr-8 text-sm font-medium rounded-md border cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-offset-2 ${config.color}`}
+                            disabled={updating && inlineEditingId === app.id}
+                          >
+                            {Object.keys(statusConfig).map((key) => (
+                              <option key={key} value={key}>
+                                {statusConfig[key].label}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                            {config.icon}
+                          </div>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                          {updating && inlineEditingId === app.id && (
+                            <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
@@ -653,7 +679,7 @@ const RecruiterJobApplications = () => {
                           href={app.resumeUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-1"
+                          className="text-primary hover:underline inline-flex items-center gap-1 font-medium"
                         >
                           Resume
                           <ExternalLink className="h-3 w-3" />
@@ -714,11 +740,11 @@ const RecruiterJobApplications = () => {
                   <img
                     src={selectedApplication.candidate.user.avatarUrl}
                     alt="Avatar"
-                    className="h-10 w-10 rounded-full object-cover"
+                    className="h-10 w-10 rounded-full object-cover border"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border">
+                    <User className="h-5 w-5 text-muted-foreground" />
                   </div>
                 )}
                 <div>
@@ -744,7 +770,7 @@ const RecruiterJobApplications = () => {
               {/* Status */}
               <div>
                 <div className="text-sm font-medium mb-2">Status</div>
-                <Badge variant={getStatusConfig(selectedApplication.status).variant} className="gap-1">
+                <Badge variant="outline" className={`gap-1.5 border ${getStatusConfig(selectedApplication.status).color}`}>
                   {getStatusConfig(selectedApplication.status).icon}
                   {getStatusConfig(selectedApplication.status).label}
                 </Badge>

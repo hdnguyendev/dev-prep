@@ -144,6 +144,7 @@ exports.Prisma.CandidateProfileScalarFieldEnum = {
   website: 'website',
   linkedin: 'linkedin',
   github: 'github',
+  address: 'address',
   cvUrl: 'cvUrl',
   isPublic: 'isPublic',
   createdAt: 'createdAt',
@@ -181,6 +182,19 @@ exports.Prisma.EducationScalarFieldEnum = {
   startDate: 'startDate',
   endDate: 'endDate',
   grade: 'grade',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ProjectScalarFieldEnum = {
+  id: 'id',
+  candidateId: 'candidateId',
+  name: 'name',
+  description: 'description',
+  url: 'url',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  isCurrent: 'isCurrent',
+  technologies: 'technologies',
   createdAt: 'createdAt'
 };
 
@@ -419,6 +433,7 @@ exports.Prisma.CandidateProfileOrderByRelevanceFieldEnum = {
   website: 'website',
   linkedin: 'linkedin',
   github: 'github',
+  address: 'address',
   cvUrl: 'cvUrl'
 };
 
@@ -445,6 +460,15 @@ exports.Prisma.EducationOrderByRelevanceFieldEnum = {
   degree: 'degree',
   fieldOfStudy: 'fieldOfStudy',
   grade: 'grade'
+};
+
+exports.Prisma.ProjectOrderByRelevanceFieldEnum = {
+  id: 'id',
+  candidateId: 'candidateId',
+  name: 'name',
+  description: 'description',
+  url: 'url',
+  technologies: 'technologies'
 };
 
 exports.Prisma.SkillOrderByRelevanceFieldEnum = {
@@ -662,6 +686,7 @@ exports.Prisma.ModelName = {
   RecruiterProfile: 'RecruiterProfile',
   Experience: 'Experience',
   Education: 'Education',
+  Project: 'Project',
   Skill: 'Skill',
   CandidateSkill: 'CandidateSkill',
   Company: 'Company',

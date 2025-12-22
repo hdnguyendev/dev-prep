@@ -5,23 +5,15 @@ import {
   InterviewFeedback,
   Jobs,
   JobDetail,
-  SavedJobs,
   Companies,
   CompanyDetail,
-  Applications,
   Interviews,
   Admin,
   AdminDetail,
   Login,
-  Profile,
   CandidatesDirectory,
   CandidatePublicProfile,
-  RecruiterCandidateProfile,
-  RecruiterDashboard,
   RecruiterRegister,
-  RecruiterJobs,
-  RecruiterJobApplications,
-  RecruiterJobForm,
 } from "@/pages";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router";
 import CandidateLayout from "@/pages/candidate/CandidateLayout";
@@ -33,6 +25,14 @@ import CandidateProfile from "@/pages/candidate/CandidateProfile";
 import CandidateSavedJobs from "@/pages/candidate/CandidateSavedJobs";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import RecruiterLayout from "@/pages/recruiter/RecruiterLayout";
+import RecruiterDashboard from "@/pages/recruiter/RecruiterDashboard";
+import RecruiterJobs from "@/pages/recruiter/RecruiterJobs";
+import RecruiterApplications from "@/pages/recruiter/RecruiterApplications";
+import RecruiterCompany from "@/pages/recruiter/RecruiterCompany";
+import RecruiterJobApplications from "@/pages/recruiter/RecruiterJobApplications";
+import RecruiterJobForm from "@/pages/recruiter/RecruiterJobForm";
+import RecruiterCandidateProfile from "@/pages/recruiter/RecruiterCandidateProfile";
+import NotFound from "@/pages/NotFound";
 
 function AppRoutes() {
   const location = useLocation();
@@ -72,6 +72,8 @@ function AppRoutes() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<RecruiterDashboard />} />
           <Route path="jobs" element={<RecruiterJobs />} />
+          <Route path="applications" element={<RecruiterApplications />} />
+          <Route path="company" element={<RecruiterCompany />} />
           <Route path="jobs/new" element={<RecruiterJobForm />} />
           <Route path="jobs/:jobId/edit" element={<RecruiterJobForm />} />
           <Route path="jobs/:jobId/applications" element={<RecruiterJobApplications />} />
@@ -86,12 +88,14 @@ function AppRoutes() {
         <Route path="/saved-jobs" element={<Navigate to="/candidate/saved-jobs" replace />} />
 
         {/* Keep these legacy routes for now; not shown in main navbar */}
-				<Route path="/applications" element={<Applications />} />
 				<Route path="/interviews" element={<Interviews />} />
         <Route path="/candidates/:candidateProfileId" element={<CandidatePublicProfile />} />
 
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<RecruiterRegister />} />
+        
+        {/* 404 - Catch all unmatched routes */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

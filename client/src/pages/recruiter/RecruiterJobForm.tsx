@@ -431,9 +431,7 @@ export default function RecruiterJobForm() {
       )}
 
       {/* Form */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-        {/* Main Form */}
-        <div className="space-y-6">
+      <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
@@ -618,66 +616,65 @@ export default function RecruiterJobForm() {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
           {/* Job Details */}
           <Card>
             <CardHeader>
               <CardTitle>Job Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location</label>
-                <Input
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="e.g. San Francisco, CA"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location Type</label>
-                <select
-                  name="locationType"
-                  value={formData.locationType}
-                  onChange={handleInputChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="REMOTE">Remote</option>
-                  <option value="ONSITE">On-site</option>
-                  <option value="HYBRID">Hybrid</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Employment Type</label>
-                <select
-                  name="employmentType"
-                  value={formData.employmentType}
-                  onChange={handleInputChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="FULL_TIME">Full-time</option>
-                  <option value="PART_TIME">Part-time</option>
-                  <option value="CONTRACT">Contract</option>
-                  <option value="FREELANCE">Freelance</option>
-                  <option value="INTERNSHIP">Internship</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Experience Level</label>
-                <select
-                  name="experienceLevel"
-                  value={formData.experienceLevel}
-                  onChange={handleInputChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="ENTRY_LEVEL">Entry Level</option>
-                  <option value="MID_LEVEL">Mid Level</option>
-                  <option value="SENIOR_LEVEL">Senior Level</option>
-                  <option value="LEAD">Lead</option>
-                </select>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Location</label>
+                  <Input
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    placeholder="e.g. San Francisco, CA"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Location Type</label>
+                  <select
+                    name="locationType"
+                    value={formData.locationType}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="REMOTE">Remote</option>
+                    <option value="ONSITE">On-site</option>
+                    <option value="HYBRID">Hybrid</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Employment Type</label>
+                  <select
+                    name="employmentType"
+                    value={formData.employmentType}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="FULL_TIME">Full-time</option>
+                    <option value="PART_TIME">Part-time</option>
+                    <option value="CONTRACT">Contract</option>
+                    <option value="FREELANCE">Freelance</option>
+                    <option value="INTERNSHIP">Internship</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Experience Level</label>
+                  <select
+                    name="experienceLevel"
+                    value={formData.experienceLevel}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="ENTRY_LEVEL">Entry Level</option>
+                    <option value="MID_LEVEL">Mid Level</option>
+                    <option value="SENIOR_LEVEL">Senior Level</option>
+                    <option value="LEAD">Lead</option>
+                  </select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -688,39 +685,41 @@ export default function RecruiterJobForm() {
               <CardTitle>Salary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Salary Min</label>
-                <Input
-                  name="salaryMin"
-                  type="number"
-                  value={formData.salaryMin}
-                  onChange={handleInputChange}
-                  placeholder="50000"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Salary Max</label>
-                <Input
-                  name="salaryMax"
-                  type="number"
-                  value={formData.salaryMax}
-                  onChange={handleInputChange}
-                  placeholder="100000"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Currency</label>
-                <select
-                  name="salaryCurrency"
-                  value={formData.salaryCurrency}
-                  onChange={handleInputChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                  <option value="VND">VND</option>
-                </select>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Salary Min</label>
+                  <Input
+                    name="salaryMin"
+                    type="number"
+                    value={formData.salaryMin}
+                    onChange={handleInputChange}
+                    placeholder="50000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Salary Max</label>
+                  <Input
+                    name="salaryMax"
+                    type="number"
+                    value={formData.salaryMax}
+                    onChange={handleInputChange}
+                    placeholder="100000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Currency</label>
+                  <select
+                    name="salaryCurrency"
+                    value={formData.salaryCurrency}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="VND">VND</option>
+                  </select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -746,7 +745,6 @@ export default function RecruiterJobForm() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );

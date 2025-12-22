@@ -31,6 +31,7 @@ const Jobs = () => {
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [types, setTypes] = useState<Record<JobType, boolean>>({
@@ -55,12 +56,26 @@ const Jobs = () => {
   useEffect(() => {
     const q = (searchParams.get("query") || "").trim();
     const loc = (searchParams.get("location") || "").trim();
-    if (q) setQuery(q);
+    if (q) {
+      setQuery(q);
+      setQueryInput(q);
+    }
     if (loc) setLocation(loc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch jobs
+  const handleSearch = () => {
+    setQuery(queryInput);
+    setPage(1);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  // Fetch jobs with search from server
   useEffect(() => {
     let isMounted = true;
     const abortController = new AbortController();
@@ -73,7 +88,11 @@ const Jobs = () => {
         setLoading(true);
         setError(null);
         const token = await getToken();
-        const response = await apiClient.listJobs({ page: 1, pageSize: fetchPageSize }, token ?? undefined);
+        const response = await apiClient.listJobs({ 
+          page: 1, 
+          pageSize: fetchPageSize,
+          q: query.trim() || undefined,
+        }, token ?? undefined);
         
         // Only update state if this is still the latest request and component is mounted
         if (currentRequestId !== requestId || !isMounted || abortController.signal.aborted) {
@@ -106,7 +125,7 @@ const Jobs = () => {
       requestId++; // Invalidate any pending requests
       abortController.abort();
     };
-  }, [getToken]);
+  }, [getToken, query]);
 
   useEffect(() => {
     setPage(1);
@@ -231,16 +250,12 @@ const Jobs = () => {
     return `${days} days ago`;
   };
 
+  // Client-side filtering only for location, type, and tags (search is done on server)
   const filtered = useMemo(() => {
     const activeTypes = Object.entries(types)
       .filter(([, v]) => v)
       .map(([k]) => k);
     let list = jobs.filter((j) => {
-      const q = query.trim().toLowerCase();
-      const matchesQuery = !q ||
-        j.title.toLowerCase().includes(q) ||
-        j.description.toLowerCase().includes(q) ||
-        (j.requirements || "").toLowerCase().includes(q);
       const matchesLocation =
         !location || getLocation(j).toLowerCase().includes(location.toLowerCase());
       const matchesType =
@@ -248,14 +263,14 @@ const Jobs = () => {
       const jobTags = (j.skills || []).map((s) => s.skill?.name).filter((x): x is string => Boolean(x));
       const matchesTags =
         selectedTags.length === 0 || selectedTags.every((t) => jobTags.includes(t));
-      return matchesQuery && matchesLocation && matchesType && matchesTags;
+      return matchesLocation && matchesType && matchesTags;
     });
     if (sort === "salary")
       list = list.sort((a, b) => (b.salaryMin || 0) - (a.salaryMin || 0));
     if (sort === "recent")
       list = list.sort((a, b) => (new Date(b.createdAt).getTime() || 0) - (new Date(a.createdAt).getTime() || 0));
     return list;
-  }, [jobs, location, query, selectedTags, sort, types]);
+  }, [jobs, location, selectedTags, sort, types]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -365,8 +380,9 @@ const Jobs = () => {
                   className="grid gap-3 md:grid-cols-[1fr_200px_auto]"
                   onSubmit={(e) => {
                     e.preventDefault();
+                    handleSearch();
                     const params = new URLSearchParams();
-                    if (query.trim()) params.set("query", query.trim());
+                    if (queryInput.trim()) params.set("query", queryInput.trim());
                     if (location.trim()) params.set("location", location.trim());
                     setSearchParams(params);
                   }}
@@ -375,8 +391,9 @@ const Jobs = () => {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="Job title, company, keywords..."
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
+                      value={queryInput}
+                      onChange={(e) => setQueryInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
                       className="pl-9 h-11"
                     />
                   </div>

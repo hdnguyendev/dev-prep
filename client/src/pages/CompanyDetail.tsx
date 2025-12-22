@@ -367,7 +367,27 @@ const CompanyDetail = () => {
         {/* Company Header */}
         <Card className="mb-8 overflow-hidden">
           {/* Cover Image */}
-          <div className={`h-32 bg-gradient-to-br ${getCompanyColor()} relative`}>
+          <div className={`h-32 relative overflow-hidden ${
+            company.coverUrl 
+              ? '' 
+              : `bg-gradient-to-br ${getCompanyColor()}`
+          }`}>
+            {company.coverUrl ? (
+              <img
+                src={company.coverUrl}
+                alt={`${company.name} cover`}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  // Fallback to gradient if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.className = `h-32 bg-gradient-to-br ${getCompanyColor()} relative overflow-hidden`;
+                  }
+                }}
+              />
+            ) : null}
             <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
             {company.isVerified && (
@@ -381,8 +401,22 @@ const CompanyDetail = () => {
           <CardHeader className="relative -mt-16 pb-4">
             {/* Company Logo */}
             <div className="mb-4 flex items-end gap-6">
+              {company.logoUrl ? (
+                <img
+                  src={company.logoUrl}
+                  alt={company.name}
+                  className="h-24 w-24 rounded-2xl border-4 border-background object-cover shadow-xl"
+                  onError={(e) => {
+                    // Fallback to icon if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = "flex";
+                  }}
+                />
+              ) : null}
               <div
-                className={`h-24 w-24 rounded-2xl border-4 border-background bg-gradient-to-br ${getCompanyColor()} flex items-center justify-center text-4xl font-bold text-white shadow-xl`}
+                className={`h-24 w-24 rounded-2xl border-4 border-background bg-gradient-to-br ${getCompanyColor()} flex items-center justify-center text-4xl font-bold text-white shadow-xl ${company.logoUrl ? "hidden" : ""}`}
               >
                 {getCompanyInitial()}
               </div>

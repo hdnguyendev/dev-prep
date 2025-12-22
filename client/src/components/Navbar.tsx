@@ -1,6 +1,6 @@
 import { SignedIn, SignedOut, UserButton, useAuth, useUser } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import logo from "@/assets/logo.svg";
 import { getCurrentUser, logout } from "@/lib/auth";
 import { 
@@ -17,6 +17,7 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { ThemeToggle } from "./ThemeToggle";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
@@ -49,11 +50,18 @@ const Navbar = () => {
   const [candidateLastName, setCandidateLastName] = useState("");
   const [savingCandidateName, setSavingCandidateName] = useState(false);
   const [candidateNameError, setCandidateNameError] = useState<string | null>(null);
+  const [candidateNameFromDB, setCandidateNameFromDB] = useState<{ firstName?: string | null; lastName?: string | null } | null>(null);
 
-  const candidateDisplayName =
-    `${clerkUser?.firstName ?? ""} ${clerkUser?.lastName ?? ""}`.trim() ||
-    `${candidateFirstName} ${candidateLastName}`.trim() ||
-    "Account";
+  // Get candidate name from database
+  const candidateDisplayName = useMemo(() => {
+    if (candidateNameFromDB?.firstName && candidateNameFromDB?.lastName) {
+      return `${candidateNameFromDB.firstName} ${candidateNameFromDB.lastName}`;
+    }
+    if (candidateFirstName && candidateLastName) {
+      return `${candidateFirstName} ${candidateLastName}`;
+    }
+    return "Account";
+  }, [candidateNameFromDB, candidateFirstName, candidateLastName]);
 
   // Listen for auth changes
   useEffect(() => {
@@ -100,6 +108,10 @@ const Navbar = () => {
           const ln = meJson?.lastName as string | null | undefined;
           const em = meJson?.email as string | null | undefined;
           setCandidateEmail(String(em || ""));
+          
+          // Store name from database
+          setCandidateNameFromDB({ firstName: fn, lastName: ln });
+          
           if (isPlaceholderCandidateName(fn, ln, em)) {
             setCandidateFirstName(fn && fn !== "Candidate" ? String(fn) : "");
             setCandidateLastName(ln && ln !== "User" ? String(ln) : "");
@@ -116,6 +128,33 @@ const Navbar = () => {
       }
     };
     syncClerkCandidate();
+  }, [getToken, isSignedIn]);
+
+  // Always fetch candidate name when signed in (for home page and other pages)
+  useEffect(() => {
+    const fetchCandidateName = async () => {
+      if (!isSignedIn) {
+        setCandidateNameFromDB(null);
+        return;
+      }
+      try {
+        const token = await getToken();
+        if (!token) return;
+        
+        const meRes = await fetch(`${API_BASE}/auth/me`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        const meJson = await meRes.json();
+        if (meJson?.success) {
+          const fn = meJson?.firstName as string | null | undefined;
+          const ln = meJson?.lastName as string | null | undefined;
+          setCandidateNameFromDB({ firstName: fn, lastName: ln });
+        }
+      } catch (err) {
+        console.error("Failed to fetch candidate name", err);
+      }
+    };
+    fetchCandidateName();
   }, [getToken, isSignedIn]);
 
   const saveCandidateName = async () => {
@@ -143,6 +182,7 @@ const Navbar = () => {
       // Update local display name immediately (Clerk name might not be set)
       setCandidateFirstName(firstName);
       setCandidateLastName(lastName);
+      setCandidateNameFromDB({ firstName, lastName });
       setNeedCandidateName(false);
     } catch (e) {
       console.error(e);
@@ -353,7 +393,10 @@ const Navbar = () => {
                   <span className="hidden lg:inline">Dashboard</span>
                 </Button>
               ) : null}
-              <span className="text-sm text-muted-foreground hidden lg:inline">{candidateDisplayName}</span>
+              <span className="text-sm font-medium hidden lg:inline">
+                Hi, <span className="text-primary">{candidateDisplayName}</span>
+              </span>
+              <ThemeToggle />
               <UserButton afterSignOutUrl="/" />
             </div>
           </SignedIn>
@@ -406,11 +449,14 @@ const Navbar = () => {
           {/* Login Button (Guests) */}
           <SignedOut>
             {!isStaffLoggedIn && (
-              <Link to="/login">
-                <Button size="sm" variant="default">
-                  Login
-                </Button>
-              </Link>
+              <>
+                <ThemeToggle />
+                <Link to="/login">
+                  <Button size="sm" variant="default">
+                    Login
+                  </Button>
+                </Link>
+              </>
             )}
           </SignedOut>
         </div>
@@ -427,6 +473,7 @@ const Navbar = () => {
                 <LayoutDashboard className="h-5 w-5" />
               </Button>
             ) : null}
+            <ThemeToggle />
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
           {isStaffLoggedIn && (
@@ -441,6 +488,7 @@ const Navbar = () => {
                 {customUser.firstName?.[0]}{customUser.lastName?.[0]}
               </span>
             </div>
+            <ThemeToggle />
             </>
           )}
           <SignedOut>

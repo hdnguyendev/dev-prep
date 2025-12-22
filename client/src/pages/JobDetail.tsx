@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { apiClient, type Job } from "@/lib/api";
+import { apiClient, type Job, type Application } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
+import { getCurrentUser } from "@/lib/auth";
 import {
   MapPin,
   Briefcase,
@@ -29,12 +30,20 @@ import {
   Layers,
   Code,
   Rocket,
+  Heart,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const JobDetail = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
+  
+  // Check if user is recruiter or admin
+  const currentUser = getCurrentUser();
+  const isRecruiterOrAdmin = currentUser?.role === "RECRUITER" || currentUser?.role === "ADMIN";
   
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +61,130 @@ const JobDetail = () => {
     coverLetter: "",
   });
 
+  // Save job state
+  const [isSaved, setIsSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Application status
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
+  const [checkingApplication, setCheckingApplication] = useState(false);
+
+  // Candidate skills for highlighting
+  const [candidateSkillIds, setCandidateSkillIds] = useState<Set<string>>(new Set());
+
+  // Reset application status when jobId changes
+  useEffect(() => {
+    setHasApplied(false);
+    setApplicationStatus(null);
+    setCheckingApplication(false);
+  }, [jobId]);
+
+  // Fetch candidate skills for highlighting
+  useEffect(() => {
+    if (!isSignedIn) {
+      setCandidateSkillIds(new Set<string>());
+      return;
+    }
+
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    const fetchCandidateSkills = async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+
+        const meResponse = await apiClient.getMe(token);
+        if (!isMounted || abortController.signal.aborted) return;
+
+        if (meResponse.success && meResponse.data.candidateProfile) {
+          const profile = meResponse.data.candidateProfile as {
+            skills?: Array<{ skillId?: string; skill?: { id: string } }>;
+          };
+          if (profile.skills && Array.isArray(profile.skills)) {
+            const skillIds = new Set<string>(
+              profile.skills
+                .map((cs) => cs.skillId || cs.skill?.id)
+                .filter((id): id is string => Boolean(id))
+            );
+            setCandidateSkillIds(skillIds);
+          }
+        }
+      } catch {
+        // Ignore errors when fetching candidate skills
+      }
+    };
+
+    fetchCandidateSkills();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, [isSignedIn, getToken]);
+
+  // Check if user has applied to this job (separate effect for faster check)
+  useEffect(() => {
+    if (!jobId || !isSignedIn) {
+      setHasApplied(false);
+      setApplicationStatus(null);
+      return;
+    }
+
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    const checkApplication = async () => {
+      try {
+        setCheckingApplication(true);
+        const token = await getToken();
+        if (!token) {
+          setHasApplied(false);
+          setApplicationStatus(null);
+          setCheckingApplication(false);
+          return;
+        }
+
+        // Check if user has applied to this job using filtered endpoint that filters by current user
+        const applicationsResponse = await apiClient.getFilteredApplications({ page: 1, pageSize: 100 }, token);
+        
+        if (!isMounted || abortController.signal.aborted) return;
+
+        if (applicationsResponse.success && Array.isArray(applicationsResponse.data)) {
+          const userApplication = applicationsResponse.data.find(
+            (app: Application) => app.jobId === jobId
+          );
+          if (userApplication) {
+            setHasApplied(true);
+            setApplicationStatus(userApplication.status || "APPLIED");
+          } else {
+            setHasApplied(false);
+            setApplicationStatus(null);
+          }
+        } else {
+          setHasApplied(false);
+          setApplicationStatus(null);
+        }
+      } catch {
+        if (!isMounted || abortController.signal.aborted) return;
+        setHasApplied(false);
+        setApplicationStatus(null);
+      } finally {
+        if (isMounted && !abortController.signal.aborted) {
+          setCheckingApplication(false);
+        }
+      }
+    };
+
+    checkApplication();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, [jobId, isSignedIn, getToken]);
+
   // Fetch job details
   useEffect(() => {
     if (!jobId) return;
@@ -65,32 +198,39 @@ const JobDetail = () => {
         setError(null);
         const token = await getToken();
         
-        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:9999"}/jobs/${jobId}?include=company,recruiter,skills,categories`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          signal: abortController.signal,
-        });
+        const jobResponse = await apiClient.getJobWithInclude(jobId, "company,recruiter,skills,categories", token ?? undefined);
         
         if (!isMounted || abortController.signal.aborted) {
           return;
         }
         
-        const data = await response.json();
-        
-        if (data.success) {
-          setJob(data.data);
+        if (jobResponse.success) {
+          setJob(jobResponse.data);
+          
+          // Check if job is saved
+          if (isSignedIn && jobResponse.data?.id) {
+            try {
+              const savedCheck = await apiClient.checkIfJobSaved(jobResponse.data.id, token ?? undefined);
+              if (savedCheck.success && isMounted && !abortController.signal.aborted) {
+                setIsSaved(savedCheck.data.isSaved);
+              }
+            } catch {
+              // Ignore errors when checking saved status
+            }
+          }
           
           // Fetch related jobs - from same company or similar skills
-          if (data.data?.companyId) {
-            const companyJobsResponse = await apiClient.getCompanyJobs(data.data.companyId, { page: 1, pageSize: 6 }, token ?? undefined);
+          if (jobResponse.data?.companyId) {
+            const companyJobsResponse = await apiClient.getCompanyJobs(jobResponse.data.companyId, { page: 1, pageSize: 6 }, token ?? undefined);
             if (companyJobsResponse.success && isMounted && !abortController.signal.aborted) {
               const companyJobs = companyJobsResponse.data.filter(j => j.id !== jobId);
               if (companyJobs.length > 0) {
-                setRelatedJobs(companyJobs.slice(0, 6));
+                setRelatedJobs(companyJobs.slice(0, 5));
               } else {
                 // Fallback to general jobs if no company jobs
                 const relatedResponse = await apiClient.listJobs({ page: 1, pageSize: 6 }, token ?? undefined);
                 if (relatedResponse.success && isMounted && !abortController.signal.aborted) {
-                  setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 6));
+                  setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 5));
                 }
               }
             }
@@ -98,11 +238,11 @@ const JobDetail = () => {
             // Fallback to general jobs
             const relatedResponse = await apiClient.listJobs({ page: 1, pageSize: 6 }, token ?? undefined);
             if (relatedResponse.success && isMounted && !abortController.signal.aborted) {
-              setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 6));
+              setRelatedJobs(relatedResponse.data.filter(j => j.id !== jobId).slice(0, 5));
             }
           }
         } else {
-          setError(data.message || "Job not found");
+          setError(jobResponse.message || "Job not found");
         }
       } catch (err) {
         if (!isMounted || abortController.signal.aborted) {
@@ -125,7 +265,7 @@ const JobDetail = () => {
       isMounted = false;
       abortController.abort();
     };
-  }, [jobId, getToken]);
+  }, [jobId, getToken, isSignedIn]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,24 +292,16 @@ const JobDetail = () => {
   const uploadResume = async (file: File): Promise<string | null> => {
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:9999"}/upload/resume`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
+      const token = await getToken();
+      const response = await apiClient.uploadResume(file, token ?? undefined);
       
-      if (data.success) {
-        return data.url;
+      if (response.success && response.data.url) {
+        return response.data.url;
       } else {
-        alert(data.message || "Failed to upload resume");
+        alert(response.message || "Failed to upload resume");
         return null;
       }
-    } catch (error) {
-      console.error("Upload error:", error);
+      } catch {
       alert("Failed to upload resume. Please try again.");
       return null;
     } finally {
@@ -204,32 +336,25 @@ const JobDetail = () => {
       }
       
       // Create application
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:9999"}/applications`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          jobId: job.id,
-          resumeUrl,
-          coverLetter: formData.coverLetter,
-          status: "APPLIED",
-        }),
-      });
-
-      const data = await response.json();
+      const applicationResponse = await apiClient.createApplication({
+        jobId: job.id,
+        resumeUrl,
+        coverLetter: formData.coverLetter,
+      }, token ?? undefined);
       
-      if (data.success) {
+      if (applicationResponse.success) {
         setApplicationSuccess(true);
         setFormData({ resumeUrl: "", coverLetter: "" });
         setResumeFile(null);
         setShowApplyForm(false);
+        // Mark as applied to prevent re-application
+        setHasApplied(true);
+        setApplicationStatus("APPLIED");
         setTimeout(() => {
-          navigate("/applications");
+          navigate("/candidate/applications");
         }, 2000);
       } else {
-        alert(data.message || "Failed to submit application");
+        alert(applicationResponse.message || "Failed to submit application");
       }
     } catch (err) {
       console.error("Application error:", err);
@@ -281,6 +406,42 @@ const JobDetail = () => {
         jobId: job.id,
       },
     });
+  };
+
+  /**
+   * Toggle save/unsave job
+   */
+  const handleSaveJob = async () => {
+    if (!job || !isSignedIn) {
+      alert("Please sign in to save jobs");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const token = await getToken();
+      
+      if (isSaved) {
+        const response = await apiClient.unsaveJob(job.id, token ?? undefined);
+        if (response.success) {
+          setIsSaved(false);
+        } else {
+          alert("Failed to unsave job. Please try again.");
+        }
+      } else {
+        const response = await apiClient.saveJob(job.id, token ?? undefined);
+        if (response.success) {
+          setIsSaved(true);
+        } else {
+          alert("Failed to save job. Please try again.");
+        }
+      }
+    } catch (err) {
+      console.error("Error saving job:", err);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -347,7 +508,7 @@ const JobDetail = () => {
   };
 
   return (
-    <main className="min-h-dvh bg-background">
+    <main className="min-h-dvh bg-gradient-to-b from-blue-50/30 via-purple-50/20 to-pink-50/30 dark:from-background dark:via-primary/5 dark:to-background">
 
       {/* Success Message */}
       {applicationSuccess && (
@@ -367,72 +528,175 @@ const JobDetail = () => {
       )}
 
       <div className="container mx-auto px-4 py-8 relative">
-        {/* Back Button */}
+        {/* Back Button - Floating */}
         <Button 
           variant="ghost" 
+          size="icon"
           onClick={() => navigate("/jobs")} 
-          className="mb-6 gap-2 hover:bg-primary/10 transition-colors group"
+          className="fixed top-24 left-4 z-50 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg hover:bg-primary/10 hover:scale-110 transition-all group"
         >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Jobs
         </Button>
 
         {/* Hero Section */}
-        <div className="mb-8">
-          <Card className="border-2 shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-start gap-4">
-                <div className={`h-16 w-16 shrink-0 rounded-xl bg-gradient-to-br ${getCompanyColor(0)} flex items-center justify-center text-3xl font-bold text-white shadow-lg`}>
+        <div className="mb-8 relative">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl">
+            <div className="absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-orange-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-yellow-300/10 to-green-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+          </div>
+          
+          <Card className="border-2 shadow-xl relative overflow-hidden bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 dark:from-card dark:via-card dark:to-card">
+            {/* Job Illustration - Enhanced */}
+            <div className="absolute right-0 top-0 bottom-0 w-96 opacity-30 dark:opacity-15 pointer-events-none hidden lg:block overflow-hidden">
+              <svg viewBox="0 0 600 500" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+                {/* Large JOB text with gradient effect */}
+                <defs>
+                  <linearGradient id="jobGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.5" />
+                    <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.3" />
+                  </linearGradient>
+                  <linearGradient id="circleGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.2" />
+                  </linearGradient>
+                  <linearGradient id="circleGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f472b6" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#fb923c" stopOpacity="0.2" />
+                  </linearGradient>
+                </defs>
+                
+                {/* Large JOB text */}
+                <text x="100" y="250" fontSize="160" fontWeight="900" fill="url(#jobGradient)" fontFamily="system-ui">JOB</text>
+                
+                {/* Animated decorative circles */}
+                <circle cx="480" cy="120" r="50" fill="url(#circleGradient1)" className="animate-pulse" style={{ animationDuration: '3s' }} />
+                <circle cx="520" cy="380" r="45" fill="url(#circleGradient2)" className="animate-pulse" style={{ animationDuration: '4s', animationDelay: '0.5s' }} />
+                <circle cx="450" cy="60" r="30" fill="currentColor" className="text-pink-400" opacity="0.25" />
+                <circle cx="550" cy="200" r="35" fill="currentColor" className="text-cyan-400" opacity="0.2" />
+                
+                {/* Decorative curves with animation */}
+                <path d="M 150 100 Q 250 70 350 100 T 550 100" stroke="url(#circleGradient1)" strokeWidth="5" fill="none" opacity="0.3" className="animate-pulse" style={{ animationDuration: '5s' }} />
+                <path d="M 80 400 Q 250 430 420 400 T 580 400" stroke="url(#circleGradient2)" strokeWidth="5" fill="none" opacity="0.3" className="animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
+                
+                {/* Lightbulb icon - glowing */}
+                <g transform="translate(480, 80)">
+                  <circle cx="0" cy="0" r="25" fill="currentColor" className="text-yellow-400" opacity="0.4" />
+                  <circle cx="0" cy="0" r="18" fill="currentColor" className="text-yellow-300" opacity="0.5" />
+                  <path d="M -10 -18 L 10 -18 L 8 -28 Q 0 -35 -8 -28 Z" fill="currentColor" className="text-yellow-500" opacity="0.6" />
+                  <circle cx="0" cy="-5" r="3" fill="currentColor" className="text-yellow-200" opacity="0.8" />
+                </g>
+                
+                {/* Briefcase icon - detailed */}
+                <g transform="translate(500, 350)">
+                  <rect x="-20" y="-12" width="40" height="24" rx="3" fill="currentColor" className="text-indigo-500" opacity="0.4" />
+                  <rect x="-17" y="-10" width="34" height="3" fill="currentColor" className="text-indigo-400" opacity="0.5" />
+                  <rect x="-8" y="-10" width="16" height="3" fill="currentColor" className="text-indigo-300" opacity="0.6" />
+                  <path d="M -12 -12 L -12 -18 M 12 -12 L 12 -18" stroke="currentColor" strokeWidth="2.5" className="text-indigo-400" opacity="0.5" />
+                  <rect x="-6" y="12" width="12" height="2" rx="1" fill="currentColor" className="text-indigo-400" opacity="0.4" />
+                </g>
+                
+                {/* Laptop icon - detailed */}
+                <g transform="translate(420, 250)">
+                  <rect x="-25" y="-15" width="50" height="30" rx="3" fill="currentColor" className="text-blue-500" opacity="0.35" />
+                  <rect x="-22" y="-12" width="44" height="22" rx="2" fill="currentColor" className="text-blue-400" opacity="0.4" />
+                  <rect x="-20" y="-10" width="40" height="18" rx="1" fill="currentColor" className="text-blue-300" opacity="0.3" />
+                  <rect x="-25" y="15" width="50" height="3" rx="1" fill="currentColor" className="text-blue-400" opacity="0.35" />
+                  <circle cx="0" cy="16.5" r="2" fill="currentColor" className="text-blue-500" opacity="0.4" />
+                </g>
+                
+                {/* Paper airplanes - multiple */}
+                <g transform="translate(400, 180) rotate(45)">
+                  <path d="M 0 0 L 20 -7 L 15 7 Z" fill="currentColor" className="text-cyan-400" opacity="0.4" />
+                  <path d="M 5 -2 L 15 -5 L 12 3 Z" fill="currentColor" className="text-cyan-300" opacity="0.3" />
+                </g>
+                <g transform="translate(380, 120) rotate(-30)">
+                  <path d="M 0 0 L 18 -6 L 14 6 Z" fill="currentColor" className="text-sky-400" opacity="0.35" />
+                </g>
+                
+                {/* Decorative leaves - enhanced */}
+                <ellipse cx="120" cy="120" rx="35" ry="60" fill="currentColor" className="text-teal-400" opacity="0.2" transform="rotate(-25 120 120)" />
+                <ellipse cx="140" cy="380" rx="30" ry="50" fill="currentColor" className="text-emerald-400" opacity="0.2" transform="rotate(50 140 380)" />
+                <ellipse cx="100" cy="280" rx="25" ry="45" fill="currentColor" className="text-green-400" opacity="0.15" transform="rotate(15 100 280)" />
+                
+                {/* Stars decoration */}
+                <g transform="translate(460, 160)">
+                  <path d="M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 4 L -5 7 L -3 1 L -8 -2 L -2 -2 Z" fill="currentColor" className="text-yellow-400" opacity="0.3" />
+                </g>
+                <g transform="translate(540, 280)">
+                  <path d="M 0 -6 L 1.5 -1.5 L 6 -1.5 L 2 0.5 L 3.5 5 L 0 3 L -3.5 5 L -2 0.5 L -6 -1.5 L -1.5 -1.5 Z" fill="currentColor" className="text-orange-400" opacity="0.25" />
+                </g>
+                
+                {/* Chart/Graph icon */}
+                <g transform="translate(360, 320)">
+                  <rect x="-15" y="-10" width="30" height="20" rx="2" fill="currentColor" className="text-purple-400" opacity="0.2" />
+                  <path d="M -12 8 L -8 2 L -4 6 L 0 -2 L 4 4 L 8 0 L 12 -4" stroke="currentColor" strokeWidth="2" fill="none" className="text-purple-500" opacity="0.4" />
+                  <circle cx="-8" cy="2" r="2" fill="currentColor" className="text-purple-500" opacity="0.5" />
+                  <circle cx="0" cy="-2" r="2" fill="currentColor" className="text-purple-500" opacity="0.5" />
+                  <circle cx="8" cy="0" r="2" fill="currentColor" className="text-purple-500" opacity="0.5" />
+                </g>
+              </svg>
+            </div>
+            
+            <CardHeader className="pb-6 bg-gradient-to-r from-blue-100/50 via-purple-100/30 to-pink-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5 border-b relative">
+              <div className="flex items-start gap-6">
+                <div className={`h-20 w-20 shrink-0 rounded-2xl bg-gradient-to-br ${getCompanyColor(0)} flex items-center justify-center text-4xl font-bold text-white shadow-lg hover:scale-105 transition-transform duration-300`}>
                   {getCompanyInitial(job)}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-3 mb-2 flex-wrap">
-                    <h1 className="text-2xl md:text-3xl font-bold">
+                <div className="flex-1 min-w-0 relative z-10">
+                  <div className="flex items-center gap-3 mb-3 flex-wrap">
+                    <h1 className="text-3xl md:text-4xl font-bold">
                       {job.title}
                     </h1>
                     {job.isRemote && (
-                      <Badge className="gap-1 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
-                        <Globe className="h-3 w-3" />
+                      <Badge className="gap-1.5 bg-primary/10 text-primary border-primary/20 shadow-sm inline-flex items-center">
+                        <Globe className="h-3.5 w-3.5 shrink-0" />
                         Remote
                       </Badge>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
+                  <div className="flex flex-wrap items-center gap-3 text-sm mb-5">
                     <button
                       onClick={() => job.company?.slug && navigate(`/companies/${job.company.slug}`)}
-                      className="font-semibold hover:text-primary transition-colors hover:underline flex items-center gap-1.5"
+                      className="font-semibold hover:text-primary transition-colors flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-primary/10"
                     >
                       <Building2 className="h-4 w-4" />
                       {job.company?.name || "Company"}
                     </button>
                     {job.company?.isVerified && (
-                      <Badge variant="outline" className="gap-1 border-green-500/30 text-green-700 dark:text-green-400">
-                        <CheckCircle className="h-3 w-3" />
+                      <Badge variant="outline" className="gap-1.5 border-primary/30 text-primary bg-primary/5">
+                        <CheckCircle className="h-3.5 w-3.5" />
                         Verified
                       </Badge>
                     )}
                   </div>
                   
                   {/* Quick Info */}
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {getLocation(job)}
-                    </Badge>
-                    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
-                      <Briefcase className="h-3.5 w-3.5" />
-                      {job.type?.replace("_", " ") || "Full-time"}
-                    </Badge>
-                    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
-                      <DollarSign className="h-3.5 w-3.5" />
-                      {getSalaryRange(job)}
-                    </Badge>
-                    {job.experienceLevel && (
-                      <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
-                        <Award className="h-3.5 w-3.5" />
-                        {job.experienceLevel}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-wrap gap-3 items-center">
+                      <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
+                        <MapPin className="h-4 w-4 shrink-0" />
+                        <span className="leading-none">{getLocation(job)}</span>
                       </Badge>
-                    )}
+                      <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
+                        <DollarSign className="h-4 w-4 shrink-0" />
+                        <span className="leading-none">{getSalaryRange(job)}</span>
+                      </Badge>
+                      {job.experienceLevel && (
+                        <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
+                          <Award className="h-4 w-4 shrink-0" />
+                          <span className="leading-none">{job.experienceLevel}</span>
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-3 items-center">
+                      <Badge variant="outline" className="gap-2 px-4 py-2 text-sm bg-muted/50 border-border hover:bg-muted transition-colors inline-flex items-center justify-center min-h-[36px]">
+                        <Briefcase className="h-4 w-4 shrink-0" />
+                        <span className="leading-none capitalize">{job.type?.replace(/_/g, " ").toLowerCase() || "Full-time"}</span>
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -440,43 +704,62 @@ const JobDetail = () => {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+        <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
           {/* Main Content */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Skills Section */}
             {job.skills && job.skills.length > 0 && (
-              <Card className="border-2 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-primary/5 to-purple-500/5 border-b">
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Code className="h-5 w-5 text-primary" />
+              <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white via-indigo-50/30 to-blue-50/30 dark:from-card dark:via-card dark:to-card">
+                <CardHeader className="bg-gradient-to-r from-indigo-100/50 via-blue-100/30 to-cyan-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5 border-b">
+                  <CardTitle className="flex items-center gap-3 text-xl font-semibold">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-500/20 dark:bg-primary/10">
+                      <Code className="h-5 w-5 text-indigo-600 dark:text-primary" />
+                    </div>
                     Required Skills
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap gap-2">
-                    {job.skills.map((s) => s.skill?.name && (
-                      <Badge 
-                        key={s.skill.id} 
-                        variant="outline" 
-                        className="gap-1.5 px-3 py-1.5 text-sm"
-                      >
-                        <Zap className="h-3.5 w-3.5" />
-                        {s.skill.name}
-                        {s.isRequired && (
-                          <span className="text-xs text-primary font-semibold">*</span>
-                        )}
-                      </Badge>
-                    ))}
+                    {job.skills.map((s) => {
+                      if (!s.skill?.name) return null;
+                      const hasSkill = candidateSkillIds.has(s.skill.id);
+                      return (
+                        <Badge 
+                          key={s.skill.id} 
+                          variant={hasSkill ? "default" : "outline"}
+                          className={`gap-1.5 px-3 py-1.5 text-sm transition-all ${
+                            hasSkill 
+                              ? "bg-green-500 hover:bg-green-600 text-white border-green-500 shadow-md" 
+                              : ""
+                          }`}
+                        >
+                          {hasSkill && <CheckCircle className="h-3.5 w-3.5" />}
+                          {!hasSkill && <Zap className="h-3.5 w-3.5" />}
+                          {s.skill.name}
+                          {s.isRequired && (
+                            <span className={`text-xs font-semibold ${hasSkill ? "text-white" : "text-primary"}`}>*</span>
+                          )}
+                        </Badge>
+                      );
+                    })}
                   </div>
+                  {candidateSkillIds.size > 0 && (
+                    <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3 text-green-500" />
+                      Skills highlighted in green are in your profile
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}
 
             {/* Job Description */}
-            <Card className="border shadow-sm">
-              <CardHeader className="border-b pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <FileText className="h-4 w-4 text-primary" />
+            <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white via-emerald-50/30 to-teal-50/30 dark:from-card dark:via-card dark:to-card">
+              <CardHeader className="border-b pb-4 bg-gradient-to-r from-emerald-100/50 via-teal-100/30 to-green-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 dark:bg-primary/10">
+                    <FileText className="h-5 w-5 text-emerald-600 dark:text-primary" />
+                  </div>
                   Job Description
                 </CardTitle>
               </CardHeader>
@@ -490,10 +773,12 @@ const JobDetail = () => {
 
             {/* Requirements */}
             {job.requirements && (
-              <Card className="border shadow-sm">
-                <CardHeader className="border-b pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 dark:from-card dark:via-card dark:to-card">
+                <CardHeader className="border-b pb-4 bg-gradient-to-r from-purple-100/50 via-pink-100/30 to-rose-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 dark:bg-primary/10">
+                      <Target className="h-5 w-5 text-purple-600 dark:text-primary" />
+                    </div>
                     Requirements
                   </CardTitle>
                 </CardHeader>
@@ -508,10 +793,12 @@ const JobDetail = () => {
 
             {/* Responsibilities */}
             {job.responsibilities && (
-              <Card className="border shadow-sm">
-                <CardHeader className="border-b pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Layers className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white via-amber-50/30 to-orange-50/30 dark:from-card dark:via-card dark:to-card">
+                <CardHeader className="border-b pb-4 bg-gradient-to-r from-amber-100/50 via-orange-100/30 to-yellow-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 dark:bg-primary/10">
+                      <Layers className="h-5 w-5 text-amber-600 dark:text-primary" />
+                    </div>
                     Responsibilities
                   </CardTitle>
                 </CardHeader>
@@ -526,10 +813,12 @@ const JobDetail = () => {
 
             {/* Benefits */}
             {job.benefits && (
-              <Card className="border shadow-sm">
-                <CardHeader className="border-b pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Rocket className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white via-rose-50/30 to-pink-50/30 dark:from-card dark:via-card dark:to-card">
+                <CardHeader className="border-b pb-4 bg-gradient-to-r from-rose-100/50 via-pink-100/30 to-fuchsia-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-rose-500/20 to-pink-500/20 dark:bg-primary/10">
+                      <Rocket className="h-5 w-5 text-rose-600 dark:text-primary" />
+                    </div>
                     Benefits & Perks
                   </CardTitle>
                 </CardHeader>
@@ -544,14 +833,16 @@ const JobDetail = () => {
 
             {/* Interview Questions */}
             {practiceQuestions.length > 0 && (
-              <Card className="border shadow-sm">
-                <CardHeader className="border-b pb-3">
+              <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white via-violet-50/30 to-purple-50/30 dark:from-card dark:via-card dark:to-card">
+                <CardHeader className="border-b pb-4 bg-gradient-to-r from-violet-100/50 via-purple-100/30 to-indigo-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 dark:bg-primary/10">
+                        <Sparkles className="h-5 w-5 text-violet-600 dark:text-primary" />
+                      </div>
                       Interview Practice Questions
                     </CardTitle>
-                    <CardDescription className="text-sm mt-1.5">
+                    <CardDescription className="text-sm mt-2 ml-11">
                       Recruiter-provided questions to help you prepare
                     </CardDescription>
                   </div>
@@ -579,15 +870,17 @@ const JobDetail = () => {
 
             {/* Related Jobs Section */}
             {relatedJobs.length > 0 && (
-              <Card className="border shadow-sm mt-6">
-                <CardHeader className="border-b pb-3">
+              <Card className="border-2 shadow-lg mt-6 overflow-hidden max-w-full bg-gradient-to-br from-white via-sky-50/30 to-cyan-50/30 dark:from-card dark:via-card dark:to-card hover:shadow-xl transition-all duration-300">
+                <CardHeader className="border-b pb-4 bg-gradient-to-r from-sky-100/50 via-cyan-100/30 to-blue-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="flex items-center gap-2 text-lg mb-1">
-                        <TrendingUp className="h-4 w-4 text-primary" />
+                      <CardTitle className="flex items-center gap-3 text-lg mb-2 font-semibold">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-sky-500/20 to-cyan-500/20 dark:bg-primary/10">
+                          <TrendingUp className="h-5 w-5 text-sky-600 dark:text-primary" />
+                        </div>
                         Related Jobs
                       </CardTitle>
-                      <CardDescription className="text-sm">
+                      <CardDescription className="text-sm ml-11">
                         Explore similar opportunities from {job.company?.name || "other companies"}
                       </CardDescription>
                     </div>
@@ -602,36 +895,71 @@ const JobDetail = () => {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4">
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                <CardContent className="p-4 md:p-6 relative overflow-hidden">
+                  {/* Navigation Buttons */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 md:h-10 md:w-10 rounded-full bg-background/95 backdrop-blur-sm shadow-lg border-2 hover:bg-background hover:scale-110 transition-transform"
+                    onClick={() => {
+                      const container = document.getElementById('related-jobs-scroll');
+                      if (container) {
+                        const scrollAmount = 290; // card width + gap
+                        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                      }
+                    }}
+                  >
+                    <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 md:h-10 md:w-10 rounded-full bg-background/95 backdrop-blur-sm shadow-lg border-2 hover:bg-background hover:scale-110 transition-transform"
+                    onClick={() => {
+                      const container = document.getElementById('related-jobs-scroll');
+                      if (container) {
+                        const scrollAmount = 290; // card width + gap
+                        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                      }
+                    }}
+                  >
+                    <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
+
+                  {/* Scrollable Container */}
+                  <div 
+                    id="related-jobs-scroll"
+                    className="flex gap-3 md:gap-4 overflow-x-auto overflow-y-hidden pb-3 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent snap-x snap-mandatory"
+                    style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none' }}
+                  >
                       {relatedJobs.map((rJob, index) => (
                       <Card
                         key={rJob.id}
-                        className="group border transition-all hover:shadow-md cursor-pointer h-full flex flex-col"
+                        className="group border-2 transition-all hover:shadow-xl hover:border-primary/50 cursor-pointer flex flex-col w-[280px] md:w-[300px] flex-shrink-0 snap-start overflow-hidden"
                         onClick={() => navigate(`/jobs/${rJob.id}`)}
                       >
-                        <CardHeader className="pb-3">
+                        <CardHeader className="pb-2">
                           <div className="flex items-start justify-between mb-2">
-                            <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-lg font-bold text-white`}>
+                            <div className={`h-10 w-10 md:h-12 md:w-12 rounded-lg bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-lg md:text-xl font-bold text-white shadow-md`}>
                               {rJob.company?.name?.[0]?.toUpperCase() || "C"}
                             </div>
                             {rJob.isRemote && (
-                              <Badge variant="outline" className="gap-1 text-xs">
+                              <Badge variant="outline" className="gap-1 text-xs border-green-500/30 text-green-700 dark:text-green-400">
                                 <Globe className="h-3 w-3" />
                                 Remote
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                          <CardTitle className="text-base md:text-lg line-clamp-2 group-hover:text-primary transition-colors font-semibold">
                             {rJob.title}
                           </CardTitle>
-                          <CardDescription className="flex items-center gap-1 mt-2">
-                            <Building2 className="h-3 w-3" />
+                          <CardDescription className="flex items-center gap-1 mt-1 text-xs md:text-sm">
+                            <Building2 className="h-3 w-3 md:h-4 md:w-4" />
                             {rJob.company?.name || "Company"}
                           </CardDescription>
                         </CardHeader>
 
-                        <CardContent className="relative space-y-3 flex-1 flex flex-col">
+                        <CardContent className="relative space-y-2 flex-1 flex flex-col">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4 shrink-0" />
                             <span className="truncate">{getLocation(rJob)}</span>
@@ -658,11 +986,11 @@ const JobDetail = () => {
                           )}
                         </CardContent>
 
-                        <div className="border-t p-3 bg-muted/30">
+                        <div className="border-t p-3 bg-gradient-to-r from-muted/30 to-muted/10">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="w-full gap-2 group-hover:gap-3 transition-all"
+                            className="w-full gap-2 group-hover:gap-3 transition-all group-hover:bg-primary/10"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/jobs/${rJob.id}`);
@@ -682,14 +1010,19 @@ const JobDetail = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Apply Card */}
-            <Card className="border shadow-sm sticky top-4">
-              <CardHeader className="border-b pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Rocket className="h-4 w-4 text-primary" />
+            {/* Sticky Container for Apply and Company Info */}
+            <div className="sticky top-20 z-10 space-y-6">
+            {/* Apply Card - Only show for candidates */}
+            {!isRecruiterOrAdmin && (
+            <Card className="border-2 shadow-lg bg-gradient-to-br from-white via-green-50/30 to-emerald-50/30 dark:from-card dark:via-card dark:to-card hover:shadow-xl transition-all duration-300">
+              <CardHeader className="border-b pb-4 bg-gradient-to-r from-green-100/50 via-emerald-100/30 to-teal-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 dark:bg-primary/10">
+                    <Rocket className="h-5 w-5 text-green-600 dark:text-primary" />
+                  </div>
                   Apply for this position
                 </CardTitle>
-                <CardDescription className="text-sm mt-1">
+                <CardDescription className="text-sm mt-2 ml-11">
                   Join {job.company?.name || "our team"} and make an impact
                 </CardDescription>
               </CardHeader>
@@ -704,6 +1037,39 @@ const JobDetail = () => {
                       Sign In to Apply
                     </Button>
                   </>
+                ) : checkingApplication ? (
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full gap-2 h-11"
+                      disabled
+                      variant="outline"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Checking application status...
+                    </Button>
+                  </div>
+                ) : hasApplied ? (
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full gap-2 h-11"
+                      disabled
+                      variant="default"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Applied ({applicationStatus || "APPLIED"})
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      You have already applied for this position
+                    </p>
+                    <Button 
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => navigate(`/candidate/applications?jobId=${job.id}`)}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      View Application
+                    </Button>
+                  </div>
                 ) : showApplyForm ? (
                   <form onSubmit={handleApply} className="space-y-4">
                     <div className="space-y-2">
@@ -770,6 +1136,15 @@ const JobDetail = () => {
                       Apply Now
                     </Button>
                     <Button 
+                      variant={isSaved ? "default" : "outline"}
+                      className="w-full gap-2"
+                      onClick={handleSaveJob}
+                      disabled={saving}
+                    >
+                      <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+                      {saving ? "Saving..." : isSaved ? "Saved" : "Save Job"}
+                    </Button>
+                    <Button 
                       variant="outline" 
                       className="w-full gap-2"
                       onClick={handlePracticeInterview}
@@ -781,35 +1156,75 @@ const JobDetail = () => {
                 )}
               </CardContent>
             </Card>
+            )}
 
             {/* Company Info */}
-            <Card className="border shadow-sm">
-              <CardHeader className="border-b pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  About Company
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-4">
-                    <div className="p-3 rounded-lg border bg-muted/30">
-                      <button
-                        onClick={() => job.company?.slug && navigate(`/companies/${job.company.slug}`)}
-                        className="font-bold text-lg mb-1 hover:text-primary transition-colors hover:underline block flex items-center gap-2 group"
-                      >
-                        {job.company?.name || "Company"}
-                        <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Briefcase className="h-4 w-4" />
-                        <span>{job.company?.industry || "Technology"}</span>
-                      </div>
+            <Card className="border-2 shadow-lg bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-card dark:via-card dark:to-card hover:shadow-xl transition-all duration-300 overflow-hidden">
+              {/* Cover Image */}
+              {job.company?.coverUrl ? (
+                <div className="relative h-32 w-full overflow-hidden">
+                  <img
+                    src={job.company.coverUrl}
+                    alt={`${job.company?.name || "Company"} cover`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.className = `relative h-32 w-full bg-gradient-to-br ${getCompanyColor(0)} overflow-hidden`;
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                </div>
+              ) : (
+                <div className={`relative h-32 w-full bg-gradient-to-br ${getCompanyColor(0)} overflow-hidden`}>
+                  <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                </div>
+              )}
+
+              <CardHeader className="relative -mt-16 pb-4 border-b bg-gradient-to-r from-blue-100/50 via-indigo-100/30 to-purple-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
+                {/* Company Logo */}
+                <div className="mb-3 flex items-end gap-4">
+                  {job.company?.logoUrl ? (
+                    <img
+                      src={job.company.logoUrl}
+                      alt={job.company?.name || "Company logo"}
+                      className="h-16 w-16 rounded-xl border-4 border-background object-cover shadow-lg"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={`h-16 w-16 rounded-xl border-4 border-background bg-gradient-to-br ${getCompanyColor(0)} flex items-center justify-center text-2xl font-bold text-white shadow-lg ${job.company?.logoUrl ? "hidden" : ""}`}
+                  >
+                    {getCompanyInitial(job)}
+                  </div>
+                  <div className="flex-1 pb-1">
+                    <CardTitle className="text-xl font-bold mb-1">
+                      {job.company?.name || "Company"}
+                    </CardTitle>
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Briefcase className="h-4 w-4 shrink-0" />
+                      <span>{job.company?.industry || "Technology"}</span>
                       {job.company?.isVerified && (
-                        <Badge variant="outline" className="gap-1 mt-2 border-green-500/30 text-green-700 dark:text-green-400">
+                        <Badge variant="outline" className="gap-1 ml-2 border-green-500/30 text-green-700 dark:text-green-400">
                           <CheckCircle className="h-3 w-3" />
-                          Verified Company
+                          Verified
                         </Badge>
                       )}
                     </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
                     
                     <Separator />
                     
@@ -864,6 +1279,7 @@ const JobDetail = () => {
                     </Button>
               </CardContent>
             </Card>
+            </div>
 
           </div>
         </div>

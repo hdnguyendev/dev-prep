@@ -21,6 +21,8 @@ export interface Company {
   id: string;
   name: string;
   slug: string;
+  logoUrl?: string | null;
+  coverUrl?: string | null;
   industry?: string | null;
   companySize?: string | null;
   website?: string | null;
@@ -194,6 +196,8 @@ type ListParams = {
   page?: number;
   pageSize?: number;
   include?: string;
+  q?: string;
+  search?: string;
 };
 
 const buildQuery = (params?: Record<string, string | number | undefined>) => {
@@ -231,9 +235,11 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     
-    const defaultHeaders = {
-      "Content-Type": "application/json",
-    };
+    // Don't set Content-Type for FormData, browser will set it with boundary
+    const isFormData = options.body instanceof FormData;
+    const defaultHeaders: Record<string, string> = isFormData
+      ? {}
+      : { "Content-Type": "application/json" };
 
     const config: RequestInit = {
       ...options,
@@ -391,6 +397,164 @@ class ApiClient {
 
   unsaveJob(jobId: string, token?: string) {
     return this.request<{ message: string }>(`/saved-jobs/${jobId}`, { method: "DELETE" }, token);
+  }
+
+  // Filtered endpoints (role-based filtering)
+  getFilteredApplications(params?: ListParams & { jobId?: string }, token?: string) {
+    return this.request<Application[]>(`/api/applications${buildQuery(params)}`, {}, token);
+  }
+
+  getFilteredJobs(params?: ListParams, token?: string) {
+    return this.request<Job[]>(`/api/jobs${buildQuery(params)}`, {}, token);
+  }
+
+  getFilteredInterviews(params?: ListParams, token?: string) {
+    return this.request<Interview[]>(`/api/interviews${buildQuery(params)}`, {}, token);
+  }
+
+  // Auth endpoints
+  getMe(token?: string) {
+    return this.request<{
+      id: string;
+      email: string;
+      role: string;
+      candidateProfile?: CandidateProfile;
+      recruiterProfile?: any;
+    }>(`/auth/me`, {}, token);
+  }
+
+  syncCandidate(token?: string) {
+    return this.request<{ success: boolean; message?: string }>(`/auth/sync-candidate`, { method: "POST" }, token);
+  }
+
+  // Upload endpoints
+  uploadResume(file: File, token?: string) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return this.request<{ url: string; message?: string }>(`/upload/resume`, {
+      method: "POST",
+      body: formData,
+    }, token);
+  }
+
+  uploadImage(file: File, token?: string) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return this.request<{ url: string; message?: string }>(`/upload/image`, {
+      method: "POST",
+      body: formData,
+    }, token);
+  }
+
+  uploadFile(file: File, token?: string) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return this.request<{ url: string; message?: string }>(`/upload`, {
+      method: "POST",
+      body: formData,
+    }, token);
+  }
+
+  // Application endpoints
+  createApplication(data: {
+    jobId: string;
+    resumeUrl?: string;
+    coverLetter?: string;
+  }, token?: string) {
+    return this.request<Application>(`/applications`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token);
+  }
+
+  // Company endpoints
+  updateCompany(companyId: string, data: Partial<Company>, token?: string) {
+    return this.request<Company>(`/companies/${companyId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token);
+  }
+
+  // Job endpoints with include
+  getJobWithInclude(jobId: string, include?: string, token?: string) {
+    const params = include ? { include } : undefined;
+    return this.request<Job>(`/jobs/${jobId}${buildQuery(params)}`, {}, token);
+  }
+
+  getJobWithSkills(jobId: string, token?: string) {
+    return this.getJobWithInclude(jobId, "skills", token);
+  }
+
+  // Education endpoints
+  createEducation(data: {
+    institution: string;
+    degree?: string;
+    fieldOfStudy?: string;
+    startDate?: string;
+    endDate?: string;
+    grade?: string;
+  }, token?: string) {
+    return this.request<{ id: string; [key: string]: any }>(`/auth/education`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token);
+  }
+
+  updateEducation(educationId: string, data: {
+    institution?: string;
+    degree?: string;
+    fieldOfStudy?: string;
+    startDate?: string;
+    endDate?: string;
+    grade?: string;
+  }, token?: string) {
+    return this.request<{ id: string; [key: string]: any }>(`/auth/education/${educationId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token);
+  }
+
+  deleteEducation(educationId: string, token?: string) {
+    return this.request<{ success: boolean; message?: string }>(`/auth/education/${educationId}`, {
+      method: "DELETE",
+    }, token);
+  }
+
+  // Project endpoints
+  createProject(data: {
+    name: string;
+    description?: string;
+    url?: string;
+    startDate?: string;
+    endDate?: string;
+    isCurrent?: boolean;
+    technologies?: string[];
+  }, token?: string) {
+    return this.request<{ id: string; [key: string]: any }>(`/auth/project`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token);
+  }
+
+  updateProject(projectId: string, data: {
+    name?: string;
+    description?: string;
+    url?: string;
+    startDate?: string;
+    endDate?: string;
+    isCurrent?: boolean;
+    technologies?: string[];
+  }, token?: string) {
+    return this.request<{ id: string; [key: string]: any }>(`/auth/project/${projectId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token);
+  }
+
+  deleteProject(projectId: string, token?: string) {
+    return this.request<{ success: boolean; message?: string }>(`/auth/project/${projectId}`, {
+      method: "DELETE",
+    }, token);
   }
 }
 

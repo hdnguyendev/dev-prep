@@ -1,4 +1,4 @@
-import Profile from "@/pages/Profile";
+import Profile from "@/pages/candidate/Profile";
 
 export default function CandidateProfile() {
   return <Profile embedded />;

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { isAdminLoggedIn } from "@/lib/auth";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import {
   CheckCircle2,
   XCircle,
@@ -45,6 +46,8 @@ const AdminDetail = () => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [jobSkillIds, setJobSkillIds] = useState<string[]>([]);
   const [jobCategoryIds, setJobCategoryIds] = useState<string[]>([]);
   const [skillOptions, setSkillOptions] = useState<Array<{ value: string; label: string }>>([]);
@@ -291,12 +294,23 @@ const AdminDetail = () => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     if (!row || !resource) return;
-    if (!confirm("Delete this record?")) return;
-    const token = await getToken();
-    await adminClient.remove(resource.path, resource.primaryKeys, row, token ?? undefined);
-    navigate(-1);
+    try {
+      setDeleting(true);
+      const token = await getToken();
+      await adminClient.remove(resource.path, resource.primaryKeys, row, token ?? undefined);
+      setDeleteConfirmOpen(false);
+      navigate(-1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // Don't render if not authenticated
@@ -317,7 +331,7 @@ const AdminDetail = () => {
                   <Button variant="outline" onClick={() => setEditing((v) => !v)} disabled={loading || !!error}>
                     {editing ? "Cancel edit" : "Edit"}
                   </Button>
-                  <Button variant="destructive" onClick={handleDelete} disabled={loading || !!error}>
+                  <Button variant="destructive" onClick={handleDeleteClick} disabled={loading || !!error || deleting}>
                     Delete
                   </Button>
                 </div>
@@ -633,6 +647,19 @@ const AdminDetail = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Dialog for Delete */}
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Record?"
+        description="Are you sure you want to delete this record? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        loading={deleting}
+      />
     </main>
   );
 };

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import {
   BriefcaseBusiness,
@@ -17,6 +18,7 @@ import {
   Search,
   MapPin,
   Building2,
+  ClipboardList,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
@@ -51,14 +53,19 @@ type Job = {
 const RecruiterJobs = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
   
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applicationsCounts, setApplicationsCounts] = useState<Record<string, number>>({});
+
+  // Delete confirmation state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // List UI state
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState<string>("");
@@ -66,6 +73,14 @@ const RecruiterJobs = () => {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title">("newest");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const hasProcessedState = useRef(false);
+  const userIdRef = useRef<string | null>(null);
+
+  // Get user ID once and cache it
+  useEffect(() => {
+    const user = getCurrentUser();
+    userIdRef.current = user?.id || null;
+  }, []);
 
   // Check auth
   useEffect(() => {
@@ -74,24 +89,46 @@ const RecruiterJobs = () => {
     }
   }, [navigate]);
 
-  // Fetch jobs
+  // Fetch jobs with search from server
   useEffect(() => {
     const fetchJobs = async () => {
-      if (!currentUser) return;
+      const userId = userIdRef.current;
+      if (!userId) return;
       
       try {
         setLoading(true);
         setError(null);
         
         const headers: Record<string, string> = {
-          "Authorization": `Bearer ${currentUser.id}`,
+          "Authorization": `Bearer ${userId}`,
         };
         
-        const response = await fetch(`${API_BASE}/api/jobs?pageSize=100`, { headers });
+        const searchParam = search.trim() ? `&q=${encodeURIComponent(search.trim())}` : "";
+        const response = await fetch(`${API_BASE}/api/jobs?pageSize=100${searchParam}`, { headers });
         const data = await response.json();
         
         if (data.success) {
-          setJobs(data.data || []);
+          const fetchedJobs = data.data || [];
+          setJobs(fetchedJobs);
+          
+          // Fetch applications count for each job
+          const counts: Record<string, number> = {};
+          await Promise.all(
+            fetchedJobs.map(async (job: Job) => {
+              try {
+                const appsRes = await fetch(`${API_BASE}/api/applications?jobId=${job.id}&pageSize=1`, { headers });
+                const appsData = await appsRes.json();
+                if (appsData.success && appsData.meta) {
+                  counts[job.id] = appsData.meta.total || 0;
+                } else {
+                  counts[job.id] = 0;
+                }
+              } catch {
+                counts[job.id] = 0;
+              }
+            })
+          );
+          setApplicationsCounts(counts);
         } else {
           setError(data.message || "Failed to fetch jobs");
         }
@@ -104,13 +141,21 @@ const RecruiterJobs = () => {
     };
 
     fetchJobs();
-  }, [currentUser?.id]);
+  }, [search]);
 
   // Support being opened from dashboard (navigate to create/edit page)
   useEffect(() => {
-    const state = location.state as { openJobId?: string; mode?: "create" } | undefined;
-    if (!state) return;
+    if (hasProcessedState.current) return;
     if (loading) return;
+
+    const state = location.state as { openJobId?: string; mode?: "create" } | undefined;
+    if (!state) {
+      hasProcessedState.current = true;
+      return;
+    }
+
+    // Mark as processed immediately to prevent infinite loop
+    hasProcessedState.current = true;
 
     if (state.mode === "create") {
       navigate("/recruiter/jobs/new", { replace: true });
@@ -122,17 +167,24 @@ const RecruiterJobs = () => {
     }
   }, [loading, location.state, navigate]);
 
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setPage(1);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, employmentTypeFilter, locationTypeFilter, sortBy]);
 
+  // Client-side filtering only for status, employment type, location type (search is done on server)
   const filteredJobs = useMemo(() => {
-    const q = search.trim().toLowerCase();
     const next = jobs.filter((j) => {
-      if (q) {
-        const hay = `${j.title ?? ""} ${j.slug ?? ""} ${j.company?.name ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
       if (statusFilter && String(j.status) !== statusFilter) return false;
       if (employmentTypeFilter && String(j.employmentType ?? "") !== employmentTypeFilter) return false;
       if (locationTypeFilter && String(j.locationType ?? "") !== locationTypeFilter) return false;
@@ -146,7 +198,7 @@ const RecruiterJobs = () => {
       return sortBy === "newest" ? bt - at : at - bt;
     });
     return next;
-  }, [employmentTypeFilter, jobs, locationTypeFilter, search, sortBy, statusFilter]);
+  }, [employmentTypeFilter, jobs, locationTypeFilter, sortBy, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -178,28 +230,37 @@ const RecruiterJobs = () => {
   };
 
   // Delete job
-  const handleDelete = async (job: Job) => {
-    if (!currentUser) return;
-    if (!confirm(`Delete job "${job.title}"?`)) return;
+  const handleDeleteClick = (job: Job) => {
+    setJobToDelete(job);
+    setDeleteConfirmOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!jobToDelete || !userIdRef.current) return;
+    
     try {
-      const response = await fetch(`${API_BASE}/jobs/${job.id}`, {
+      setDeleting(true);
+      const response = await fetch(`${API_BASE}/jobs/${jobToDelete.id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${currentUser.id}`,
+          "Authorization": `Bearer ${userIdRef.current}`,
         },
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setJobs((prev) => prev.filter((j) => j.id !== job.id));
+        setJobs((prev) => prev.filter((j) => j.id !== jobToDelete.id));
+        setDeleteConfirmOpen(false);
+        setJobToDelete(null);
       } else {
         setError(data.message || "Failed to delete job");
       }
     } catch (err) {
       console.error("Failed to delete job:", err);
       setError("Network error");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -213,8 +274,7 @@ const RecruiterJobs = () => {
   }
 
   return (
-    <main className="min-h-dvh bg-muted/40 py-8">
-      <div className="container mx-auto px-4 space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -228,6 +288,52 @@ const RecruiterJobs = () => {
             Create Job
           </Button>
         </div>
+
+        {/* Quick Actions */}
+        <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
+          <CardHeader>
+            <CardTitle className="text-amber-700 dark:text-amber-400 flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-amber-500" />
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <Button 
+                variant="outline" 
+                className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors" 
+                onClick={() => navigate("/recruiter/dashboard")}
+              >
+                <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium">Overview</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto flex-col gap-2 py-4 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                onClick={() => navigate("/recruiter/applications")}
+              >
+                <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <span className="text-sm font-medium">Review Applications</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-auto flex-col gap-2 py-4 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors" 
+                onClick={() => navigate("/recruiter/company")}
+              >
+                <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-sm font-medium">Edit Company</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto flex-col gap-2 py-4 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+                onClick={handleCreate}
+              >
+                <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-sm font-medium">Create New Job</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Error */}
         {error && (
@@ -267,14 +373,21 @@ const RecruiterJobs = () => {
                 </div>
 
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                  <div className="relative w-full lg:w-[360px]">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search by title, slug, company..."
-                      className="pl-9"
-                    />
+                  <div className="relative w-full lg:w-[360px] flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Search by title, slug, company..."
+                        className="pl-9"
+                      />
+                    </div>
+                    <Button onClick={handleSearch} size="sm">
+                      <Search className="h-4 w-4 mr-2" />
+                      Search
+                    </Button>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -318,7 +431,7 @@ const RecruiterJobs = () => {
 
                     <select
                       value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as any)}
+                      onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "title")}
                       className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                     >
                       <option value="newest">Newest</option>
@@ -422,13 +535,18 @@ const RecruiterJobs = () => {
                         <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center gap-2 justify-end">
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
-                              className="gap-2"
+                              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
                       onClick={() => handleViewApplications(job)}
                     >
                               <Eye className="h-4 w-4" />
                       Applications
+                      {applicationsCounts[job.id] !== undefined && applicationsCounts[job.id] > 0 && (
+                        <Badge variant="outline" className="ml-1 bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30">
+                          {applicationsCounts[job.id]}
+                        </Badge>
+                      )}
                     </Button>
                             <Button variant="ghost" size="sm" className="gap-2" onClick={() => handleEdit(job)}>
                               <Edit className="h-4 w-4" />
@@ -438,7 +556,7 @@ const RecruiterJobs = () => {
                       variant="ghost"
                       size="sm"
                               className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleDelete(job)}
+                              onClick={() => handleDeleteClick(job)}
                     >
                               <Trash2 className="h-4 w-4" />
                               Delete
@@ -484,9 +602,20 @@ const RecruiterJobs = () => {
                 </CardContent>
               </Card>
         )}
-      </div>
 
-    </main>
+      {/* Confirmation Dialog for Delete */}
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Job?"
+        description={jobToDelete ? `Are you sure you want to delete "${jobToDelete.title}"? This action cannot be undone.` : "This action cannot be undone."}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        loading={deleting}
+      />
+    </div>
   );
 };
 

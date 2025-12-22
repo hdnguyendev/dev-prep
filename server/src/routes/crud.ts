@@ -11,6 +11,7 @@ type ResourceConfig = {
   orderBy?: Record<string, unknown>;
   where?: Record<string, unknown>;
   allowedFields: string[];
+  searchableFields?: string[];
 };
 
 const toClientKey = (model: Prisma.ModelName) => model.charAt(0).toLowerCase() + model.slice(1);
@@ -79,9 +80,40 @@ const createCrudRouter = (config: ResourceConfig) => {
     const queryParams = c.req.query();
     const dynamicWhere: any = { ...config.where };
     
+    // Support search query (q or search param)
+    const searchQuery = (queryParams.q || queryParams.search || "").trim();
+    if (searchQuery) {
+      // Build OR conditions for searchable fields
+      const searchableFields = config.searchableFields || [];
+      if (searchableFields.length > 0) {
+        dynamicWhere.OR = searchableFields.map((field: string) => {
+          // Handle nested fields (e.g., "user.firstName")
+          if (field.includes(".")) {
+            const parts = field.split(".");
+            const relation = parts[0];
+            const nestedField = parts[1];
+            if (!relation || !nestedField) return {};
+            const condition: any = {};
+            condition[relation] = {};
+            condition[relation][nestedField] = {
+              contains: searchQuery,
+              mode: "insensitive" as const,
+            };
+            return condition;
+          }
+          const condition: any = {};
+          condition[field] = {
+            contains: searchQuery,
+            mode: "insensitive" as const,
+          };
+          return condition;
+        });
+      }
+    }
+    
     // Support filtering by foreign key IDs (e.g., jobId, candidateId, etc.)
     for (const [key, value] of Object.entries(queryParams)) {
-      if (key.endsWith('Id') && value && typeof value === 'string') {
+      if (key.endsWith('Id') && value && typeof value === 'string' && key !== 'q' && key !== 'search') {
         dynamicWhere[key] = value;
       }
     }
@@ -245,6 +277,25 @@ export const resources: ResourceConfig[] = [
     orderBy: { startDate: "desc" },
   },
   {
+    path: "projects",
+    model: Prisma.ModelName.Project,
+    primaryKeys: ["id"],
+    allowedFields: [
+      "id",
+      "candidateId",
+      "name",
+      "description",
+      "url",
+      "startDate",
+      "endDate",
+      "isCurrent",
+      "technologies",
+      "createdAt",
+    ],
+    include: { candidate: true },
+    orderBy: { startDate: "desc" },
+  },
+  {
     path: "skills",
     model: Prisma.ModelName.Skill,
     primaryKeys: ["id"],
@@ -281,6 +332,7 @@ export const resources: ResourceConfig[] = [
       "createdAt",
       "updatedAt",
     ],
+    searchableFields: ["name", "industry", "city", "country", "description"],
     include: { recruiters: true, jobs: true },
     orderBy: { createdAt: "desc" },
   },
@@ -315,6 +367,7 @@ export const resources: ResourceConfig[] = [
       "createdAt",
       "updatedAt",
     ],
+    searchableFields: ["title", "description", "requirements", "location"],
     include: {
       company: true,
       recruiter: true,

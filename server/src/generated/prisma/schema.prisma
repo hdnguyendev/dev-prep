@@ -99,6 +99,7 @@ model CandidateProfile {
   website  String?
   linkedin String?
   github   String?
+  address  String? // Địa chỉ
 
   // Thông tin CV structured (Để search tốt hơn là chỉ lưu file PDF)
   cvUrl String? // Link file gốc (PDF/Word)
@@ -112,6 +113,7 @@ model CandidateProfile {
   // Relations
   experiences    Experience[]
   educations     Education[]
+  projects       Project[]
   skills         CandidateSkill[]
   applications   Application[]
   savedJobs      SavedJob[]
@@ -168,6 +170,22 @@ model Education {
   startDate    DateTime
   endDate      DateTime?
   grade        String? // GPA hoặc xếp loại
+
+  createdAt DateTime @default(now())
+}
+
+model Project {
+  id          String           @id @default(uuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  name         String // Tên dự án
+  description  String?   @db.Text // Mô tả dự án
+  url          String? // Link demo/GitHub
+  startDate    DateTime?
+  endDate      DateTime?
+  isCurrent    Boolean   @default(false) // Đang làm
+  technologies String[]  @default([]) // Các công nghệ sử dụng
 
   createdAt DateTime @default(now())
 }

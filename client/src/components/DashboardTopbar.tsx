@@ -3,6 +3,8 @@ import { SignedIn, SignedOut, UserButton, useAuth, useUser } from "@clerk/clerk-
 import { getCurrentUser, logout } from "@/lib/auth";
 import { Briefcase, Building2, Home, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { useState, useEffect, useMemo } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import logo from "@/assets/logo.svg";
 
 type DashboardTopbarProps = {
@@ -15,9 +17,10 @@ type DashboardTopbarProps = {
  */
 export default function DashboardTopbar({ title }: DashboardTopbarProps) {
   const navigate = useNavigate();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { user: clerkUser } = useUser();
   const customUser = getCurrentUser();
+  const [candidateNameFromDB, setCandidateNameFromDB] = useState<{ firstName?: string | null; lastName?: string | null } | null>(null);
 
   const isStaff = Boolean(customUser);
 
@@ -26,8 +29,39 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
     navigate("/login");
   };
 
-  const candidateDisplayName =
-    `${clerkUser?.firstName ?? ""} ${clerkUser?.lastName ?? ""}`.trim() || "Account";
+  // Fetch candidate name from database
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const fetchCandidateName = async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:9999"}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data?.success) {
+          setCandidateNameFromDB({
+            firstName: data.firstName,
+            lastName: data.lastName,
+          });
+        }
+      } catch (err) {
+        // Ignore errors
+      }
+    };
+    fetchCandidateName();
+  }, [isSignedIn, getToken]);
+
+  const candidateDisplayName = useMemo(() => {
+    if (candidateNameFromDB?.firstName && candidateNameFromDB?.lastName) {
+      return `${candidateNameFromDB.firstName} ${candidateNameFromDB.lastName}`;
+    }
+    if (clerkUser?.firstName && clerkUser?.lastName) {
+      return `${clerkUser.firstName} ${clerkUser.lastName}`;
+    }
+    return "Account";
+  }, [candidateNameFromDB, clerkUser]);
 
   return (
     <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -64,7 +98,10 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
           {/* Candidate (Clerk) */}
           <SignedIn>
             <div className="flex items-center gap-2">
-              <span className="hidden lg:inline text-sm text-muted-foreground">{candidateDisplayName}</span>
+              <span className="hidden lg:inline text-sm font-medium">
+                Hi, <span className="text-primary">{candidateDisplayName}</span>
+              </span>
+              <ThemeToggle />
               <UserButton afterSignOutUrl="/" />
             </div>
           </SignedIn>
@@ -78,6 +115,7 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
                 </span>
                 <span className="text-xs text-muted-foreground">{customUser?.role}</span>
               </div>
+              <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={handleStaffLogout} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden lg:inline">Logout</span>
@@ -87,11 +125,14 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
 
           <SignedOut>
             {!isStaff && (
-              <Link to="/login">
-                <Button size="sm" variant="default">
-                  Login
-                </Button>
-              </Link>
+              <>
+                <ThemeToggle />
+                <Link to="/login">
+                  <Button size="sm" variant="default">
+                    Login
+                  </Button>
+                </Link>
+              </>
             )}
           </SignedOut>
         </div>

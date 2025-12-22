@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { apiClient, type Job, type JobType } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
 import {
@@ -21,6 +22,9 @@ const SavedJobs = ({ embedded }: { embedded?: boolean }) => {
   const { getToken, isSignedIn } = useAuth();
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unsaveConfirmOpen, setUnsaveConfirmOpen] = useState(false);
+  const [jobToUnsave, setJobToUnsave] = useState<string | null>(null);
+  const [unsaving, setUnsaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Redirect if not signed in (skip when embedded - parent layout already handles auth)
@@ -62,20 +66,27 @@ const SavedJobs = ({ embedded }: { embedded?: boolean }) => {
   }, [isSignedIn, getToken]);
 
   // Handle unsave
-  const handleUnsave = async (e: React.MouseEvent, jobId: string) => {
+  const handleUnsaveClick = (e: React.MouseEvent, jobId: string) => {
     e.stopPropagation();
-    
-    if (!confirm("Are you sure you want to remove this job from your saved list?")) {
-      return;
-    }
+    setJobToUnsave(jobId);
+    setUnsaveConfirmOpen(true);
+  };
 
+  const handleUnsaveConfirm = async () => {
+    if (!jobToUnsave) return;
+    
     try {
+      setUnsaving(true);
       const token = await getToken();
-      await apiClient.unsaveJob(jobId, token ?? undefined);
-      setSavedJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
+      await apiClient.unsaveJob(jobToUnsave, token ?? undefined);
+      setSavedJobs(prevJobs => prevJobs.filter(job => job.id !== jobToUnsave));
+      setUnsaveConfirmOpen(false);
+      setJobToUnsave(null);
     } catch (err) {
       console.error("Error unsaving job:", err);
       alert("Failed to remove job. Please try again.");
+    } finally {
+      setUnsaving(false);
     }
   };
 
@@ -251,7 +262,7 @@ const SavedJobs = ({ embedded }: { embedded?: boolean }) => {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={(e) => handleUnsave(e, job.id)}
+                        onClick={(e) => handleUnsaveClick(e, job.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500 hover:text-red-600" />
                       </Button>
@@ -359,6 +370,19 @@ const SavedJobs = ({ embedded }: { embedded?: boolean }) => {
   return (
     <main className="min-h-dvh bg-gradient-to-b from-background via-purple-500/5 to-background">
       {content}
+
+      {/* Confirmation Dialog for Unsave */}
+      <ConfirmationDialog
+        open={unsaveConfirmOpen}
+        onOpenChange={setUnsaveConfirmOpen}
+        onConfirm={handleUnsaveConfirm}
+        title="Remove Saved Job?"
+        description="Are you sure you want to remove this job from your saved list?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="default"
+        loading={unsaving}
+      />
     </main>
   );
 };

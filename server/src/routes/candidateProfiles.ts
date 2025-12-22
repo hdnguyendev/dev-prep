@@ -66,24 +66,51 @@ candidateProfilesRoutes.get("/public/candidate-profiles", async (c) => {
 candidateProfilesRoutes.get("/public/candidate-profiles/:id", async (c) => {
   try {
     const id = c.req.param("id");
-    const profile = await prisma.candidateProfile.findFirst({
-      where: { id, isPublic: true },
-      include: {
-        user: { select: { firstName: true, lastName: true, avatarUrl: true } },
-        skills: { include: { skill: true } },
-        experiences: true,
-        educations: true,
-      },
-    });
+    let profile;
+    try {
+      profile = await prisma.candidateProfile.findFirst({
+        where: { id, isPublic: true },
+        include: {
+          user: { select: { firstName: true, lastName: true, avatarUrl: true } },
+          skills: { include: { skill: true } },
+          experiences: true,
+          educations: true,
+          projects: true,
+        },
+      });
+    } catch (dbError: any) {
+      console.error("❌ Database query error in public profile:", dbError);
+      // If projects relation doesn't exist, try without it
+      if (dbError?.message?.includes('projects') || dbError?.code === 'P2021') {
+        console.log("⚠️ Projects relation might not exist, trying without it...");
+        profile = await prisma.candidateProfile.findFirst({
+          where: { id, isPublic: true },
+          include: {
+            user: { select: { firstName: true, lastName: true, avatarUrl: true } },
+            skills: { include: { skill: true } },
+            experiences: true,
+            educations: true,
+            // projects: true, // Skip projects if table doesn't exist
+          },
+        });
+      } else {
+        throw dbError;
+      }
+    }
 
     if (!profile) {
       return c.json({ success: false, message: "Profile not found" }, 404);
     }
 
     return c.json({ success: true, data: profile });
-  } catch (error) {
-    console.error("Public candidate profile error:", error);
-    return c.json({ success: false, message: "Failed to fetch profile" }, 500);
+  } catch (error: any) {
+    console.error("❌ Public candidate profile error:", error);
+    console.error("Error details:", { message: error?.message, code: error?.code, stack: error?.stack });
+    return c.json({ 
+      success: false, 
+      message: "Failed to fetch profile",
+      error: process.env.NODE_ENV === "development" ? error?.message : undefined
+    }, 500);
   }
 });
 
@@ -151,21 +178,48 @@ candidateProfilesRoutes.get("/candidate-profiles/:id/view", async (c) => {
       }
     }
 
-    const profile = await prisma.candidateProfile.findUnique({
-      where: { id },
-      include: {
-        user: true,
-        skills: { include: { skill: true } },
-        experiences: true,
-        educations: true,
-      },
-    });
+    let profile;
+    try {
+      profile = await prisma.candidateProfile.findUnique({
+        where: { id },
+        include: {
+          user: true,
+          skills: { include: { skill: true } },
+          experiences: true,
+          educations: true,
+          projects: true,
+        },
+      });
+    } catch (dbError: any) {
+      console.error("❌ Database query error in profile view:", dbError);
+      // If projects relation doesn't exist, try without it
+      if (dbError?.message?.includes('projects') || dbError?.code === 'P2021') {
+        console.log("⚠️ Projects relation might not exist, trying without it...");
+        profile = await prisma.candidateProfile.findUnique({
+          where: { id },
+          include: {
+            user: true,
+            skills: { include: { skill: true } },
+            experiences: true,
+            educations: true,
+            // projects: true, // Skip projects if table doesn't exist
+          },
+        });
+      } else {
+        throw dbError;
+      }
+    }
 
     if (!profile) return c.json({ success: false, message: "Profile not found" }, 404);
     return c.json({ success: true, data: profile });
-  } catch (error) {
-    console.error("Candidate profile view error:", error);
-    return c.json({ success: false, message: "Failed to fetch profile" }, 500);
+  } catch (error: any) {
+    console.error("❌ Candidate profile view error:", error);
+    console.error("Error details:", { message: error?.message, code: error?.code, stack: error?.stack });
+    return c.json({ 
+      success: false, 
+      message: "Failed to fetch profile",
+      error: process.env.NODE_ENV === "development" ? error?.message : undefined
+    }, 500);
   }
 });
 

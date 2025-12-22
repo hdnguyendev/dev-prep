@@ -40,6 +40,7 @@ import {
 const Companies = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [hasWebsiteOnly, setHasWebsiteOnly] = useState(false);
@@ -56,12 +57,27 @@ const Companies = () => {
   const pageSize = 12;
   const [sort, setSort] = useState<"recommended" | "rating" | "name">("recommended");
 
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+    setPage(1);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   const fetcher = useCallback(
-    (token?: string) => apiClient.listCompanies({ page, pageSize }, token),
-    [page, pageSize]
+    (token?: string) => apiClient.listCompanies({ 
+      page, 
+      pageSize,
+      q: searchQuery.trim() || undefined,
+    }, token),
+    [page, pageSize, searchQuery]
   );
 
-  const { data: companies, loading, error, meta } = useApiList<Company>(fetcher, [page, pageSize]);
+  const { data: companies, loading, error, meta } = useApiList<Company>(fetcher, [page, pageSize, searchQuery]);
 
   const getCompanyInitial = (company: Company) => {
     return company.name?.[0]?.toUpperCase() || "C";
@@ -81,16 +97,8 @@ const Companies = () => {
     return colors[index % colors.length];
   };
 
+  // Client-side filtering only for filters (search is done on server)
   const filteredCompanies = companies.filter((c) => {
-    const query = searchQuery.toLowerCase();
-    const matchesQuery =
-      !query ||
-      c.name.toLowerCase().includes(query) ||
-      c.industry?.toLowerCase().includes(query) ||
-      c.city?.toLowerCase().includes(query) ||
-      c.country?.toLowerCase().includes(query);
-
-    if (!matchesQuery) return false;
     if (verifiedOnly && !c.isVerified) return false;
     if (hasWebsiteOnly && !c.website) return false;
 
@@ -291,14 +299,21 @@ const Companies = () => {
               <CardContent className="p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
                   {/* Search */}
-                  <div className="relative flex-1 min-w-0">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search companies by name, industry, location..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-11 pl-9"
-                    />
+                  <div className="relative flex-1 min-w-0 flex gap-2">
+                    <div className="relative flex-1 min-w-0">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search companies by name, industry, location..."
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="h-11 pl-9"
+                      />
+                    </div>
+                    <Button onClick={handleSearch} className="h-11">
+                      <Search className="h-4 w-4 mr-2" />
+                      Search
+                    </Button>
                   </div>
 
                   {/* Divider */}
@@ -623,7 +638,7 @@ const Companies = () => {
                 We couldn't find any companies matching your search criteria. Try adjusting your filters or search terms.
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
-                <Button variant="outline" onClick={() => setSearchQuery("")} className="gap-2">
+                <Button variant="outline" onClick={() => { setSearchQuery(""); setSearchInput(""); }} className="gap-2">
                   <X className="h-4 w-4" />
                   Clear Search
                 </Button>
@@ -643,7 +658,27 @@ const Companies = () => {
                   onClick={() => navigate(`/companies/${company.slug}`)}
                 >
                   {/* Cover Image / Gradient */}
-                  <div className={`h-24 bg-gradient-to-br ${getCompanyColor(index)} relative`}>
+                  <div className={`h-24 relative overflow-hidden ${
+                    company.coverUrl 
+                      ? '' 
+                      : `bg-gradient-to-br ${getCompanyColor(index)}`
+                  }`}>
+                    {company.coverUrl ? (
+                      <img
+                        src={company.coverUrl}
+                        alt={`${company.name} cover`}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          // Fallback to gradient if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.className = `h-24 bg-gradient-to-br ${getCompanyColor(index)} relative overflow-hidden`;
+                          }
+                        }}
+                      />
+                    ) : null}
                     <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                     
@@ -659,8 +694,22 @@ const Companies = () => {
                   <CardHeader className="relative -mt-8 pb-3">
                     {/* Company Logo */}
                     <div className="mb-3 flex justify-center">
+                      {company.logoUrl ? (
+                        <img
+                          src={company.logoUrl}
+                          alt={company.name}
+                          className="h-20 w-20 rounded-2xl border-4 border-background object-cover shadow-xl"
+                          onError={(e) => {
+                            // Fallback to icon if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
                       <div
-                        className={`h-20 w-20 rounded-2xl border-4 border-background bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-3xl font-bold text-white shadow-xl`}
+                        className={`h-20 w-20 rounded-2xl border-4 border-background bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-3xl font-bold text-white shadow-xl ${company.logoUrl ? "hidden" : ""}`}
                       >
                         {getCompanyInitial(company)}
                       </div>
@@ -845,8 +894,21 @@ const Companies = () => {
                         >
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-3">
+                              {company.logoUrl ? (
+                                <img
+                                  src={company.logoUrl}
+                                  alt={company.name}
+                                  className="h-10 w-10 rounded-lg object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = "none";
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = "flex";
+                                  }}
+                                />
+                              ) : null}
                               <div
-                                className={`h-10 w-10 rounded-lg bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-lg font-bold text-white`}
+                                className={`h-10 w-10 rounded-lg bg-gradient-to-br ${getCompanyColor(index)} flex items-center justify-center text-lg font-bold text-white ${company.logoUrl ? "hidden" : ""}`}
                               >
                                 {getCompanyInitial(company)}
                               </div>
