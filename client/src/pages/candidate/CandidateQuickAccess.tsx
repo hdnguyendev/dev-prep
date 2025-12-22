@@ -23,7 +23,7 @@ export default function CandidateQuickAccess() {
           <Heart className="mt-0.5 h-4 w-4" />
           <div className="text-left">
             <div className="text-sm font-medium">Saved jobs</div>
-            <div className="text-xs text-muted-foreground">Các job bạn đã lưu</div>
+            <div className="text-xs text-muted-foreground">Jobs you have saved</div>
           </div>
         </Button>
       </CardContent>

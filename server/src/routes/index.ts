@@ -8,6 +8,8 @@ import applicationRoutes from "./applications";
 import companyRoutes from "./companies";
 import reviewRoutes from "./reviews";
 import savedJobRoutes from "./savedJobs";
+import companyFollowRoutes from "./companyFollows";
+import notificationRoutes from "./notifications";
 import candidateProfilesRoutes from "./candidateProfiles";
 import interviewsRoutes from "./interviews";
 import aiRoutes from "./ai";
@@ -21,6 +23,8 @@ routes.route("/applications", applicationRoutes); // Custom application endpoint
 routes.route("/companies", companyRoutes); // Company endpoints
 routes.route("/reviews", reviewRoutes); // Review endpoints
 routes.route("/saved-jobs", savedJobRoutes); // Saved jobs endpoints
+routes.route("/company-follows", companyFollowRoutes); // Company follow endpoints
+routes.route("/notifications", notificationRoutes); // Notification endpoints
 routes.route("/upload", uploadRoutes); // Upload endpoints
 routes.route("/", candidateProfilesRoutes);
 routes.route("/", interviewsRoutes);

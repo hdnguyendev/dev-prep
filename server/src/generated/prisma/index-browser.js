@@ -245,6 +245,15 @@ exports.Prisma.CompanyReviewScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.CompanyFollowScalarFieldEnum = {
+  id: 'id',
+  candidateId: 'candidateId',
+  companyId: 'companyId',
+  notifyOnNewJob: 'notifyOnNewJob',
+  notifyOnJobUpdate: 'notifyOnJobUpdate',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.JobScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -509,6 +518,12 @@ exports.Prisma.CompanyReviewOrderByRelevanceFieldEnum = {
   cons: 'cons'
 };
 
+exports.Prisma.CompanyFollowOrderByRelevanceFieldEnum = {
+  id: 'id',
+  candidateId: 'candidateId',
+  companyId: 'companyId'
+};
+
 exports.Prisma.JobOrderByRelevanceFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -691,6 +706,7 @@ exports.Prisma.ModelName = {
   CandidateSkill: 'CandidateSkill',
   Company: 'Company',
   CompanyReview: 'CompanyReview',
+  CompanyFollow: 'CompanyFollow',
   Job: 'Job',
   Category: 'Category',
   JobCategory: 'JobCategory',

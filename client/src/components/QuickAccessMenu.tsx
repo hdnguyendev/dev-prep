@@ -12,9 +12,9 @@ type QuickLink = {
 };
 
 const LINKS: QuickLink[] = [
-  { label: "Applications", href: "/applications", icon: <ClipboardList className="h-4 w-4" />, description: "Theo dõi các job đã apply" },
   { label: "Interviews", href: "/interviews", icon: <Calendar className="h-4 w-4" />, description: "Xem lịch + feedback phỏng vấn" },
-  { label: "Saved jobs", href: "/saved-jobs", icon: <Heart className="h-4 w-4" />, description: "Danh sách job đã lưu" },
+  { label: "Applications", href: "/applications", icon: <ClipboardList className="h-4 w-4" />, description: "Track jobs you have applied to" },
+  { label: "Saved jobs", href: "/saved-jobs", icon: <Heart className="h-4 w-4" />, description: "Your list of saved jobs" },
   { label: "Interview prep", href: "/interview", icon: <FileText className="h-4 w-4" />, description: "Luyện phỏng vấn" },
 ];
 

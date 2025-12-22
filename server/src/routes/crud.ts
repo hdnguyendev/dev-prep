@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import prisma from "@server/app/db/prisma";
 import type { Context } from "hono";
 import { Prisma } from "@server/generated/prisma";
+import { getNewJobMessage, getJobClosedMessage } from "@server/utils/notificationMessages";
 
 type ResourceConfig = {
   path: string;
@@ -165,6 +166,36 @@ const createCrudRouter = (config: ResourceConfig) => {
     const client = getModelClient(config.model);
     const data = pickPayload(payload, config.allowedFields);
     const created = await client.create({ data, include: config.include });
+
+    // Persist notifications in DB for jobs created via admin CRUD – only when PUBLISHED
+    if (
+      config.model === Prisma.ModelName.Job &&
+      (created as any)?.companyId &&
+      (created as any)?.status === "PUBLISHED"
+    ) {
+      const companyId = String((created as any).companyId);
+      const follows = await prisma.companyFollow.findMany({
+        where: { companyId },
+        select: { candidate: { select: { userId: true } } },
+      });
+
+      const notificationsData =
+        follows
+          .map((f) => f.candidate?.userId)
+          .filter((u): u is string => Boolean(u))
+          .map((userId) => ({
+            userId,
+            title: "New job posted",
+            message: getNewJobMessage((created as any).title ?? "New job"),
+            type: "COMPANY_UPDATE",
+            link: `/jobs/${(created as any).id}`,
+          })) ?? [];
+
+      if (notificationsData.length > 0) {
+        await prisma.notification.createMany({ data: notificationsData });
+      }
+    }
+
     return c.json({ success: true, data: created }, 201);
   });
 
@@ -175,7 +206,74 @@ const createCrudRouter = (config: ResourceConfig) => {
       const client = getModelClient(config.model);
       const data = pickPayload(payload, config.allowedFields);
       const where = buildWhere(c.req.param(), config.primaryKeys);
+
+      // For jobs, we want to know previous status to detect significant transitions
+      let existingJob: { status: string; companyId: string | null; title: string } | null = null;
+      if (config.model === Prisma.ModelName.Job) {
+        existingJob = await client.findUnique({
+          where,
+          select: { status: true, companyId: true, title: true },
+        });
+      }
+
       const updated = await client.update({ where, data, include: config.include });
+
+      // Persist notifications in DB for job status transitions
+      if (
+        config.model === Prisma.ModelName.Job &&
+        existingJob &&
+        existingJob.companyId
+      ) {
+        const companyId = String(existingJob.companyId);
+        const follows = await prisma.companyFollow.findMany({
+          where: { companyId },
+          select: { candidate: { select: { userId: true } } },
+        });
+
+        // Notify when job transitions from DRAFT/CLOSED to PUBLISHED
+        if (
+          (existingJob.status === "DRAFT" || existingJob.status === "CLOSED") &&
+          (updated as any)?.status === "PUBLISHED"
+        ) {
+          const notificationsData =
+            follows
+              .map((f) => f.candidate?.userId)
+              .filter((u): u is string => Boolean(u))
+              .map((userId) => ({
+                userId,
+                title: "New job posted",
+                message: getNewJobMessage((updated as any).title ?? "New job"),
+                type: "COMPANY_UPDATE",
+                link: `/jobs/${(updated as any).id}`,
+              })) ?? [];
+
+          if (notificationsData.length > 0) {
+            await prisma.notification.createMany({ data: notificationsData });
+          }
+        }
+        // Notify when job transitions to CLOSED
+        else if (
+          existingJob.status !== "CLOSED" &&
+          (updated as any)?.status === "CLOSED"
+        ) {
+          const notificationsData =
+            follows
+              .map((f) => f.candidate?.userId)
+              .filter((u): u is string => Boolean(u))
+              .map((userId) => ({
+                userId,
+                title: "Job closed",
+                message: getJobClosedMessage((updated as any).title ?? "Job"),
+                type: "COMPANY_UPDATE",
+                link: `/jobs/${(updated as any).id}`,
+              })) ?? [];
+
+          if (notificationsData.length > 0) {
+            await prisma.notification.createMany({ data: notificationsData });
+          }
+        }
+      }
+
       return c.json({ success: true, data: updated });
     } catch (error) {
       return handlePrismaNotFound(error, c);

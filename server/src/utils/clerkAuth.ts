@@ -16,8 +16,6 @@ export async function getOrCreateClerkUser(c: Context) {
 
   const clerkUserId = auth.userId;
   
-  // Debug: Log all available session claims
-  console.log("🔍 Clerk sessionClaims:", JSON.stringify(auth.sessionClaims, null, 2));
   
   // Try different field names that Clerk might use
   const sessionClaims = auth.sessionClaims as any;
@@ -26,8 +24,6 @@ export async function getOrCreateClerkUser(c: Context) {
   const firstName = "Candidate";
   const lastName = "User";
   
-  console.log(`📝 Using default name for new user: ${firstName} ${lastName}`);
-
   // Try to find existing user
   let user = await prisma.user.findFirst({
     where: {
@@ -101,7 +97,7 @@ export async function getOrCreateClerkUser(c: Context) {
       console.error("Failed to create candidate profile:", error);
       // Try to fetch again in case it was created by another request
       user = await prisma.user.findUnique({
-        where: { id: user.id },
+        where: { id: user?.id },
         include: {
           candidateProfile: {
             include: {

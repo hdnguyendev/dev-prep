@@ -425,13 +425,6 @@ authRoutes.get("/me", async (c) => {
       }
     }
 
-    console.log("✅ Auth/me success:", { 
-      userId: user.id, 
-      role: user.role, 
-      hasCandidateProfile: !!user.candidateProfile,
-      candidateProfileId: user.candidateProfile?.id 
-    });
-
     return c.json({ 
       success: true, 
       id: user.id,

@@ -19,9 +19,37 @@ import {
   MapPin,
   Building2,
   ClipboardList,
+  DollarSign,
+  Users,
+  Filter,
+  X,
+  ArrowUpDown,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+
+const jobStatusConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  DRAFT: {
+    label: "Draft",
+    icon: <Clock className="h-4 w-4" />,
+    color: "bg-slate-100 dark:bg-slate-950/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800",
+  },
+  PUBLISHED: {
+    label: "Published",
+    icon: <CheckCircle2 className="h-4 w-4" />,
+    color: "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+  },
+  CLOSED: {
+    label: "Closed",
+    icon: <XCircle className="h-4 w-4" />,
+    color: "bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+  },
+  ARCHIVED: {
+    label: "Archived",
+    icon: <XCircle className="h-4 w-4" />,
+    color: "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  },
+};
 
 type Job = {
   id: string;
@@ -269,6 +297,33 @@ const RecruiterJobs = () => {
     navigate(`/recruiter/jobs/${job.id}/applications`);
   };
 
+  // Helper functions
+  const stripHtmlTags = (html: string | null | undefined): string => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "").trim();
+  };
+
+  const formatSalary = (job: Job): string => {
+    if (!job.salaryMin && !job.salaryMax) return "—";
+    const currency = job.salaryCurrency || "USD";
+    const format = (amount: number) => {
+      if (currency === "VND") {
+        return `${(amount / 1000000).toFixed(0)}M VND`;
+      }
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    };
+    if (job.salaryMin && job.salaryMax) {
+      return `${format(job.salaryMin)} - ${format(job.salaryMax)}`;
+    }
+    if (job.salaryMin) return `From ${format(job.salaryMin)}`;
+    if (job.salaryMax) return `Up to ${format(job.salaryMax)}`;
+    return "—";
+  };
+
   if (!isRecruiterLoggedIn()) {
     return null;
   }
@@ -362,113 +417,206 @@ const RecruiterJobs = () => {
             </CardContent>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
-                <CardHeader className="pb-3">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <CardTitle className="text-lg">Jobs</CardTitle>
-                  <div className="text-xs text-muted-foreground">
-                    {filteredJobs.length} result{filteredJobs.length === 1 ? "" : "s"}
-                        </div>
+          <>
+            {/* Search and Filters Card */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Filter className="h-5 w-5" />
+                      Search & Filters
+                    </CardTitle>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {filteredJobs.length} job{filteredJobs.length === 1 ? "" : "s"} found
+                    </div>
+                  </div>
+                  {(search || statusFilter || employmentTypeFilter || locationTypeFilter) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearch("");
+                        setSearchInput("");
+                        setStatusFilter("");
+                        setEmploymentTypeFilter("");
+                        setLocationTypeFilter("");
+                        setSortBy("newest");
+                      }}
+                      className="gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear All
+                    </Button>
+                  )}
                 </div>
-
-                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                  <div className="relative w-full lg:w-[360px] flex gap-2">
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Search Bar */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Search Jobs</label>
+                  <div className="flex gap-2">
                     <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         onKeyPress={handleKeyPress}
-                      placeholder="Search by title, slug, company..."
-                      className="pl-9"
-                    />
+                        placeholder="Search by title, company name..."
+                        className="pl-9"
+                      />
                     </div>
-                    <Button onClick={handleSearch} size="sm">
+                    <Button onClick={handleSearch} size="default">
                       <Search className="h-4 w-4 mr-2" />
                       Search
                     </Button>
                   </div>
+                </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                {/* Filters Grid */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {/* Status Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
-                      <option value="">All status</option>
-                      <option value="DRAFT">DRAFT</option>
-                      <option value="PUBLISHED">PUBLISHED</option>
-                      <option value="CLOSED">CLOSED</option>
-                      <option value="ARCHIVED">ARCHIVED</option>
+                      <option value="">All Status</option>
+                      <option value="DRAFT">Draft</option>
+                      <option value="PUBLISHED">Published</option>
+                      <option value="CLOSED">Closed</option>
+                      <option value="ARCHIVED">Archived</option>
                     </select>
+                  </div>
 
+                  {/* Employment Type Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Employment Type</label>
                     <select
                       value={employmentTypeFilter}
                       onChange={(e) => setEmploymentTypeFilter(e.target.value)}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
-                      <option value="">All employment</option>
+                      <option value="">All Types</option>
                       {employmentTypeOptions.map((t) => (
                         <option key={t} value={t}>
-                          {t}
+                          {t.replace(/_/g, " ")}
                         </option>
                       ))}
                     </select>
+                  </div>
 
+                  {/* Location Type Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Location Type</label>
                     <select
                       value={locationTypeFilter}
                       onChange={(e) => setLocationTypeFilter(e.target.value)}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
-                      <option value="">All location</option>
+                      <option value="">All Locations</option>
                       {locationTypeOptions.map((t) => (
                         <option key={t} value={t}>
-                          {t}
+                          {t.replace(/_/g, " ")}
                         </option>
                       ))}
                     </select>
+                  </div>
 
+                  {/* Sort By */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <ArrowUpDown className="h-4 w-4" />
+                      Sort By
+                    </label>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "title")}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
-                      <option value="newest">Newest</option>
-                      <option value="oldest">Oldest</option>
-                      <option value="title">Title</option>
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                      <option value="title">Title (A-Z)</option>
                     </select>
-
-                    {(search || statusFilter || employmentTypeFilter || locationTypeFilter) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSearch("");
-                          setStatusFilter("");
-                          setEmploymentTypeFilter("");
-                          setLocationTypeFilter("");
-                        }}
-                      >
-                        Clear
-                      </Button>
-                      )}
-                    </div>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
+
+                {/* Active Filters */}
+                {(search || statusFilter || employmentTypeFilter || locationTypeFilter) && (
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+                    <span className="text-xs font-medium text-muted-foreground">Active filters:</span>
+                    {search && (
+                      <Badge variant="secondary" className="gap-1">
+                        Search: {search}
+                        <button
+                          onClick={() => {
+                            setSearch("");
+                            setSearchInput("");
+                          }}
+                          className="ml-1 hover:bg-muted rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {statusFilter && (
+                      <Badge variant="secondary" className="gap-1">
+                        Status: {statusFilter}
+                        <button
+                          onClick={() => setStatusFilter("")}
+                          className="ml-1 hover:bg-muted rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {employmentTypeFilter && (
+                      <Badge variant="secondary" className="gap-1">
+                        Type: {employmentTypeFilter.replace(/_/g, " ")}
+                        <button
+                          onClick={() => setEmploymentTypeFilter("")}
+                          className="ml-1 hover:bg-muted rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {locationTypeFilter && (
+                      <Badge variant="secondary" className="gap-1">
+                        Location: {locationTypeFilter.replace(/_/g, " ")}
+                        <button
+                          onClick={() => setLocationTypeFilter("")}
+                          className="ml-1 hover:bg-muted rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Jobs Table Card */}
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Jobs List</CardTitle>
+              </CardHeader>
             <CardContent className="pt-0">
               <div className="overflow-x-auto rounded-lg border">
                 <table className="min-w-full text-sm">
                   <thead className="bg-muted/70 text-muted-foreground">
                     <tr className="border-b text-xs font-semibold uppercase tracking-wide">
-                      <th className="px-4 py-3 text-left w-[40%]">Job</th>
-                      <th className="px-4 py-3 text-center w-[14%]">Status</th>
-                      <th className="px-4 py-3 text-left w-[14%]">Type</th>
-                      <th className="px-4 py-3 text-left w-[18%]">Location</th>
-                      <th className="px-4 py-3 text-right w-[14%]">Created</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
+                      <th className="px-4 py-3 text-left w-[30%]">Job</th>
+                      <th className="px-4 py-3 text-center w-[10%]">Status</th>
+                      <th className="px-4 py-3 text-left w-[12%]">Type</th>
+                      <th className="px-4 py-3 text-left w-[12%]">Location</th>
+                      <th className="px-4 py-3 text-left w-[12%]">Salary</th>
+                      <th className="px-4 py-3 text-right w-[10%]">Created</th>
+                      <th className="px-4 py-3 text-right w-[14%]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -479,95 +627,88 @@ const RecruiterJobs = () => {
                         onClick={() => handleEdit(job)}
                       >
                         <td className="px-4 py-3">
-                          <div className="space-y-1">
-                            <div className="font-semibold break-words">{job.title}</div>
+                          <div className="space-y-1.5">
+                            <div className="font-semibold break-words text-foreground">{job.title}</div>
                             <div className="text-xs text-muted-foreground break-words">
                               <span className="inline-flex items-center gap-2">
                                 <Building2 className="h-3 w-3" />
                                 {job.company?.name || "Company"}
                               </span>
-                              <span className="mx-2">•</span>
-                              <span className="font-mono">{job.slug}</span>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-center">
-                    <Badge
-                      variant={
-                        job.status === "PUBLISHED"
-                          ? "default"
-                          : job.status === "DRAFT"
-                          ? "outline"
-                          : "outline"
-                      }
-                              className="inline-flex h-8 items-center gap-2 px-3 text-sm font-medium"
-                    >
-                      {job.status === "PUBLISHED" ? (
-                                <CheckCircle2 className="h-4 w-4" />
-                      ) : job.status === "DRAFT" ? (
-                                <Clock className="h-4 w-4" />
-                      ) : (
-                                <XCircle className="h-4 w-4" />
-                      )}
-                      {job.status}
-                    </Badge>
-                  </div>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          <div className="space-y-1">
-                            <div>{job.employmentType || "—"}</div>
-                            <div className="text-xs">{job.experienceLevel || ""}</div>
+                            <Badge className={`inline-flex h-8 items-center gap-2 px-3 text-sm font-medium border ${jobStatusConfig[job.status]?.color || "bg-muted text-muted-foreground border-border"}`}>
+                              {jobStatusConfig[job.status]?.icon ?? <Clock className="h-4 w-4" />}
+                              {jobStatusConfig[job.status]?.label || job.status}
+                            </Badge>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           <div className="space-y-1">
-                            <div className="inline-flex items-center gap-2">
-                        <MapPin className="h-3 w-3" />
-                              <span className="break-words">{job.location || "—"}</span>
-                      </div>
-                            <div className="text-xs">{job.locationType || ""}</div>
-                      </div>
+                            {job.employmentType && (
+                              <div className="font-medium">{job.employmentType}</div>
+                            )}
+                            {job.experienceLevel && (
+                              <div className="text-xs">{job.experienceLevel}</div>
+                            )}
+                            {!job.employmentType && !job.experienceLevel && (
+                              <span className="text-xs text-muted-foreground/50">—</span>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-right text-muted-foreground whitespace-nowrap">
+                        <td className="px-4 py-3 text-muted-foreground">
+                          <div className="space-y-1">
+                            <div className="inline-flex items-center gap-1.5">
+                              <MapPin className="h-3.5 w-3.5 shrink-0" />
+                              <span className="break-words">{job.location || "—"}</span>
+                            </div>
+                            <div className="text-xs">{job.locationType || ""}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                            <DollarSign className="h-3.5 w-3.5 shrink-0" />
+                            <span className="text-xs font-medium">{formatSalary(job)}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right text-muted-foreground whitespace-nowrap text-xs">
                           {new Date(job.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center gap-2 justify-end">
-                    <Button
-                      variant="default"
-                      size="sm"
-                              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-                      onClick={() => handleViewApplications(job)}
-                    >
-                              <Eye className="h-4 w-4" />
-                      Applications
-                      {applicationsCounts[job.id] !== undefined && applicationsCounts[job.id] > 0 && (
-                        <Badge variant="outline" className="ml-1 bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30">
-                          {applicationsCounts[job.id]}
-                        </Badge>
-                      )}
-                    </Button>
-                            <Button variant="ghost" size="sm" className="gap-2" onClick={() => handleEdit(job)}>
-                              <Edit className="h-4 w-4" />
-                              Edit
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm min-w-[140px] justify-center"
+                              onClick={() => handleViewApplications(job)}
+                            >
+                              <ClipboardList className="h-4 w-4" />
+                              <span>Applications</span>
+                              <Badge 
+                                variant="secondary" 
+                                className="ml-1 bg-primary-foreground/30 text-primary-foreground border-0 font-bold min-w-[24px] h-5 flex items-center justify-center"
+                              >
+                                {applicationsCounts[job.id] ?? 0}
+                              </Badge>
                             </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                               onClick={() => handleDeleteClick(job)}
-                    >
+                              title="Delete Job"
+                            >
                               <Trash2 className="h-4 w-4" />
-                              Delete
-                    </Button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
                     ))}
                     {pagedJobs.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                        <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
                           No jobs match your filters.
                         </td>
                       </tr>
@@ -601,6 +742,7 @@ const RecruiterJobs = () => {
                   </div>
                 </CardContent>
               </Card>
+            </>
         )}
 
       {/* Confirmation Dialog for Delete */}
@@ -615,7 +757,7 @@ const RecruiterJobs = () => {
         variant="destructive"
         loading={deleting}
       />
-      </div>
+    </div>
   );
 };
 

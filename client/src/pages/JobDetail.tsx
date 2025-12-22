@@ -34,6 +34,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 
 const JobDetail = () => {
@@ -72,6 +73,8 @@ const JobDetail = () => {
 
   // Candidate skills for highlighting
   const [candidateSkillIds, setCandidateSkillIds] = useState<Set<string>>(new Set());
+
+  const isJobClosed = job?.status === "CLOSED";
 
   // Reset application status when jobId changes
   useEffect(() => {
@@ -211,7 +214,7 @@ const JobDetail = () => {
           if (isSignedIn && jobResponse.data?.id) {
             try {
               const savedCheck = await apiClient.checkIfJobSaved(jobResponse.data.id, token ?? undefined);
-              if (savedCheck.success && isMounted && !abortController.signal.aborted) {
+              if (savedCheck.success && savedCheck.data && isMounted && !abortController.signal.aborted) {
                 setIsSaved(savedCheck.data.isSaved);
               }
             } catch {
@@ -765,7 +768,7 @@ const JobDetail = () => {
               </CardHeader>
               <CardContent className="prose prose-sm max-w-none pt-4">
                 <div 
-                  className="text-muted-foreground leading-relaxed"
+                  className="text-muted-foreground leading-relaxed [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-4 [&_h1]:text-foreground [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-3 [&_h2]:text-foreground [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_h3]:text-foreground [&_p]:my-2 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-1 [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_a]:text-primary [&_a]:underline [&_img]:max-w-full [&_img]:rounded-md [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-md [&_pre]:overflow-x-auto"
                   dangerouslySetInnerHTML={{ __html: job.description }}
                 />
               </CardContent>
@@ -804,7 +807,7 @@ const JobDetail = () => {
                 </CardHeader>
                 <CardContent className="prose prose-sm max-w-none pt-4">
                   <div 
-                    className="text-muted-foreground leading-relaxed"
+                    className="text-muted-foreground leading-relaxed [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-4 [&_h1]:text-foreground [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-3 [&_h2]:text-foreground [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_h3]:text-foreground [&_p]:my-2 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-1 [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_a]:text-primary [&_a]:underline [&_img]:max-w-full [&_img]:rounded-md [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-md [&_pre]:overflow-x-auto"
                     dangerouslySetInnerHTML={{ __html: job.responsibilities }}
                   />
                 </CardContent>
@@ -824,7 +827,7 @@ const JobDetail = () => {
                 </CardHeader>
                 <CardContent className="prose prose-sm max-w-none pt-4">
                   <div 
-                    className="text-muted-foreground leading-relaxed"
+                    className="text-muted-foreground leading-relaxed [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-4 [&_h1]:text-foreground [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-3 [&_h2]:text-foreground [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_h3]:text-foreground [&_p]:my-2 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-1 [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_a]:text-primary [&_a]:underline [&_img]:max-w-full [&_img]:rounded-md [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-md [&_pre]:overflow-x-auto"
                     dangerouslySetInnerHTML={{ __html: job.benefits }}
                   />
                 </CardContent>
@@ -1018,16 +1021,36 @@ const JobDetail = () => {
               <CardHeader className="border-b pb-4 bg-gradient-to-r from-green-100/50 via-emerald-100/30 to-teal-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
                 <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 dark:bg-primary/10">
-                    <Rocket className="h-5 w-5 text-green-600 dark:text-primary" />
+                    {isJobClosed ? (
+                      <Lock className="h-5 w-5 text-red-600 dark:text-red-500" />
+                    ) : (
+                      <Rocket className="h-5 w-5 text-green-600 dark:text-primary" />
+                    )}
                   </div>
-                  Apply for this position
+                  {isJobClosed ? "This position is closed" : "Apply for this position"}
                 </CardTitle>
                 <CardDescription className="text-sm mt-2 ml-11">
-                  Join {job.company?.name || "our team"} and make an impact
+                  {isJobClosed
+                    ? "This job is no longer accepting applications."
+                    : `Join ${job.company?.name || "our team"} and make an impact`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
-                {!isSignedIn ? (
+                {isJobClosed ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      You cannot apply because this job has been closed by the company.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => navigate("/jobs")}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Browse other jobs
+                    </Button>
+                  </>
+                ) : !isSignedIn ? (
                   <>
                     <p className="text-sm text-muted-foreground">
                       Please sign in to apply for this position

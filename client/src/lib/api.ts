@@ -165,6 +165,17 @@ export interface Interview {
   job?: Job;
 }
 
+export interface UserNotification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  link?: string | null;
+  createdAt: string;
+}
+
 export type InterviewFeedback = {
   id: string;
   status: InterviewStatus;
@@ -347,6 +358,19 @@ class ApiClient {
     return this.request<Interview>(`/interviews/${interviewId}/analyze`, { method: "POST" }, token);
   }
 
+  // Notification endpoints
+  listNotifications(params?: ListParams, token?: string) {
+    return this.request<UserNotification[]>(`/notifications${buildQuery(params)}`, {}, token);
+  }
+
+  markAllNotificationsRead(token?: string) {
+    return this.request<{ updated: boolean }>(`/notifications/read-all`, { method: "POST" }, token);
+  }
+
+  markNotificationRead(id: string, token?: string) {
+    return this.request<{ updated: boolean }>(`/notifications/${id}/read`, { method: "POST" }, token);
+  }
+
   // Review endpoints
   getCompanyReviews(companyId: string, params?: ListParams, token?: string) {
     return this.request<CompanyReview[]>(`/reviews/companies/${companyId}${buildQuery(params)}`, {}, token);
@@ -397,6 +421,23 @@ class ApiClient {
 
   unsaveJob(jobId: string, token?: string) {
     return this.request<{ message: string }>(`/saved-jobs/${jobId}`, { method: "DELETE" }, token);
+  }
+
+  // Company follow endpoints
+  getFollowedCompanies(params?: ListParams, token?: string) {
+    return this.request<Company[]>(`/company-follows${buildQuery(params)}`, {}, token);
+  }
+
+  checkIfCompanyFollowed(companyId: string, token?: string) {
+    return this.request<{ isFollowed: boolean }>(`/company-follows/check/${companyId}`, {}, token);
+  }
+
+  followCompany(companyId: string, token?: string) {
+    return this.request<{ message: string }>(`/company-follows/${companyId}`, { method: "POST" }, token);
+  }
+
+  unfollowCompany(companyId: string, token?: string) {
+    return this.request<{ message: string }>(`/company-follows/${companyId}`, { method: "DELETE" }, token);
   }
 
   // Filtered endpoints (role-based filtering)

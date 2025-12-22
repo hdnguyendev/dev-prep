@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { apiClient, type Company, type Job, type JobType, type CompanyReview } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import {
   MapPin,
   Users,
@@ -20,6 +21,7 @@ import {
   ExternalLink,
   Star,
   Award,
+  Bell,
 } from "lucide-react";
 
 const CompanyDetail = () => {
@@ -50,6 +52,10 @@ const CompanyDetail = () => {
     isCurrentEmployee: false,
     wouldRecommend: true,
   });
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deletingReview, setDeletingReview] = useState(false);
 
   // Fetch company details and jobs
   useEffect(() => {
@@ -107,12 +113,12 @@ const CompanyDetail = () => {
           setReviewStats(statsResponse.data);
         }
 
-        // Fetch user's review if signed in
+        // Fetch user's review & follow state if signed in
         if (token) {
-          const myReviewResponse = await apiClient.getMyReview(
-            foundCompany.id,
-            token
-          );
+          const [myReviewResponse, followResponse] = await Promise.all([
+            apiClient.getMyReview(foundCompany.id, token),
+            apiClient.checkIfCompanyFollowed(foundCompany.id, token),
+          ]);
 
           if (myReviewResponse.success && myReviewResponse.data) {
             setMyReview(myReviewResponse.data);
@@ -125,6 +131,12 @@ const CompanyDetail = () => {
               isCurrentEmployee: myReviewResponse.data.isCurrentEmployee,
               wouldRecommend: myReviewResponse.data.wouldRecommend,
             });
+          }
+
+          if (followResponse.success && followResponse.data) {
+            setIsFollowing(!!followResponse.data.isFollowed);
+          } else {
+            setIsFollowing(false);
           }
         }
       } catch (err) {
@@ -139,6 +151,31 @@ const CompanyDetail = () => {
       fetchData();
     }
   }, [slug, getToken]);
+
+  const handleToggleFollow = async () => {
+    if (!company || !isSignedIn) return;
+    try {
+      setFollowLoading(true);
+      const token = await getToken();
+      if (!token) return;
+
+      if (isFollowing) {
+        const res = await apiClient.unfollowCompany(company.id, token);
+        if (res.success) {
+          setIsFollowing(false);
+        }
+      } else {
+        const res = await apiClient.followCompany(company.id, token);
+        if (res.success) {
+          setIsFollowing(true);
+        }
+      }
+    } catch (err) {
+      console.error("Error toggling company follow:", err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   // Helper functions
   const getCompanyInitial = () => {
@@ -199,6 +236,12 @@ const CompanyDetail = () => {
     return job.skills?.slice(0, 3).map((js) => js.skill?.name).filter(Boolean) || [];
   };
 
+  // Strip HTML tags from description
+  const stripHtmlTags = (html: string | null | undefined): string => {
+    if (!html) return "No description available";
+    return html.replace(/<[^>]*>/g, "").trim() || "No description available";
+  };
+
   // Handle review submission
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,10 +283,15 @@ const CompanyDetail = () => {
   };
 
   // Handle delete review
-  const handleDeleteReview = async () => {
-    if (!myReview || !confirm("Are you sure you want to delete your review?")) return;
+  const handleDeleteReview = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteReviewConfirm = async () => {
+    if (!myReview) return;
 
     try {
+      setDeletingReview(true);
       const token = await getToken();
       const response = await apiClient.deleteReview(myReview.id, token ?? undefined);
 
@@ -258,6 +306,7 @@ const CompanyDetail = () => {
           isCurrentEmployee: false,
           wouldRecommend: true,
         });
+        setDeleteConfirmOpen(false);
 
         // Refresh reviews and stats
         if (company) {
@@ -271,10 +320,14 @@ const CompanyDetail = () => {
         }
 
         alert("Review deleted successfully!");
+      } else {
+        alert("Failed to delete review. Please try again.");
       }
     } catch (err) {
       console.error("Error deleting review:", err);
       alert("Failed to delete review. Please try again.");
+    } finally {
+      setDeletingReview(false);
     }
   };
 
@@ -421,7 +474,7 @@ const CompanyDetail = () => {
                 {getCompanyInitial()}
               </div>
               <div className="flex-1 pb-2">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div>
                     <CardTitle className="text-3xl mb-2">{company.name}</CardTitle>
                     {company.industry && (
@@ -430,18 +483,32 @@ const CompanyDetail = () => {
                       </CardDescription>
                     )}
                   </div>
-                  {company.website && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(company.website!, "_blank")}
-                      className="gap-2"
-                    >
-                      <Globe className="h-4 w-4" />
-                      Visit Website
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  )}
+                  <div className="flex flex-col items-end gap-2">
+                    {company.website && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(company.website!, "_blank")}
+                        className="gap-2"
+                      >
+                        <Globe className="h-4 w-4" />
+                        Visit Website
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {isSignedIn && (
+                      <Button
+                        variant={isFollowing ? "outline" : "default"}
+                        size="sm"
+                        className="gap-2"
+                        onClick={handleToggleFollow}
+                        disabled={followLoading}
+                      >
+                        <Bell className="h-4 w-4" />
+                        {isFollowing ? "Following" : "Follow company"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -565,7 +632,7 @@ const CompanyDetail = () => {
 
                   <CardContent className="space-y-3 pb-3 flex-1 flex flex-col">
                     <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-                      {job.description || "No description available"}
+                      {stripHtmlTags(job.description)}
                     </p>
 
                     <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
@@ -961,6 +1028,19 @@ const CompanyDetail = () => {
           }
         }
       `}</style>
+
+      {/* Confirmation Dialog for Delete Review */}
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteReviewConfirm}
+        title="Delete Review?"
+        description="Are you sure you want to delete your review? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        loading={deletingReview}
+      />
     </main>
   );
 };

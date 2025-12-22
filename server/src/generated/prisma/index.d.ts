@@ -64,6 +64,11 @@ export type Company = $Result.DefaultSelection<Prisma.$CompanyPayload>
  */
 export type CompanyReview = $Result.DefaultSelection<Prisma.$CompanyReviewPayload>
 /**
+ * Model CompanyFollow
+ * 
+ */
+export type CompanyFollow = $Result.DefaultSelection<Prisma.$CompanyFollowPayload>
+/**
  * Model Job
  * 
  */
@@ -456,6 +461,16 @@ export class PrismaClient<
     * ```
     */
   get companyReview(): Prisma.CompanyReviewDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.companyFollow`: Exposes CRUD operations for the **CompanyFollow** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CompanyFollows
+    * const companyFollows = await prisma.companyFollow.findMany()
+    * ```
+    */
+  get companyFollow(): Prisma.CompanyFollowDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.job`: Exposes CRUD operations for the **Job** model.
@@ -1030,6 +1045,7 @@ export namespace Prisma {
     CandidateSkill: 'CandidateSkill',
     Company: 'Company',
     CompanyReview: 'CompanyReview',
+    CompanyFollow: 'CompanyFollow',
     Job: 'Job',
     Category: 'Category',
     JobCategory: 'JobCategory',
@@ -1058,7 +1074,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "candidateProfile" | "recruiterProfile" | "experience" | "education" | "project" | "skill" | "candidateSkill" | "company" | "companyReview" | "job" | "category" | "jobCategory" | "jobSkill" | "savedJob" | "application" | "applicationHistory" | "applicationNote" | "interview" | "interviewExchange" | "questionBank" | "message" | "notification"
+      modelProps: "user" | "candidateProfile" | "recruiterProfile" | "experience" | "education" | "project" | "skill" | "candidateSkill" | "company" | "companyReview" | "companyFollow" | "job" | "category" | "jobCategory" | "jobSkill" | "savedJob" | "application" | "applicationHistory" | "applicationNote" | "interview" | "interviewExchange" | "questionBank" | "message" | "notification"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1799,6 +1815,80 @@ export namespace Prisma {
           count: {
             args: Prisma.CompanyReviewCountArgs<ExtArgs>
             result: $Utils.Optional<CompanyReviewCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompanyFollow: {
+        payload: Prisma.$CompanyFollowPayload<ExtArgs>
+        fields: Prisma.CompanyFollowFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CompanyFollowFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompanyFollowFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>
+          }
+          findFirst: {
+            args: Prisma.CompanyFollowFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompanyFollowFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>
+          }
+          findMany: {
+            args: Prisma.CompanyFollowFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>[]
+          }
+          create: {
+            args: Prisma.CompanyFollowCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>
+          }
+          createMany: {
+            args: Prisma.CompanyFollowCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CompanyFollowCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>[]
+          }
+          delete: {
+            args: Prisma.CompanyFollowDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>
+          }
+          update: {
+            args: Prisma.CompanyFollowUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompanyFollowDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompanyFollowUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CompanyFollowUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>[]
+          }
+          upsert: {
+            args: Prisma.CompanyFollowUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompanyFollowPayload>
+          }
+          aggregate: {
+            args: Prisma.CompanyFollowAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCompanyFollow>
+          }
+          groupBy: {
+            args: Prisma.CompanyFollowGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CompanyFollowGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompanyFollowCountArgs<ExtArgs>
+            result: $Utils.Optional<CompanyFollowCountAggregateOutputType> | number
           }
         }
       }
@@ -2882,6 +2972,7 @@ export namespace Prisma {
     candidateSkill?: CandidateSkillOmit
     company?: CompanyOmit
     companyReview?: CompanyReviewOmit
+    companyFollow?: CompanyFollowOmit
     job?: JobOmit
     category?: CategoryOmit
     jobCategory?: JobCategoryOmit
@@ -3032,6 +3123,7 @@ export namespace Prisma {
     savedJobs: number
     companyReviews: number
     interviews: number
+    companyFollows: number
   }
 
   export type CandidateProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3043,6 +3135,7 @@ export namespace Prisma {
     savedJobs?: boolean | CandidateProfileCountOutputTypeCountSavedJobsArgs
     companyReviews?: boolean | CandidateProfileCountOutputTypeCountCompanyReviewsArgs
     interviews?: boolean | CandidateProfileCountOutputTypeCountInterviewsArgs
+    companyFollows?: boolean | CandidateProfileCountOutputTypeCountCompanyFollowsArgs
   }
 
   // Custom InputTypes
@@ -3110,6 +3203,13 @@ export namespace Prisma {
    */
   export type CandidateProfileCountOutputTypeCountInterviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InterviewWhereInput
+  }
+
+  /**
+   * CandidateProfileCountOutputType without action
+   */
+  export type CandidateProfileCountOutputTypeCountCompanyFollowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompanyFollowWhereInput
   }
 
 
@@ -3192,12 +3292,14 @@ export namespace Prisma {
     recruiters: number
     jobs: number
     reviews: number
+    followers: number
   }
 
   export type CompanyCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     recruiters?: boolean | CompanyCountOutputTypeCountRecruitersArgs
     jobs?: boolean | CompanyCountOutputTypeCountJobsArgs
     reviews?: boolean | CompanyCountOutputTypeCountReviewsArgs
+    followers?: boolean | CompanyCountOutputTypeCountFollowersArgs
   }
 
   // Custom InputTypes
@@ -3230,6 +3332,13 @@ export namespace Prisma {
    */
   export type CompanyCountOutputTypeCountReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CompanyReviewWhereInput
+  }
+
+  /**
+   * CompanyCountOutputType without action
+   */
+  export type CompanyCountOutputTypeCountFollowersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompanyFollowWhereInput
   }
 
 
@@ -4920,6 +5029,7 @@ export namespace Prisma {
     savedJobs?: boolean | CandidateProfile$savedJobsArgs<ExtArgs>
     companyReviews?: boolean | CandidateProfile$companyReviewsArgs<ExtArgs>
     interviews?: boolean | CandidateProfile$interviewsArgs<ExtArgs>
+    companyFollows?: boolean | CandidateProfile$companyFollowsArgs<ExtArgs>
     _count?: boolean | CandidateProfileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["candidateProfile"]>
 
@@ -4981,6 +5091,7 @@ export namespace Prisma {
     savedJobs?: boolean | CandidateProfile$savedJobsArgs<ExtArgs>
     companyReviews?: boolean | CandidateProfile$companyReviewsArgs<ExtArgs>
     interviews?: boolean | CandidateProfile$interviewsArgs<ExtArgs>
+    companyFollows?: boolean | CandidateProfile$companyFollowsArgs<ExtArgs>
     _count?: boolean | CandidateProfileCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CandidateProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5002,6 +5113,7 @@ export namespace Prisma {
       savedJobs: Prisma.$SavedJobPayload<ExtArgs>[]
       companyReviews: Prisma.$CompanyReviewPayload<ExtArgs>[]
       interviews: Prisma.$InterviewPayload<ExtArgs>[]
+      companyFollows: Prisma.$CompanyFollowPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5419,6 +5531,7 @@ export namespace Prisma {
     savedJobs<T extends CandidateProfile$savedJobsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$savedJobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SavedJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     companyReviews<T extends CandidateProfile$companyReviewsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$companyReviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     interviews<T extends CandidateProfile$interviewsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$interviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    companyFollows<T extends CandidateProfile$companyFollowsArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfile$companyFollowsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6045,6 +6158,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: InterviewScalarFieldEnum | InterviewScalarFieldEnum[]
+  }
+
+  /**
+   * CandidateProfile.companyFollows
+   */
+  export type CandidateProfile$companyFollowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    where?: CompanyFollowWhereInput
+    orderBy?: CompanyFollowOrderByWithRelationInput | CompanyFollowOrderByWithRelationInput[]
+    cursor?: CompanyFollowWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompanyFollowScalarFieldEnum | CompanyFollowScalarFieldEnum[]
   }
 
   /**
@@ -12941,6 +13078,7 @@ export namespace Prisma {
     recruiters?: boolean | Company$recruitersArgs<ExtArgs>
     jobs?: boolean | Company$jobsArgs<ExtArgs>
     reviews?: boolean | Company$reviewsArgs<ExtArgs>
+    followers?: boolean | Company$followersArgs<ExtArgs>
     _count?: boolean | CompanyCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["company"]>
 
@@ -13006,6 +13144,7 @@ export namespace Prisma {
     recruiters?: boolean | Company$recruitersArgs<ExtArgs>
     jobs?: boolean | Company$jobsArgs<ExtArgs>
     reviews?: boolean | Company$reviewsArgs<ExtArgs>
+    followers?: boolean | Company$followersArgs<ExtArgs>
     _count?: boolean | CompanyCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CompanyIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -13017,6 +13156,7 @@ export namespace Prisma {
       recruiters: Prisma.$RecruiterProfilePayload<ExtArgs>[]
       jobs: Prisma.$JobPayload<ExtArgs>[]
       reviews: Prisma.$CompanyReviewPayload<ExtArgs>[]
+      followers: Prisma.$CompanyFollowPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -13432,6 +13572,7 @@ export namespace Prisma {
     recruiters<T extends Company$recruitersArgs<ExtArgs> = {}>(args?: Subset<T, Company$recruitersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecruiterProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     jobs<T extends Company$jobsArgs<ExtArgs> = {}>(args?: Subset<T, Company$jobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     reviews<T extends Company$reviewsArgs<ExtArgs> = {}>(args?: Subset<T, Company$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    followers<T extends Company$followersArgs<ExtArgs> = {}>(args?: Subset<T, Company$followersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -13934,6 +14075,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: CompanyReviewScalarFieldEnum | CompanyReviewScalarFieldEnum[]
+  }
+
+  /**
+   * Company.followers
+   */
+  export type Company$followersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    where?: CompanyFollowWhereInput
+    orderBy?: CompanyFollowOrderByWithRelationInput | CompanyFollowOrderByWithRelationInput[]
+    cursor?: CompanyFollowWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompanyFollowScalarFieldEnum | CompanyFollowScalarFieldEnum[]
   }
 
   /**
@@ -15143,6 +15308,1085 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CompanyReviewInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CompanyFollow
+   */
+
+  export type AggregateCompanyFollow = {
+    _count: CompanyFollowCountAggregateOutputType | null
+    _min: CompanyFollowMinAggregateOutputType | null
+    _max: CompanyFollowMaxAggregateOutputType | null
+  }
+
+  export type CompanyFollowMinAggregateOutputType = {
+    id: string | null
+    candidateId: string | null
+    companyId: string | null
+    notifyOnNewJob: boolean | null
+    notifyOnJobUpdate: boolean | null
+    createdAt: Date | null
+  }
+
+  export type CompanyFollowMaxAggregateOutputType = {
+    id: string | null
+    candidateId: string | null
+    companyId: string | null
+    notifyOnNewJob: boolean | null
+    notifyOnJobUpdate: boolean | null
+    createdAt: Date | null
+  }
+
+  export type CompanyFollowCountAggregateOutputType = {
+    id: number
+    candidateId: number
+    companyId: number
+    notifyOnNewJob: number
+    notifyOnJobUpdate: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type CompanyFollowMinAggregateInputType = {
+    id?: true
+    candidateId?: true
+    companyId?: true
+    notifyOnNewJob?: true
+    notifyOnJobUpdate?: true
+    createdAt?: true
+  }
+
+  export type CompanyFollowMaxAggregateInputType = {
+    id?: true
+    candidateId?: true
+    companyId?: true
+    notifyOnNewJob?: true
+    notifyOnJobUpdate?: true
+    createdAt?: true
+  }
+
+  export type CompanyFollowCountAggregateInputType = {
+    id?: true
+    candidateId?: true
+    companyId?: true
+    notifyOnNewJob?: true
+    notifyOnJobUpdate?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type CompanyFollowAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompanyFollow to aggregate.
+     */
+    where?: CompanyFollowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyFollows to fetch.
+     */
+    orderBy?: CompanyFollowOrderByWithRelationInput | CompanyFollowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CompanyFollowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyFollows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyFollows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CompanyFollows
+    **/
+    _count?: true | CompanyFollowCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CompanyFollowMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CompanyFollowMaxAggregateInputType
+  }
+
+  export type GetCompanyFollowAggregateType<T extends CompanyFollowAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompanyFollow]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCompanyFollow[P]>
+      : GetScalarType<T[P], AggregateCompanyFollow[P]>
+  }
+
+
+
+
+  export type CompanyFollowGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompanyFollowWhereInput
+    orderBy?: CompanyFollowOrderByWithAggregationInput | CompanyFollowOrderByWithAggregationInput[]
+    by: CompanyFollowScalarFieldEnum[] | CompanyFollowScalarFieldEnum
+    having?: CompanyFollowScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CompanyFollowCountAggregateInputType | true
+    _min?: CompanyFollowMinAggregateInputType
+    _max?: CompanyFollowMaxAggregateInputType
+  }
+
+  export type CompanyFollowGroupByOutputType = {
+    id: string
+    candidateId: string
+    companyId: string
+    notifyOnNewJob: boolean
+    notifyOnJobUpdate: boolean
+    createdAt: Date
+    _count: CompanyFollowCountAggregateOutputType | null
+    _min: CompanyFollowMinAggregateOutputType | null
+    _max: CompanyFollowMaxAggregateOutputType | null
+  }
+
+  type GetCompanyFollowGroupByPayload<T extends CompanyFollowGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CompanyFollowGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CompanyFollowGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CompanyFollowGroupByOutputType[P]>
+            : GetScalarType<T[P], CompanyFollowGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CompanyFollowSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    candidateId?: boolean
+    companyId?: boolean
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: boolean
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["companyFollow"]>
+
+  export type CompanyFollowSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    candidateId?: boolean
+    companyId?: boolean
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: boolean
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["companyFollow"]>
+
+  export type CompanyFollowSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    candidateId?: boolean
+    companyId?: boolean
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: boolean
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["companyFollow"]>
+
+  export type CompanyFollowSelectScalar = {
+    id?: boolean
+    candidateId?: boolean
+    companyId?: boolean
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: boolean
+  }
+
+  export type CompanyFollowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "candidateId" | "companyId" | "notifyOnNewJob" | "notifyOnJobUpdate" | "createdAt", ExtArgs["result"]["companyFollow"]>
+  export type CompanyFollowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+  }
+  export type CompanyFollowIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+  }
+  export type CompanyFollowIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    candidate?: boolean | CandidateProfileDefaultArgs<ExtArgs>
+    company?: boolean | CompanyDefaultArgs<ExtArgs>
+  }
+
+  export type $CompanyFollowPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CompanyFollow"
+    objects: {
+      candidate: Prisma.$CandidateProfilePayload<ExtArgs>
+      company: Prisma.$CompanyPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      candidateId: string
+      companyId: string
+      notifyOnNewJob: boolean
+      notifyOnJobUpdate: boolean
+      createdAt: Date
+    }, ExtArgs["result"]["companyFollow"]>
+    composites: {}
+  }
+
+  type CompanyFollowGetPayload<S extends boolean | null | undefined | CompanyFollowDefaultArgs> = $Result.GetResult<Prisma.$CompanyFollowPayload, S>
+
+  type CompanyFollowCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CompanyFollowFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CompanyFollowCountAggregateInputType | true
+    }
+
+  export interface CompanyFollowDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompanyFollow'], meta: { name: 'CompanyFollow' } }
+    /**
+     * Find zero or one CompanyFollow that matches the filter.
+     * @param {CompanyFollowFindUniqueArgs} args - Arguments to find a CompanyFollow
+     * @example
+     * // Get one CompanyFollow
+     * const companyFollow = await prisma.companyFollow.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CompanyFollowFindUniqueArgs>(args: SelectSubset<T, CompanyFollowFindUniqueArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CompanyFollow that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CompanyFollowFindUniqueOrThrowArgs} args - Arguments to find a CompanyFollow
+     * @example
+     * // Get one CompanyFollow
+     * const companyFollow = await prisma.companyFollow.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CompanyFollowFindUniqueOrThrowArgs>(args: SelectSubset<T, CompanyFollowFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompanyFollow that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyFollowFindFirstArgs} args - Arguments to find a CompanyFollow
+     * @example
+     * // Get one CompanyFollow
+     * const companyFollow = await prisma.companyFollow.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CompanyFollowFindFirstArgs>(args?: SelectSubset<T, CompanyFollowFindFirstArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompanyFollow that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyFollowFindFirstOrThrowArgs} args - Arguments to find a CompanyFollow
+     * @example
+     * // Get one CompanyFollow
+     * const companyFollow = await prisma.companyFollow.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CompanyFollowFindFirstOrThrowArgs>(args?: SelectSubset<T, CompanyFollowFindFirstOrThrowArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CompanyFollows that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyFollowFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CompanyFollows
+     * const companyFollows = await prisma.companyFollow.findMany()
+     * 
+     * // Get first 10 CompanyFollows
+     * const companyFollows = await prisma.companyFollow.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const companyFollowWithIdOnly = await prisma.companyFollow.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CompanyFollowFindManyArgs>(args?: SelectSubset<T, CompanyFollowFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CompanyFollow.
+     * @param {CompanyFollowCreateArgs} args - Arguments to create a CompanyFollow.
+     * @example
+     * // Create one CompanyFollow
+     * const CompanyFollow = await prisma.companyFollow.create({
+     *   data: {
+     *     // ... data to create a CompanyFollow
+     *   }
+     * })
+     * 
+     */
+    create<T extends CompanyFollowCreateArgs>(args: SelectSubset<T, CompanyFollowCreateArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CompanyFollows.
+     * @param {CompanyFollowCreateManyArgs} args - Arguments to create many CompanyFollows.
+     * @example
+     * // Create many CompanyFollows
+     * const companyFollow = await prisma.companyFollow.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CompanyFollowCreateManyArgs>(args?: SelectSubset<T, CompanyFollowCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CompanyFollows and returns the data saved in the database.
+     * @param {CompanyFollowCreateManyAndReturnArgs} args - Arguments to create many CompanyFollows.
+     * @example
+     * // Create many CompanyFollows
+     * const companyFollow = await prisma.companyFollow.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CompanyFollows and only return the `id`
+     * const companyFollowWithIdOnly = await prisma.companyFollow.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CompanyFollowCreateManyAndReturnArgs>(args?: SelectSubset<T, CompanyFollowCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CompanyFollow.
+     * @param {CompanyFollowDeleteArgs} args - Arguments to delete one CompanyFollow.
+     * @example
+     * // Delete one CompanyFollow
+     * const CompanyFollow = await prisma.companyFollow.delete({
+     *   where: {
+     *     // ... filter to delete one CompanyFollow
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CompanyFollowDeleteArgs>(args: SelectSubset<T, CompanyFollowDeleteArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CompanyFollow.
+     * @param {CompanyFollowUpdateArgs} args - Arguments to update one CompanyFollow.
+     * @example
+     * // Update one CompanyFollow
+     * const companyFollow = await prisma.companyFollow.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CompanyFollowUpdateArgs>(args: SelectSubset<T, CompanyFollowUpdateArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CompanyFollows.
+     * @param {CompanyFollowDeleteManyArgs} args - Arguments to filter CompanyFollows to delete.
+     * @example
+     * // Delete a few CompanyFollows
+     * const { count } = await prisma.companyFollow.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CompanyFollowDeleteManyArgs>(args?: SelectSubset<T, CompanyFollowDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompanyFollows.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyFollowUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CompanyFollows
+     * const companyFollow = await prisma.companyFollow.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CompanyFollowUpdateManyArgs>(args: SelectSubset<T, CompanyFollowUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompanyFollows and returns the data updated in the database.
+     * @param {CompanyFollowUpdateManyAndReturnArgs} args - Arguments to update many CompanyFollows.
+     * @example
+     * // Update many CompanyFollows
+     * const companyFollow = await prisma.companyFollow.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CompanyFollows and only return the `id`
+     * const companyFollowWithIdOnly = await prisma.companyFollow.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CompanyFollowUpdateManyAndReturnArgs>(args: SelectSubset<T, CompanyFollowUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CompanyFollow.
+     * @param {CompanyFollowUpsertArgs} args - Arguments to update or create a CompanyFollow.
+     * @example
+     * // Update or create a CompanyFollow
+     * const companyFollow = await prisma.companyFollow.upsert({
+     *   create: {
+     *     // ... data to create a CompanyFollow
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CompanyFollow we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CompanyFollowUpsertArgs>(args: SelectSubset<T, CompanyFollowUpsertArgs<ExtArgs>>): Prisma__CompanyFollowClient<$Result.GetResult<Prisma.$CompanyFollowPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CompanyFollows.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyFollowCountArgs} args - Arguments to filter CompanyFollows to count.
+     * @example
+     * // Count the number of CompanyFollows
+     * const count = await prisma.companyFollow.count({
+     *   where: {
+     *     // ... the filter for the CompanyFollows we want to count
+     *   }
+     * })
+    **/
+    count<T extends CompanyFollowCountArgs>(
+      args?: Subset<T, CompanyFollowCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CompanyFollowCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CompanyFollow.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyFollowAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CompanyFollowAggregateArgs>(args: Subset<T, CompanyFollowAggregateArgs>): Prisma.PrismaPromise<GetCompanyFollowAggregateType<T>>
+
+    /**
+     * Group by CompanyFollow.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompanyFollowGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CompanyFollowGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CompanyFollowGroupByArgs['orderBy'] }
+        : { orderBy?: CompanyFollowGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CompanyFollowGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompanyFollowGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CompanyFollow model
+   */
+  readonly fields: CompanyFollowFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CompanyFollow.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CompanyFollowClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    candidate<T extends CandidateProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CandidateProfileDefaultArgs<ExtArgs>>): Prisma__CandidateProfileClient<$Result.GetResult<Prisma.$CandidateProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    company<T extends CompanyDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CompanyDefaultArgs<ExtArgs>>): Prisma__CompanyClient<$Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CompanyFollow model
+   */
+  interface CompanyFollowFieldRefs {
+    readonly id: FieldRef<"CompanyFollow", 'String'>
+    readonly candidateId: FieldRef<"CompanyFollow", 'String'>
+    readonly companyId: FieldRef<"CompanyFollow", 'String'>
+    readonly notifyOnNewJob: FieldRef<"CompanyFollow", 'Boolean'>
+    readonly notifyOnJobUpdate: FieldRef<"CompanyFollow", 'Boolean'>
+    readonly createdAt: FieldRef<"CompanyFollow", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CompanyFollow findUnique
+   */
+  export type CompanyFollowFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyFollow to fetch.
+     */
+    where: CompanyFollowWhereUniqueInput
+  }
+
+  /**
+   * CompanyFollow findUniqueOrThrow
+   */
+  export type CompanyFollowFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyFollow to fetch.
+     */
+    where: CompanyFollowWhereUniqueInput
+  }
+
+  /**
+   * CompanyFollow findFirst
+   */
+  export type CompanyFollowFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyFollow to fetch.
+     */
+    where?: CompanyFollowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyFollows to fetch.
+     */
+    orderBy?: CompanyFollowOrderByWithRelationInput | CompanyFollowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompanyFollows.
+     */
+    cursor?: CompanyFollowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyFollows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyFollows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompanyFollows.
+     */
+    distinct?: CompanyFollowScalarFieldEnum | CompanyFollowScalarFieldEnum[]
+  }
+
+  /**
+   * CompanyFollow findFirstOrThrow
+   */
+  export type CompanyFollowFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyFollow to fetch.
+     */
+    where?: CompanyFollowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyFollows to fetch.
+     */
+    orderBy?: CompanyFollowOrderByWithRelationInput | CompanyFollowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompanyFollows.
+     */
+    cursor?: CompanyFollowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyFollows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyFollows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompanyFollows.
+     */
+    distinct?: CompanyFollowScalarFieldEnum | CompanyFollowScalarFieldEnum[]
+  }
+
+  /**
+   * CompanyFollow findMany
+   */
+  export type CompanyFollowFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * Filter, which CompanyFollows to fetch.
+     */
+    where?: CompanyFollowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompanyFollows to fetch.
+     */
+    orderBy?: CompanyFollowOrderByWithRelationInput | CompanyFollowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CompanyFollows.
+     */
+    cursor?: CompanyFollowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompanyFollows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompanyFollows.
+     */
+    skip?: number
+    distinct?: CompanyFollowScalarFieldEnum | CompanyFollowScalarFieldEnum[]
+  }
+
+  /**
+   * CompanyFollow create
+   */
+  export type CompanyFollowCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CompanyFollow.
+     */
+    data: XOR<CompanyFollowCreateInput, CompanyFollowUncheckedCreateInput>
+  }
+
+  /**
+   * CompanyFollow createMany
+   */
+  export type CompanyFollowCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CompanyFollows.
+     */
+    data: CompanyFollowCreateManyInput | CompanyFollowCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CompanyFollow createManyAndReturn
+   */
+  export type CompanyFollowCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * The data used to create many CompanyFollows.
+     */
+    data: CompanyFollowCreateManyInput | CompanyFollowCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompanyFollow update
+   */
+  export type CompanyFollowUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CompanyFollow.
+     */
+    data: XOR<CompanyFollowUpdateInput, CompanyFollowUncheckedUpdateInput>
+    /**
+     * Choose, which CompanyFollow to update.
+     */
+    where: CompanyFollowWhereUniqueInput
+  }
+
+  /**
+   * CompanyFollow updateMany
+   */
+  export type CompanyFollowUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CompanyFollows.
+     */
+    data: XOR<CompanyFollowUpdateManyMutationInput, CompanyFollowUncheckedUpdateManyInput>
+    /**
+     * Filter which CompanyFollows to update
+     */
+    where?: CompanyFollowWhereInput
+    /**
+     * Limit how many CompanyFollows to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompanyFollow updateManyAndReturn
+   */
+  export type CompanyFollowUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * The data used to update CompanyFollows.
+     */
+    data: XOR<CompanyFollowUpdateManyMutationInput, CompanyFollowUncheckedUpdateManyInput>
+    /**
+     * Filter which CompanyFollows to update
+     */
+    where?: CompanyFollowWhereInput
+    /**
+     * Limit how many CompanyFollows to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompanyFollow upsert
+   */
+  export type CompanyFollowUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CompanyFollow to update in case it exists.
+     */
+    where: CompanyFollowWhereUniqueInput
+    /**
+     * In case the CompanyFollow found by the `where` argument doesn't exist, create a new CompanyFollow with this data.
+     */
+    create: XOR<CompanyFollowCreateInput, CompanyFollowUncheckedCreateInput>
+    /**
+     * In case the CompanyFollow was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CompanyFollowUpdateInput, CompanyFollowUncheckedUpdateInput>
+  }
+
+  /**
+   * CompanyFollow delete
+   */
+  export type CompanyFollowDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
+    /**
+     * Filter which CompanyFollow to delete.
+     */
+    where: CompanyFollowWhereUniqueInput
+  }
+
+  /**
+   * CompanyFollow deleteMany
+   */
+  export type CompanyFollowDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompanyFollows to delete
+     */
+    where?: CompanyFollowWhereInput
+    /**
+     * Limit how many CompanyFollows to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompanyFollow without action
+   */
+  export type CompanyFollowDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyFollow
+     */
+    select?: CompanyFollowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyFollow
+     */
+    omit?: CompanyFollowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyFollowInclude<ExtArgs> | null
   }
 
 
@@ -30113,6 +31357,18 @@ export namespace Prisma {
   export type CompanyReviewScalarFieldEnum = (typeof CompanyReviewScalarFieldEnum)[keyof typeof CompanyReviewScalarFieldEnum]
 
 
+  export const CompanyFollowScalarFieldEnum: {
+    id: 'id',
+    candidateId: 'candidateId',
+    companyId: 'companyId',
+    notifyOnNewJob: 'notifyOnNewJob',
+    notifyOnJobUpdate: 'notifyOnJobUpdate',
+    createdAt: 'createdAt'
+  };
+
+  export type CompanyFollowScalarFieldEnum = (typeof CompanyFollowScalarFieldEnum)[keyof typeof CompanyFollowScalarFieldEnum]
+
+
   export const JobScalarFieldEnum: {
     id: 'id',
     slug: 'slug',
@@ -30456,6 +31712,15 @@ export namespace Prisma {
   };
 
   export type CompanyReviewOrderByRelevanceFieldEnum = (typeof CompanyReviewOrderByRelevanceFieldEnum)[keyof typeof CompanyReviewOrderByRelevanceFieldEnum]
+
+
+  export const CompanyFollowOrderByRelevanceFieldEnum: {
+    id: 'id',
+    candidateId: 'candidateId',
+    companyId: 'companyId'
+  };
+
+  export type CompanyFollowOrderByRelevanceFieldEnum = (typeof CompanyFollowOrderByRelevanceFieldEnum)[keyof typeof CompanyFollowOrderByRelevanceFieldEnum]
 
 
   export const JobOrderByRelevanceFieldEnum: {
@@ -30931,6 +32196,7 @@ export namespace Prisma {
     savedJobs?: SavedJobListRelationFilter
     companyReviews?: CompanyReviewListRelationFilter
     interviews?: InterviewListRelationFilter
+    companyFollows?: CompanyFollowListRelationFilter
   }
 
   export type CandidateProfileOrderByWithRelationInput = {
@@ -30955,6 +32221,7 @@ export namespace Prisma {
     savedJobs?: SavedJobOrderByRelationAggregateInput
     companyReviews?: CompanyReviewOrderByRelationAggregateInput
     interviews?: InterviewOrderByRelationAggregateInput
+    companyFollows?: CompanyFollowOrderByRelationAggregateInput
     _relevance?: CandidateProfileOrderByRelevanceInput
   }
 
@@ -30983,6 +32250,7 @@ export namespace Prisma {
     savedJobs?: SavedJobListRelationFilter
     companyReviews?: CompanyReviewListRelationFilter
     interviews?: InterviewListRelationFilter
+    companyFollows?: CompanyFollowListRelationFilter
   }, "id" | "userId">
 
   export type CandidateProfileOrderByWithAggregationInput = {
@@ -31453,6 +32721,7 @@ export namespace Prisma {
     recruiters?: RecruiterProfileListRelationFilter
     jobs?: JobListRelationFilter
     reviews?: CompanyReviewListRelationFilter
+    followers?: CompanyFollowListRelationFilter
   }
 
   export type CompanyOrderByWithRelationInput = {
@@ -31475,6 +32744,7 @@ export namespace Prisma {
     recruiters?: RecruiterProfileOrderByRelationAggregateInput
     jobs?: JobOrderByRelationAggregateInput
     reviews?: CompanyReviewOrderByRelationAggregateInput
+    followers?: CompanyFollowOrderByRelationAggregateInput
     _relevance?: CompanyOrderByRelevanceInput
   }
 
@@ -31501,6 +32771,7 @@ export namespace Prisma {
     recruiters?: RecruiterProfileListRelationFilter
     jobs?: JobListRelationFilter
     reviews?: CompanyReviewListRelationFilter
+    followers?: CompanyFollowListRelationFilter
   }, "id" | "slug">
 
   export type CompanyOrderByWithAggregationInput = {
@@ -31644,6 +32915,71 @@ export namespace Prisma {
     wouldRecommend?: BoolWithAggregatesFilter<"CompanyReview"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"CompanyReview"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CompanyReview"> | Date | string
+  }
+
+  export type CompanyFollowWhereInput = {
+    AND?: CompanyFollowWhereInput | CompanyFollowWhereInput[]
+    OR?: CompanyFollowWhereInput[]
+    NOT?: CompanyFollowWhereInput | CompanyFollowWhereInput[]
+    id?: StringFilter<"CompanyFollow"> | string
+    candidateId?: StringFilter<"CompanyFollow"> | string
+    companyId?: StringFilter<"CompanyFollow"> | string
+    notifyOnNewJob?: BoolFilter<"CompanyFollow"> | boolean
+    notifyOnJobUpdate?: BoolFilter<"CompanyFollow"> | boolean
+    createdAt?: DateTimeFilter<"CompanyFollow"> | Date | string
+    candidate?: XOR<CandidateProfileScalarRelationFilter, CandidateProfileWhereInput>
+    company?: XOR<CompanyScalarRelationFilter, CompanyWhereInput>
+  }
+
+  export type CompanyFollowOrderByWithRelationInput = {
+    id?: SortOrder
+    candidateId?: SortOrder
+    companyId?: SortOrder
+    notifyOnNewJob?: SortOrder
+    notifyOnJobUpdate?: SortOrder
+    createdAt?: SortOrder
+    candidate?: CandidateProfileOrderByWithRelationInput
+    company?: CompanyOrderByWithRelationInput
+    _relevance?: CompanyFollowOrderByRelevanceInput
+  }
+
+  export type CompanyFollowWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    candidateId_companyId?: CompanyFollowCandidateIdCompanyIdCompoundUniqueInput
+    AND?: CompanyFollowWhereInput | CompanyFollowWhereInput[]
+    OR?: CompanyFollowWhereInput[]
+    NOT?: CompanyFollowWhereInput | CompanyFollowWhereInput[]
+    candidateId?: StringFilter<"CompanyFollow"> | string
+    companyId?: StringFilter<"CompanyFollow"> | string
+    notifyOnNewJob?: BoolFilter<"CompanyFollow"> | boolean
+    notifyOnJobUpdate?: BoolFilter<"CompanyFollow"> | boolean
+    createdAt?: DateTimeFilter<"CompanyFollow"> | Date | string
+    candidate?: XOR<CandidateProfileScalarRelationFilter, CandidateProfileWhereInput>
+    company?: XOR<CompanyScalarRelationFilter, CompanyWhereInput>
+  }, "id" | "candidateId_companyId">
+
+  export type CompanyFollowOrderByWithAggregationInput = {
+    id?: SortOrder
+    candidateId?: SortOrder
+    companyId?: SortOrder
+    notifyOnNewJob?: SortOrder
+    notifyOnJobUpdate?: SortOrder
+    createdAt?: SortOrder
+    _count?: CompanyFollowCountOrderByAggregateInput
+    _max?: CompanyFollowMaxOrderByAggregateInput
+    _min?: CompanyFollowMinOrderByAggregateInput
+  }
+
+  export type CompanyFollowScalarWhereWithAggregatesInput = {
+    AND?: CompanyFollowScalarWhereWithAggregatesInput | CompanyFollowScalarWhereWithAggregatesInput[]
+    OR?: CompanyFollowScalarWhereWithAggregatesInput[]
+    NOT?: CompanyFollowScalarWhereWithAggregatesInput | CompanyFollowScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CompanyFollow"> | string
+    candidateId?: StringWithAggregatesFilter<"CompanyFollow"> | string
+    companyId?: StringWithAggregatesFilter<"CompanyFollow"> | string
+    notifyOnNewJob?: BoolWithAggregatesFilter<"CompanyFollow"> | boolean
+    notifyOnJobUpdate?: BoolWithAggregatesFilter<"CompanyFollow"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CompanyFollow"> | Date | string
   }
 
   export type JobWhereInput = {
@@ -32815,6 +34151,7 @@ export namespace Prisma {
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateInput = {
@@ -32838,6 +34175,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUpdateInput = {
@@ -32861,6 +34199,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateInput = {
@@ -32884,6 +34223,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileCreateManyInput = {
@@ -33375,6 +34715,7 @@ export namespace Prisma {
     recruiters?: RecruiterProfileCreateNestedManyWithoutCompanyInput
     jobs?: JobCreateNestedManyWithoutCompanyInput
     reviews?: CompanyReviewCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUncheckedCreateInput = {
@@ -33397,6 +34738,7 @@ export namespace Prisma {
     recruiters?: RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput
     jobs?: JobUncheckedCreateNestedManyWithoutCompanyInput
     reviews?: CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowUncheckedCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUpdateInput = {
@@ -33419,6 +34761,7 @@ export namespace Prisma {
     recruiters?: RecruiterProfileUpdateManyWithoutCompanyNestedInput
     jobs?: JobUpdateManyWithoutCompanyNestedInput
     reviews?: CompanyReviewUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyUncheckedUpdateInput = {
@@ -33441,6 +34784,7 @@ export namespace Prisma {
     recruiters?: RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput
     jobs?: JobUncheckedUpdateManyWithoutCompanyNestedInput
     reviews?: CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyCreateManyInput = {
@@ -33601,6 +34945,67 @@ export namespace Prisma {
     wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyFollowCreateInput = {
+    id?: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+    candidate: CandidateProfileCreateNestedOneWithoutCompanyFollowsInput
+    company: CompanyCreateNestedOneWithoutFollowersInput
+  }
+
+  export type CompanyFollowUncheckedCreateInput = {
+    id?: string
+    candidateId: string
+    companyId: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+  }
+
+  export type CompanyFollowUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidate?: CandidateProfileUpdateOneRequiredWithoutCompanyFollowsNestedInput
+    company?: CompanyUpdateOneRequiredWithoutFollowersNestedInput
+  }
+
+  export type CompanyFollowUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyFollowCreateManyInput = {
+    id?: string
+    candidateId: string
+    companyId: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+  }
+
+  export type CompanyFollowUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyFollowUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type JobCreateInput = {
@@ -34967,6 +36372,12 @@ export namespace Prisma {
     none?: InterviewWhereInput
   }
 
+  export type CompanyFollowListRelationFilter = {
+    every?: CompanyFollowWhereInput
+    some?: CompanyFollowWhereInput
+    none?: CompanyFollowWhereInput
+  }
+
   export type ExperienceOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -34996,6 +36407,10 @@ export namespace Prisma {
   }
 
   export type InterviewOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CompanyFollowOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -35509,6 +36924,44 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type CompanyFollowOrderByRelevanceInput = {
+    fields: CompanyFollowOrderByRelevanceFieldEnum | CompanyFollowOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type CompanyFollowCandidateIdCompanyIdCompoundUniqueInput = {
+    candidateId: string
+    companyId: string
+  }
+
+  export type CompanyFollowCountOrderByAggregateInput = {
+    id?: SortOrder
+    candidateId?: SortOrder
+    companyId?: SortOrder
+    notifyOnNewJob?: SortOrder
+    notifyOnJobUpdate?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CompanyFollowMaxOrderByAggregateInput = {
+    id?: SortOrder
+    candidateId?: SortOrder
+    companyId?: SortOrder
+    notifyOnNewJob?: SortOrder
+    notifyOnJobUpdate?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CompanyFollowMinOrderByAggregateInput = {
+    id?: SortOrder
+    candidateId?: SortOrder
+    companyId?: SortOrder
+    notifyOnNewJob?: SortOrder
+    notifyOnJobUpdate?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type EnumJobTypeFilter<$PrismaModel = never> = {
@@ -36620,6 +38073,13 @@ export namespace Prisma {
     connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
   }
 
+  export type CompanyFollowCreateNestedManyWithoutCandidateInput = {
+    create?: XOR<CompanyFollowCreateWithoutCandidateInput, CompanyFollowUncheckedCreateWithoutCandidateInput> | CompanyFollowCreateWithoutCandidateInput[] | CompanyFollowUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCandidateInput | CompanyFollowCreateOrConnectWithoutCandidateInput[]
+    createMany?: CompanyFollowCreateManyCandidateInputEnvelope
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+  }
+
   export type ExperienceUncheckedCreateNestedManyWithoutCandidateInput = {
     create?: XOR<ExperienceCreateWithoutCandidateInput, ExperienceUncheckedCreateWithoutCandidateInput> | ExperienceCreateWithoutCandidateInput[] | ExperienceUncheckedCreateWithoutCandidateInput[]
     connectOrCreate?: ExperienceCreateOrConnectWithoutCandidateInput | ExperienceCreateOrConnectWithoutCandidateInput[]
@@ -36674,6 +38134,13 @@ export namespace Prisma {
     connectOrCreate?: InterviewCreateOrConnectWithoutCandidateInput | InterviewCreateOrConnectWithoutCandidateInput[]
     createMany?: InterviewCreateManyCandidateInputEnvelope
     connect?: InterviewWhereUniqueInput | InterviewWhereUniqueInput[]
+  }
+
+  export type CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput = {
+    create?: XOR<CompanyFollowCreateWithoutCandidateInput, CompanyFollowUncheckedCreateWithoutCandidateInput> | CompanyFollowCreateWithoutCandidateInput[] | CompanyFollowUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCandidateInput | CompanyFollowCreateOrConnectWithoutCandidateInput[]
+    createMany?: CompanyFollowCreateManyCandidateInputEnvelope
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
   }
 
   export type UserUpdateOneRequiredWithoutCandidateProfileNestedInput = {
@@ -36796,6 +38263,20 @@ export namespace Prisma {
     deleteMany?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
   }
 
+  export type CompanyFollowUpdateManyWithoutCandidateNestedInput = {
+    create?: XOR<CompanyFollowCreateWithoutCandidateInput, CompanyFollowUncheckedCreateWithoutCandidateInput> | CompanyFollowCreateWithoutCandidateInput[] | CompanyFollowUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCandidateInput | CompanyFollowCreateOrConnectWithoutCandidateInput[]
+    upsert?: CompanyFollowUpsertWithWhereUniqueWithoutCandidateInput | CompanyFollowUpsertWithWhereUniqueWithoutCandidateInput[]
+    createMany?: CompanyFollowCreateManyCandidateInputEnvelope
+    set?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    disconnect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    delete?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    update?: CompanyFollowUpdateWithWhereUniqueWithoutCandidateInput | CompanyFollowUpdateWithWhereUniqueWithoutCandidateInput[]
+    updateMany?: CompanyFollowUpdateManyWithWhereWithoutCandidateInput | CompanyFollowUpdateManyWithWhereWithoutCandidateInput[]
+    deleteMany?: CompanyFollowScalarWhereInput | CompanyFollowScalarWhereInput[]
+  }
+
   export type ExperienceUncheckedUpdateManyWithoutCandidateNestedInput = {
     create?: XOR<ExperienceCreateWithoutCandidateInput, ExperienceUncheckedCreateWithoutCandidateInput> | ExperienceCreateWithoutCandidateInput[] | ExperienceUncheckedCreateWithoutCandidateInput[]
     connectOrCreate?: ExperienceCreateOrConnectWithoutCandidateInput | ExperienceCreateOrConnectWithoutCandidateInput[]
@@ -36906,6 +38387,20 @@ export namespace Prisma {
     update?: InterviewUpdateWithWhereUniqueWithoutCandidateInput | InterviewUpdateWithWhereUniqueWithoutCandidateInput[]
     updateMany?: InterviewUpdateManyWithWhereWithoutCandidateInput | InterviewUpdateManyWithWhereWithoutCandidateInput[]
     deleteMany?: InterviewScalarWhereInput | InterviewScalarWhereInput[]
+  }
+
+  export type CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput = {
+    create?: XOR<CompanyFollowCreateWithoutCandidateInput, CompanyFollowUncheckedCreateWithoutCandidateInput> | CompanyFollowCreateWithoutCandidateInput[] | CompanyFollowUncheckedCreateWithoutCandidateInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCandidateInput | CompanyFollowCreateOrConnectWithoutCandidateInput[]
+    upsert?: CompanyFollowUpsertWithWhereUniqueWithoutCandidateInput | CompanyFollowUpsertWithWhereUniqueWithoutCandidateInput[]
+    createMany?: CompanyFollowCreateManyCandidateInputEnvelope
+    set?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    disconnect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    delete?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    update?: CompanyFollowUpdateWithWhereUniqueWithoutCandidateInput | CompanyFollowUpdateWithWhereUniqueWithoutCandidateInput[]
+    updateMany?: CompanyFollowUpdateManyWithWhereWithoutCandidateInput | CompanyFollowUpdateManyWithWhereWithoutCandidateInput[]
+    deleteMany?: CompanyFollowScalarWhereInput | CompanyFollowScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutRecruiterProfileInput = {
@@ -37162,6 +38657,13 @@ export namespace Prisma {
     connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
   }
 
+  export type CompanyFollowCreateNestedManyWithoutCompanyInput = {
+    create?: XOR<CompanyFollowCreateWithoutCompanyInput, CompanyFollowUncheckedCreateWithoutCompanyInput> | CompanyFollowCreateWithoutCompanyInput[] | CompanyFollowUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCompanyInput | CompanyFollowCreateOrConnectWithoutCompanyInput[]
+    createMany?: CompanyFollowCreateManyCompanyInputEnvelope
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+  }
+
   export type RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput = {
     create?: XOR<RecruiterProfileCreateWithoutCompanyInput, RecruiterProfileUncheckedCreateWithoutCompanyInput> | RecruiterProfileCreateWithoutCompanyInput[] | RecruiterProfileUncheckedCreateWithoutCompanyInput[]
     connectOrCreate?: RecruiterProfileCreateOrConnectWithoutCompanyInput | RecruiterProfileCreateOrConnectWithoutCompanyInput[]
@@ -37181,6 +38683,13 @@ export namespace Prisma {
     connectOrCreate?: CompanyReviewCreateOrConnectWithoutCompanyInput | CompanyReviewCreateOrConnectWithoutCompanyInput[]
     createMany?: CompanyReviewCreateManyCompanyInputEnvelope
     connect?: CompanyReviewWhereUniqueInput | CompanyReviewWhereUniqueInput[]
+  }
+
+  export type CompanyFollowUncheckedCreateNestedManyWithoutCompanyInput = {
+    create?: XOR<CompanyFollowCreateWithoutCompanyInput, CompanyFollowUncheckedCreateWithoutCompanyInput> | CompanyFollowCreateWithoutCompanyInput[] | CompanyFollowUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCompanyInput | CompanyFollowCreateOrConnectWithoutCompanyInput[]
+    createMany?: CompanyFollowCreateManyCompanyInputEnvelope
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -37233,6 +38742,20 @@ export namespace Prisma {
     deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
   }
 
+  export type CompanyFollowUpdateManyWithoutCompanyNestedInput = {
+    create?: XOR<CompanyFollowCreateWithoutCompanyInput, CompanyFollowUncheckedCreateWithoutCompanyInput> | CompanyFollowCreateWithoutCompanyInput[] | CompanyFollowUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCompanyInput | CompanyFollowCreateOrConnectWithoutCompanyInput[]
+    upsert?: CompanyFollowUpsertWithWhereUniqueWithoutCompanyInput | CompanyFollowUpsertWithWhereUniqueWithoutCompanyInput[]
+    createMany?: CompanyFollowCreateManyCompanyInputEnvelope
+    set?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    disconnect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    delete?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    update?: CompanyFollowUpdateWithWhereUniqueWithoutCompanyInput | CompanyFollowUpdateWithWhereUniqueWithoutCompanyInput[]
+    updateMany?: CompanyFollowUpdateManyWithWhereWithoutCompanyInput | CompanyFollowUpdateManyWithWhereWithoutCompanyInput[]
+    deleteMany?: CompanyFollowScalarWhereInput | CompanyFollowScalarWhereInput[]
+  }
+
   export type RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput = {
     create?: XOR<RecruiterProfileCreateWithoutCompanyInput, RecruiterProfileUncheckedCreateWithoutCompanyInput> | RecruiterProfileCreateWithoutCompanyInput[] | RecruiterProfileUncheckedCreateWithoutCompanyInput[]
     connectOrCreate?: RecruiterProfileCreateOrConnectWithoutCompanyInput | RecruiterProfileCreateOrConnectWithoutCompanyInput[]
@@ -37275,6 +38798,20 @@ export namespace Prisma {
     deleteMany?: CompanyReviewScalarWhereInput | CompanyReviewScalarWhereInput[]
   }
 
+  export type CompanyFollowUncheckedUpdateManyWithoutCompanyNestedInput = {
+    create?: XOR<CompanyFollowCreateWithoutCompanyInput, CompanyFollowUncheckedCreateWithoutCompanyInput> | CompanyFollowCreateWithoutCompanyInput[] | CompanyFollowUncheckedCreateWithoutCompanyInput[]
+    connectOrCreate?: CompanyFollowCreateOrConnectWithoutCompanyInput | CompanyFollowCreateOrConnectWithoutCompanyInput[]
+    upsert?: CompanyFollowUpsertWithWhereUniqueWithoutCompanyInput | CompanyFollowUpsertWithWhereUniqueWithoutCompanyInput[]
+    createMany?: CompanyFollowCreateManyCompanyInputEnvelope
+    set?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    disconnect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    delete?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    connect?: CompanyFollowWhereUniqueInput | CompanyFollowWhereUniqueInput[]
+    update?: CompanyFollowUpdateWithWhereUniqueWithoutCompanyInput | CompanyFollowUpdateWithWhereUniqueWithoutCompanyInput[]
+    updateMany?: CompanyFollowUpdateManyWithWhereWithoutCompanyInput | CompanyFollowUpdateManyWithWhereWithoutCompanyInput[]
+    deleteMany?: CompanyFollowScalarWhereInput | CompanyFollowScalarWhereInput[]
+  }
+
   export type CompanyCreateNestedOneWithoutReviewsInput = {
     create?: XOR<CompanyCreateWithoutReviewsInput, CompanyUncheckedCreateWithoutReviewsInput>
     connectOrCreate?: CompanyCreateOrConnectWithoutReviewsInput
@@ -37309,6 +38846,34 @@ export namespace Prisma {
     upsert?: CandidateProfileUpsertWithoutCompanyReviewsInput
     connect?: CandidateProfileWhereUniqueInput
     update?: XOR<XOR<CandidateProfileUpdateToOneWithWhereWithoutCompanyReviewsInput, CandidateProfileUpdateWithoutCompanyReviewsInput>, CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput>
+  }
+
+  export type CandidateProfileCreateNestedOneWithoutCompanyFollowsInput = {
+    create?: XOR<CandidateProfileCreateWithoutCompanyFollowsInput, CandidateProfileUncheckedCreateWithoutCompanyFollowsInput>
+    connectOrCreate?: CandidateProfileCreateOrConnectWithoutCompanyFollowsInput
+    connect?: CandidateProfileWhereUniqueInput
+  }
+
+  export type CompanyCreateNestedOneWithoutFollowersInput = {
+    create?: XOR<CompanyCreateWithoutFollowersInput, CompanyUncheckedCreateWithoutFollowersInput>
+    connectOrCreate?: CompanyCreateOrConnectWithoutFollowersInput
+    connect?: CompanyWhereUniqueInput
+  }
+
+  export type CandidateProfileUpdateOneRequiredWithoutCompanyFollowsNestedInput = {
+    create?: XOR<CandidateProfileCreateWithoutCompanyFollowsInput, CandidateProfileUncheckedCreateWithoutCompanyFollowsInput>
+    connectOrCreate?: CandidateProfileCreateOrConnectWithoutCompanyFollowsInput
+    upsert?: CandidateProfileUpsertWithoutCompanyFollowsInput
+    connect?: CandidateProfileWhereUniqueInput
+    update?: XOR<XOR<CandidateProfileUpdateToOneWithWhereWithoutCompanyFollowsInput, CandidateProfileUpdateWithoutCompanyFollowsInput>, CandidateProfileUncheckedUpdateWithoutCompanyFollowsInput>
+  }
+
+  export type CompanyUpdateOneRequiredWithoutFollowersNestedInput = {
+    create?: XOR<CompanyCreateWithoutFollowersInput, CompanyUncheckedCreateWithoutFollowersInput>
+    connectOrCreate?: CompanyCreateOrConnectWithoutFollowersInput
+    upsert?: CompanyUpsertWithoutFollowersInput
+    connect?: CompanyWhereUniqueInput
+    update?: XOR<XOR<CompanyUpdateToOneWithWhereWithoutFollowersInput, CompanyUpdateWithoutFollowersInput>, CompanyUncheckedUpdateWithoutFollowersInput>
   }
 
   export type JobCreateinterviewQuestionsInput = {
@@ -38436,6 +40001,7 @@ export namespace Prisma {
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutUserInput = {
@@ -38458,6 +40024,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutUserInput = {
@@ -38609,6 +40176,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutUserInput = {
@@ -38631,6 +40199,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type RecruiterProfileUpsertWithoutUserInput = {
@@ -39061,6 +40630,32 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompanyFollowCreateWithoutCandidateInput = {
+    id?: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+    company: CompanyCreateNestedOneWithoutFollowersInput
+  }
+
+  export type CompanyFollowUncheckedCreateWithoutCandidateInput = {
+    id?: string
+    companyId: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+  }
+
+  export type CompanyFollowCreateOrConnectWithoutCandidateInput = {
+    where: CompanyFollowWhereUniqueInput
+    create: XOR<CompanyFollowCreateWithoutCandidateInput, CompanyFollowUncheckedCreateWithoutCandidateInput>
+  }
+
+  export type CompanyFollowCreateManyCandidateInputEnvelope = {
+    data: CompanyFollowCreateManyCandidateInput | CompanyFollowCreateManyCandidateInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutCandidateProfileInput = {
     update: XOR<UserUpdateWithoutCandidateProfileInput, UserUncheckedUpdateWithoutCandidateProfileInput>
     create: XOR<UserCreateWithoutCandidateProfileInput, UserUncheckedCreateWithoutCandidateProfileInput>
@@ -39367,6 +40962,34 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Interview"> | Date | string
   }
 
+  export type CompanyFollowUpsertWithWhereUniqueWithoutCandidateInput = {
+    where: CompanyFollowWhereUniqueInput
+    update: XOR<CompanyFollowUpdateWithoutCandidateInput, CompanyFollowUncheckedUpdateWithoutCandidateInput>
+    create: XOR<CompanyFollowCreateWithoutCandidateInput, CompanyFollowUncheckedCreateWithoutCandidateInput>
+  }
+
+  export type CompanyFollowUpdateWithWhereUniqueWithoutCandidateInput = {
+    where: CompanyFollowWhereUniqueInput
+    data: XOR<CompanyFollowUpdateWithoutCandidateInput, CompanyFollowUncheckedUpdateWithoutCandidateInput>
+  }
+
+  export type CompanyFollowUpdateManyWithWhereWithoutCandidateInput = {
+    where: CompanyFollowScalarWhereInput
+    data: XOR<CompanyFollowUpdateManyMutationInput, CompanyFollowUncheckedUpdateManyWithoutCandidateInput>
+  }
+
+  export type CompanyFollowScalarWhereInput = {
+    AND?: CompanyFollowScalarWhereInput | CompanyFollowScalarWhereInput[]
+    OR?: CompanyFollowScalarWhereInput[]
+    NOT?: CompanyFollowScalarWhereInput | CompanyFollowScalarWhereInput[]
+    id?: StringFilter<"CompanyFollow"> | string
+    candidateId?: StringFilter<"CompanyFollow"> | string
+    companyId?: StringFilter<"CompanyFollow"> | string
+    notifyOnNewJob?: BoolFilter<"CompanyFollow"> | boolean
+    notifyOnJobUpdate?: BoolFilter<"CompanyFollow"> | boolean
+    createdAt?: DateTimeFilter<"CompanyFollow"> | Date | string
+  }
+
   export type UserCreateWithoutRecruiterProfileInput = {
     id?: string
     email: string
@@ -39431,6 +41054,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     jobs?: JobCreateNestedManyWithoutCompanyInput
     reviews?: CompanyReviewCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUncheckedCreateWithoutRecruitersInput = {
@@ -39452,6 +41076,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     jobs?: JobUncheckedCreateNestedManyWithoutCompanyInput
     reviews?: CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowUncheckedCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyCreateOrConnectWithoutRecruitersInput = {
@@ -39614,6 +41239,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     jobs?: JobUpdateManyWithoutCompanyNestedInput
     reviews?: CompanyReviewUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyUncheckedUpdateWithoutRecruitersInput = {
@@ -39635,6 +41261,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     jobs?: JobUncheckedUpdateManyWithoutCompanyNestedInput
     reviews?: CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type JobUpsertWithWhereUniqueWithoutRecruiterInput = {
@@ -39704,6 +41331,7 @@ export namespace Prisma {
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutExperiencesInput = {
@@ -39726,6 +41354,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutExperiencesInput = {
@@ -39764,6 +41393,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutExperiencesInput = {
@@ -39786,6 +41416,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileCreateWithoutEducationsInput = {
@@ -39808,6 +41439,7 @@ export namespace Prisma {
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutEducationsInput = {
@@ -39830,6 +41462,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutEducationsInput = {
@@ -39868,6 +41501,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutEducationsInput = {
@@ -39890,6 +41524,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileCreateWithoutProjectsInput = {
@@ -39912,6 +41547,7 @@ export namespace Prisma {
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutProjectsInput = {
@@ -39934,6 +41570,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutProjectsInput = {
@@ -39972,6 +41609,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutProjectsInput = {
@@ -39994,6 +41632,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateSkillCreateWithoutSkillInput = {
@@ -40099,6 +41738,7 @@ export namespace Prisma {
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutSkillsInput = {
@@ -40121,6 +41761,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutSkillsInput = {
@@ -40178,6 +41819,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutSkillsInput = {
@@ -40200,6 +41842,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type SkillUpsertWithoutCandidatesInput = {
@@ -40367,6 +42010,32 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompanyFollowCreateWithoutCompanyInput = {
+    id?: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+    candidate: CandidateProfileCreateNestedOneWithoutCompanyFollowsInput
+  }
+
+  export type CompanyFollowUncheckedCreateWithoutCompanyInput = {
+    id?: string
+    candidateId: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+  }
+
+  export type CompanyFollowCreateOrConnectWithoutCompanyInput = {
+    where: CompanyFollowWhereUniqueInput
+    create: XOR<CompanyFollowCreateWithoutCompanyInput, CompanyFollowUncheckedCreateWithoutCompanyInput>
+  }
+
+  export type CompanyFollowCreateManyCompanyInputEnvelope = {
+    data: CompanyFollowCreateManyCompanyInput | CompanyFollowCreateManyCompanyInput[]
+    skipDuplicates?: boolean
+  }
+
   export type RecruiterProfileUpsertWithWhereUniqueWithoutCompanyInput = {
     where: RecruiterProfileWhereUniqueInput
     update: XOR<RecruiterProfileUpdateWithoutCompanyInput, RecruiterProfileUncheckedUpdateWithoutCompanyInput>
@@ -40427,6 +42096,22 @@ export namespace Prisma {
     data: XOR<CompanyReviewUpdateManyMutationInput, CompanyReviewUncheckedUpdateManyWithoutCompanyInput>
   }
 
+  export type CompanyFollowUpsertWithWhereUniqueWithoutCompanyInput = {
+    where: CompanyFollowWhereUniqueInput
+    update: XOR<CompanyFollowUpdateWithoutCompanyInput, CompanyFollowUncheckedUpdateWithoutCompanyInput>
+    create: XOR<CompanyFollowCreateWithoutCompanyInput, CompanyFollowUncheckedCreateWithoutCompanyInput>
+  }
+
+  export type CompanyFollowUpdateWithWhereUniqueWithoutCompanyInput = {
+    where: CompanyFollowWhereUniqueInput
+    data: XOR<CompanyFollowUpdateWithoutCompanyInput, CompanyFollowUncheckedUpdateWithoutCompanyInput>
+  }
+
+  export type CompanyFollowUpdateManyWithWhereWithoutCompanyInput = {
+    where: CompanyFollowScalarWhereInput
+    data: XOR<CompanyFollowUpdateManyMutationInput, CompanyFollowUncheckedUpdateManyWithoutCompanyInput>
+  }
+
   export type CompanyCreateWithoutReviewsInput = {
     id?: string
     name: string
@@ -40446,6 +42131,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     recruiters?: RecruiterProfileCreateNestedManyWithoutCompanyInput
     jobs?: JobCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUncheckedCreateWithoutReviewsInput = {
@@ -40467,6 +42153,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     recruiters?: RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput
     jobs?: JobUncheckedCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowUncheckedCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyCreateOrConnectWithoutReviewsInput = {
@@ -40494,6 +42181,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutCompanyReviewsInput = {
@@ -40516,6 +42204,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutCompanyReviewsInput = {
@@ -40553,6 +42242,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUpdateManyWithoutCompanyNestedInput
     jobs?: JobUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyUncheckedUpdateWithoutReviewsInput = {
@@ -40574,6 +42264,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput
     jobs?: JobUncheckedUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type CandidateProfileUpsertWithoutCompanyReviewsInput = {
@@ -40607,6 +42298,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutCompanyReviewsInput = {
@@ -40629,6 +42321,219 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
+  }
+
+  export type CandidateProfileCreateWithoutCompanyFollowsInput = {
+    id?: string
+    headline?: string | null
+    bio?: string | null
+    website?: string | null
+    linkedin?: string | null
+    github?: string | null
+    address?: string | null
+    cvUrl?: string | null
+    isPublic?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutCandidateProfileInput
+    experiences?: ExperienceCreateNestedManyWithoutCandidateInput
+    educations?: EducationCreateNestedManyWithoutCandidateInput
+    projects?: ProjectCreateNestedManyWithoutCandidateInput
+    skills?: CandidateSkillCreateNestedManyWithoutCandidateInput
+    applications?: ApplicationCreateNestedManyWithoutCandidateInput
+    savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewCreateNestedManyWithoutCandidateInput
+  }
+
+  export type CandidateProfileUncheckedCreateWithoutCompanyFollowsInput = {
+    id?: string
+    userId: string
+    headline?: string | null
+    bio?: string | null
+    website?: string | null
+    linkedin?: string | null
+    github?: string | null
+    address?: string | null
+    cvUrl?: string | null
+    isPublic?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    experiences?: ExperienceUncheckedCreateNestedManyWithoutCandidateInput
+    educations?: EducationUncheckedCreateNestedManyWithoutCandidateInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutCandidateInput
+    skills?: CandidateSkillUncheckedCreateNestedManyWithoutCandidateInput
+    applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
+    savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
+    companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+  }
+
+  export type CandidateProfileCreateOrConnectWithoutCompanyFollowsInput = {
+    where: CandidateProfileWhereUniqueInput
+    create: XOR<CandidateProfileCreateWithoutCompanyFollowsInput, CandidateProfileUncheckedCreateWithoutCompanyFollowsInput>
+  }
+
+  export type CompanyCreateWithoutFollowersInput = {
+    id?: string
+    name: string
+    slug: string
+    logoUrl?: string | null
+    coverUrl?: string | null
+    website?: string | null
+    description?: string | null
+    industry?: string | null
+    companySize?: string | null
+    foundedYear?: number | null
+    address?: string | null
+    city?: string | null
+    country?: string | null
+    isVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    recruiters?: RecruiterProfileCreateNestedManyWithoutCompanyInput
+    jobs?: JobCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewCreateNestedManyWithoutCompanyInput
+  }
+
+  export type CompanyUncheckedCreateWithoutFollowersInput = {
+    id?: string
+    name: string
+    slug: string
+    logoUrl?: string | null
+    coverUrl?: string | null
+    website?: string | null
+    description?: string | null
+    industry?: string | null
+    companySize?: string | null
+    foundedYear?: number | null
+    address?: string | null
+    city?: string | null
+    country?: string | null
+    isVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    recruiters?: RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput
+    jobs?: JobUncheckedCreateNestedManyWithoutCompanyInput
+    reviews?: CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput
+  }
+
+  export type CompanyCreateOrConnectWithoutFollowersInput = {
+    where: CompanyWhereUniqueInput
+    create: XOR<CompanyCreateWithoutFollowersInput, CompanyUncheckedCreateWithoutFollowersInput>
+  }
+
+  export type CandidateProfileUpsertWithoutCompanyFollowsInput = {
+    update: XOR<CandidateProfileUpdateWithoutCompanyFollowsInput, CandidateProfileUncheckedUpdateWithoutCompanyFollowsInput>
+    create: XOR<CandidateProfileCreateWithoutCompanyFollowsInput, CandidateProfileUncheckedCreateWithoutCompanyFollowsInput>
+    where?: CandidateProfileWhereInput
+  }
+
+  export type CandidateProfileUpdateToOneWithWhereWithoutCompanyFollowsInput = {
+    where?: CandidateProfileWhereInput
+    data: XOR<CandidateProfileUpdateWithoutCompanyFollowsInput, CandidateProfileUncheckedUpdateWithoutCompanyFollowsInput>
+  }
+
+  export type CandidateProfileUpdateWithoutCompanyFollowsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    headline?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedin?: NullableStringFieldUpdateOperationsInput | string | null
+    github?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutCandidateProfileNestedInput
+    experiences?: ExperienceUpdateManyWithoutCandidateNestedInput
+    educations?: EducationUpdateManyWithoutCandidateNestedInput
+    projects?: ProjectUpdateManyWithoutCandidateNestedInput
+    skills?: CandidateSkillUpdateManyWithoutCandidateNestedInput
+    applications?: ApplicationUpdateManyWithoutCandidateNestedInput
+    savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+  }
+
+  export type CandidateProfileUncheckedUpdateWithoutCompanyFollowsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    headline?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    linkedin?: NullableStringFieldUpdateOperationsInput | string | null
+    github?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    experiences?: ExperienceUncheckedUpdateManyWithoutCandidateNestedInput
+    educations?: EducationUncheckedUpdateManyWithoutCandidateNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutCandidateNestedInput
+    skills?: CandidateSkillUncheckedUpdateManyWithoutCandidateNestedInput
+    applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
+    savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
+    companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+  }
+
+  export type CompanyUpsertWithoutFollowersInput = {
+    update: XOR<CompanyUpdateWithoutFollowersInput, CompanyUncheckedUpdateWithoutFollowersInput>
+    create: XOR<CompanyCreateWithoutFollowersInput, CompanyUncheckedCreateWithoutFollowersInput>
+    where?: CompanyWhereInput
+  }
+
+  export type CompanyUpdateToOneWithWhereWithoutFollowersInput = {
+    where?: CompanyWhereInput
+    data: XOR<CompanyUpdateWithoutFollowersInput, CompanyUncheckedUpdateWithoutFollowersInput>
+  }
+
+  export type CompanyUpdateWithoutFollowersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    coverUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    companySize?: NullableStringFieldUpdateOperationsInput | string | null
+    foundedYear?: NullableIntFieldUpdateOperationsInput | number | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    recruiters?: RecruiterProfileUpdateManyWithoutCompanyNestedInput
+    jobs?: JobUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUpdateManyWithoutCompanyNestedInput
+  }
+
+  export type CompanyUncheckedUpdateWithoutFollowersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    coverUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    companySize?: NullableStringFieldUpdateOperationsInput | string | null
+    foundedYear?: NullableIntFieldUpdateOperationsInput | number | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    country?: NullableStringFieldUpdateOperationsInput | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    recruiters?: RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput
+    jobs?: JobUncheckedUpdateManyWithoutCompanyNestedInput
+    reviews?: CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyCreateWithoutJobsInput = {
@@ -40650,6 +42555,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     recruiters?: RecruiterProfileCreateNestedManyWithoutCompanyInput
     reviews?: CompanyReviewCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyUncheckedCreateWithoutJobsInput = {
@@ -40671,6 +42577,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     recruiters?: RecruiterProfileUncheckedCreateNestedManyWithoutCompanyInput
     reviews?: CompanyReviewUncheckedCreateNestedManyWithoutCompanyInput
+    followers?: CompanyFollowUncheckedCreateNestedManyWithoutCompanyInput
   }
 
   export type CompanyCreateOrConnectWithoutJobsInput = {
@@ -40887,6 +42794,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUpdateManyWithoutCompanyNestedInput
     reviews?: CompanyReviewUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUpdateManyWithoutCompanyNestedInput
   }
 
   export type CompanyUncheckedUpdateWithoutJobsInput = {
@@ -40908,6 +42816,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     recruiters?: RecruiterProfileUncheckedUpdateManyWithoutCompanyNestedInput
     reviews?: CompanyReviewUncheckedUpdateManyWithoutCompanyNestedInput
+    followers?: CompanyFollowUncheckedUpdateManyWithoutCompanyNestedInput
   }
 
   export type RecruiterProfileUpsertWithoutJobsPostedInput = {
@@ -41453,6 +43362,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutSavedJobsInput = {
@@ -41475,6 +43385,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutSavedJobsInput = {
@@ -41582,6 +43493,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutSavedJobsInput = {
@@ -41604,6 +43516,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type JobUpsertWithoutSavedByInput = {
@@ -41770,6 +43683,7 @@ export namespace Prisma {
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
     interviews?: InterviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutApplicationsInput = {
@@ -41792,6 +43706,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
     interviews?: InterviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutApplicationsInput = {
@@ -42013,6 +43928,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutApplicationsInput = {
@@ -42035,6 +43951,7 @@ export namespace Prisma {
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
     interviews?: InterviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type InterviewUpsertWithWhereUniqueWithoutApplicationInput = {
@@ -42305,6 +44222,7 @@ export namespace Prisma {
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileUncheckedCreateWithoutInterviewsInput = {
@@ -42327,6 +44245,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
     savedJobs?: SavedJobUncheckedCreateNestedManyWithoutCandidateInput
     companyReviews?: CompanyReviewUncheckedCreateNestedManyWithoutCandidateInput
+    companyFollows?: CompanyFollowUncheckedCreateNestedManyWithoutCandidateInput
   }
 
   export type CandidateProfileCreateOrConnectWithoutInterviewsInput = {
@@ -42509,6 +44428,7 @@ export namespace Prisma {
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUpdateManyWithoutCandidateNestedInput
   }
 
   export type CandidateProfileUncheckedUpdateWithoutInterviewsInput = {
@@ -42531,6 +44451,7 @@ export namespace Prisma {
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
     savedJobs?: SavedJobUncheckedUpdateManyWithoutCandidateNestedInput
     companyReviews?: CompanyReviewUncheckedUpdateManyWithoutCandidateNestedInput
+    companyFollows?: CompanyFollowUncheckedUpdateManyWithoutCandidateNestedInput
   }
 
   export type JobUpsertWithoutInterviewsInput = {
@@ -43256,6 +45177,14 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CompanyFollowCreateManyCandidateInput = {
+    id?: string
+    companyId: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+  }
+
   export type ExperienceUpdateWithoutCandidateInput = {
     id?: StringFieldUpdateOperationsInput | string
     companyName?: StringFieldUpdateOperationsInput | string
@@ -43549,6 +45478,30 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CompanyFollowUpdateWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    company?: CompanyUpdateOneRequiredWithoutFollowersNestedInput
+  }
+
+  export type CompanyFollowUncheckedUpdateWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyFollowUncheckedUpdateManyWithoutCandidateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type JobCreateManyRecruiterInput = {
     id?: string
     slug: string
@@ -43760,6 +45713,14 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CompanyFollowCreateManyCompanyInput = {
+    id?: string
+    candidateId: string
+    notifyOnNewJob?: boolean
+    notifyOnJobUpdate?: boolean
+    createdAt?: Date | string
+  }
+
   export type RecruiterProfileUpdateWithoutCompanyInput = {
     id?: StringFieldUpdateOperationsInput | string
     position?: NullableStringFieldUpdateOperationsInput | string | null
@@ -43917,6 +45878,30 @@ export namespace Prisma {
     wouldRecommend?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyFollowUpdateWithoutCompanyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidate?: CandidateProfileUpdateOneRequiredWithoutCompanyFollowsNestedInput
+  }
+
+  export type CompanyFollowUncheckedUpdateWithoutCompanyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyFollowUncheckedUpdateManyWithoutCompanyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    notifyOnNewJob?: BoolFieldUpdateOperationsInput | boolean
+    notifyOnJobUpdate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type JobSkillCreateManyJobInput = {

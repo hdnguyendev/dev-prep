@@ -256,6 +256,10 @@ const Jobs = () => {
       .filter(([, v]) => v)
       .map(([k]) => k);
     let list = jobs.filter((j) => {
+      // Exclude DRAFT and CLOSED jobs
+      if (j.status === "DRAFT" || j.status === "CLOSED") {
+        return false;
+      }
       const matchesLocation =
         !location || getLocation(j).toLowerCase().includes(location.toLowerCase());
       const matchesType =
@@ -298,6 +302,12 @@ const Jobs = () => {
       "from-indigo-500 to-purple-500",
     ];
     return colors[index % colors.length];
+  };
+
+  // Strip HTML tags from description
+  const stripHtmlTags = (html: string | null | undefined): string => {
+    if (!html) return "No description available";
+    return html.replace(/<[^>]*>/g, "").trim() || "No description available";
   };
 
   const clearAll = () => {
@@ -665,7 +675,7 @@ const Jobs = () => {
                     <CardContent className="relative space-y-4 flex-1">
                       {/* Description */}
                       <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-                        {job.description || "No description available"}
+                        {stripHtmlTags(job.description)}
                       </p>
 
                       {/* Skills */}
@@ -745,7 +755,7 @@ const Jobs = () => {
                             <td className="px-4 py-4">
                               <div className="font-medium">{job.title}</div>
                               <div className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                                {job.description}
+                                {stripHtmlTags(job.description)}
                               </div>
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {getSkillTags(job).slice(0, 2).map((tag) => (

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import {
   ArrowLeft,
   User,
@@ -64,6 +65,29 @@ type Job = {
   company?: {
     name: string;
   };
+};
+
+const jobStatusConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  DRAFT: {
+    label: "Draft",
+    icon: <FileText className="h-3.5 w-3.5" />,
+    color: "bg-slate-100 dark:bg-slate-950/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800",
+  },
+  PUBLISHED: {
+    label: "Published",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    color: "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+  },
+  CLOSED: {
+    label: "Closed",
+    icon: <XCircle className="h-3.5 w-3.5" />,
+    color: "bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+  },
+  ARCHIVED: {
+    label: "Archived",
+    icon: <AlertTriangle className="h-3.5 w-3.5" />,
+    color: "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  },
 };
 
 const statusConfig: Record<string, { label: string; variant: "default" | "outline" | "success"; icon: React.ReactNode; color: string }> = {
@@ -136,12 +160,15 @@ const RecruiterJobApplications = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [updatingJobStatus, setUpdatingJobStatus] = useState(false);
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
   const [recruiterProfileId, setRecruiterProfileId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteText, setEditingNoteText] = useState<string>("");
+  const [noteIdToDelete, setNoteIdToDelete] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState("");
@@ -316,11 +343,16 @@ const RecruiterJobApplications = () => {
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!userId || !selectedApplication) return;
+  const handleDeleteNote = (noteId: string) => {
+    setNoteIdToDelete(noteId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteNoteConfirm = async () => {
+    if (!userId || !selectedApplication || !noteIdToDelete) return;
     try {
       setSavingNote(true);
-      const res = await fetch(`${API_BASE}/applications/${selectedApplication.id}/notes/${noteId}`, {
+      const res = await fetch(`${API_BASE}/applications/${selectedApplication.id}/notes/${noteIdToDelete}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${userId}`,
@@ -333,9 +365,11 @@ const RecruiterJobApplications = () => {
       }
       const next: Application = {
         ...selectedApplication,
-        notes: (selectedApplication.notes || []).filter((n) => n.id !== noteId),
+        notes: (selectedApplication.notes || []).filter((n) => n.id !== noteIdToDelete),
       };
       upsertSelectedApplication(next);
+      setDeleteConfirmOpen(false);
+      setNoteIdToDelete(null);
     } catch (err) {
       console.error("Failed to delete note", err);
       setError("Network error");
@@ -351,6 +385,42 @@ const RecruiterJobApplications = () => {
       icon: <Clock className="h-3.5 w-3.5" />,
       color: "bg-muted text-muted-foreground border-border",
     };
+  };
+
+  const getJobStatusConfig = (status: string) => {
+    return jobStatusConfig[status] || {
+      label: status,
+      icon: <Clock className="h-3.5 w-3.5" />,
+      color: "bg-muted text-muted-foreground border-border",
+    };
+  };
+
+  const handleJobStatusUpdate = async (nextStatus: string) => {
+    if (!currentUser || !jobId || !job) return;
+    try {
+      setUpdatingJobStatus(true);
+      setError(null);
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentUser.id}`,
+      };
+      const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ ...job, status: nextStatus }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setJob({ ...job, status: nextStatus });
+      } else {
+        setError(data.message || "Failed to update job status");
+      }
+    } catch (err) {
+      console.error("Failed to update job status:", err);
+      setError("Network error");
+    } finally {
+      setUpdatingJobStatus(false);
+    }
   };
 
   const handleInlineStatusUpdate = async (applicationId: string, nextStatus: string) => {
@@ -477,33 +547,62 @@ const RecruiterJobApplications = () => {
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
           </Button>
 
+        {/* Job Header & Filters - Combined */}
         {job && (
           <Card>
-            <CardHeader>
-          <div className="space-y-1">
-                <CardTitle className="text-2xl">
-                  {job.title}
-                </CardTitle>
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <span>{job.company?.name}</span>
-              <span>•</span>
-              <span>
-                {applications.length} application{applications.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          </div>
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1">
+                      <CardTitle className="text-xl sm:text-2xl">
+                        {job.title}
+                      </CardTitle>
+                      <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                        <span>{job.company?.name}</span>
+                        <span>•</span>
+                        <span>
+                          {applications.length} application{applications.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Job Status Selector */}
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative inline-flex items-center">
+                        <select
+                          value={job.status}
+                          onChange={(e) => handleJobStatusUpdate(e.target.value)}
+                          className={`inline-flex h-8 items-center gap-1.5 pl-8 pr-8 text-sm font-medium rounded-md border cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-offset-2 ${getJobStatusConfig(job.status).color}`}
+                          disabled={updatingJobStatus}
+                        >
+                          {Object.keys(jobStatusConfig).map((key) => (
+                            <option key={key} value={key}>
+                              {jobStatusConfig[key].label}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                          {getJobStatusConfig(job.status).icon}
+                        </div>
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                        {updatingJobStatus && (
+                          <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
-          </Card>
-        )}
-
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-4">
+            <CardContent className="pt-0 space-y-4 border-t">
+              {/* Filters */}
+              <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
@@ -573,8 +672,10 @@ const RecruiterJobApplications = () => {
                 )}
               </div>
             </div>
+            </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Error */}
         {error && (
@@ -971,6 +1072,19 @@ const RecruiterJobApplications = () => {
           </Card>
         </div>
       )}
+
+      {/* Confirmation Dialog for Delete Note */}
+      <ConfirmationDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteNoteConfirm}
+        title="Delete Note?"
+        description="Are you sure you want to delete this note? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        loading={savingNote}
+      />
     </main>
   );
 };

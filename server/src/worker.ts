@@ -21,6 +21,7 @@ import applicationRoutes from "./routes/applications";
 import companyRoutes from "./routes/companies";
 import reviewRoutes from "./routes/reviews";
 import savedJobRoutes from "./routes/savedJobs";
+import companyFollowRoutes from "./routes/companyFollows";
 
 // Cloudflare Workers environment bindings
 type Env = {
@@ -32,7 +33,7 @@ type Env = {
   CLERK_SECRET_KEY: string;
   JWT_SECRET: string;
   NODE_ENV?: string;
-  R2_STORAGE?: R2Bucket; // Optional R2 bucket for file uploads
+  R2_STORAGE?: any; // Optional R2 bucket for file uploads
 };
 
 const app = new Hono<{ Bindings: Env }>();
@@ -164,6 +165,7 @@ app.route("/applications", applicationRoutes);
 app.route("/companies", companyRoutes);
 app.route("/reviews", reviewRoutes);
 app.route("/saved-jobs", savedJobRoutes);
+app.route("/company-follows", companyFollowRoutes);
 app.route("/", crudRoutes);
 app.route("/", swaggerRoutes);
 

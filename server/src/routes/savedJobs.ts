@@ -107,7 +107,7 @@ savedJobRoutes.get("/check/:jobId", async (c) => {
     if (!user || !user.candidateProfile) {
       return c.json({
         success: true,
-        isSaved: false,
+        data: { isSaved: false },
       });
     }
 
@@ -123,7 +123,7 @@ savedJobRoutes.get("/check/:jobId", async (c) => {
 
     return c.json({
       success: true,
-      isSaved: !!savedJob,
+      data: { isSaved: !!savedJob },
     });
   } catch (error) {
     console.error("Error checking saved job:", error);

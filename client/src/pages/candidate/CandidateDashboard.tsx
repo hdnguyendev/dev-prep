@@ -17,7 +17,8 @@ import {
   YAxis,
 } from "recharts";
 
-import { apiClient } from "@/lib/api";
+import { apiClient, type Company } from "@/lib/api";
+import { useState as useReactState } from "react";
 
 type ApplicationRow = { id: string; status: string; appliedAt: string; jobId?: string | null };
 type InterviewRow = { id: string; status: string; createdAt: string; overallScore?: number | null; applicationId?: string | null; jobId?: string | null };
@@ -65,6 +66,8 @@ export default function CandidateDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [interviews, setInterviews] = useState<InterviewRow[]>([]);
+  const [followedCompanies, setFollowedCompanies] = useReactState<Company[]>([]);
+  const [realtimeMessages] = useReactState<string[]>([]);
 
   useEffect(() => {
     let abort = false;
@@ -76,14 +79,16 @@ export default function CandidateDashboard() {
         const token = await getToken();
         if (!token) return;
 
-        const [appsResponse, intsResponse] = await Promise.all([
+        const [appsResponse, intsResponse, followsResponse] = await Promise.all([
           apiClient.getFilteredApplications({ page: 1, pageSize: 200 }, token),
           apiClient.getFilteredInterviews({ page: 1, pageSize: 200 }, token),
+          apiClient.getFollowedCompanies({ page: 1, pageSize: 100 }, token),
         ]);
         if (abort) return;
 
         setApplications((appsResponse?.data || []) as ApplicationRow[]);
         setInterviews((intsResponse?.data || []) as InterviewRow[]);
+        setFollowedCompanies((followsResponse?.data || []) as Company[]);
       } catch (e) {
         if (abort) return;
         console.error(e);
@@ -97,6 +102,8 @@ export default function CandidateDashboard() {
       abort = true;
     };
   }, [getToken, isLoaded]);
+
+  // WebSocket realtime notifications have been removed.
 
   const appsByStatus = useMemo(() => countBy(applications, "status"), [applications]);
   const intsByStatus = useMemo(() => countBy(interviews, "status"), [interviews]);
@@ -315,6 +322,22 @@ export default function CandidateDashboard() {
 
   return (
     <div className="space-y-4">
+      {realtimeMessages.length > 0 && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-primary">
+              Company updates
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-xs text-foreground">
+            {realtimeMessages.map((msg, idx) => (
+              <div key={`${msg}-${idx}`} className="truncate">
+                {msg}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Dashboard</CardTitle>

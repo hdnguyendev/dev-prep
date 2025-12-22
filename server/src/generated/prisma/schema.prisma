@@ -119,6 +119,7 @@ model CandidateProfile {
   savedJobs      SavedJob[]
   companyReviews CompanyReview[]
   interviews     Interview[]
+  companyFollows CompanyFollow[]
 }
 
 // Profile dành cho nhà tuyển dụng
@@ -243,6 +244,7 @@ model Company {
   recruiters RecruiterProfile[]
   jobs       Job[]
   reviews    CompanyReview[]
+  followers  CompanyFollow[]
 }
 
 // Đánh giá công ty từ candidate
@@ -275,6 +277,25 @@ model CompanyReview {
   @@index([companyId])
   @@index([candidateId])
   @@index([rating])
+}
+
+// Candidate follows company to receive updates/notifications
+model CompanyFollow {
+  id          String           @id @default(uuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Future notification preferences
+  notifyOnNewJob    Boolean @default(true)
+  notifyOnJobUpdate Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([candidateId, companyId])
+  @@index([companyId])
+  @@index([candidateId])
 }
 
 model Job {
