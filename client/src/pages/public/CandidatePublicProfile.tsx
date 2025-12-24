@@ -67,7 +67,13 @@ type CandidateProfile = {
   github?: string | null;
   address?: string | null;
   cvUrl?: string | null;
-  user?: { firstName?: string | null; lastName?: string | null; email?: string; avatarUrl?: string | null };
+  user?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string;
+    notificationEmail?: string | null;
+    avatarUrl?: string | null;
+  };
   skills?: CandidateSkill[];
   experiences?: Experience[];
   educations?: Education[];
@@ -235,10 +241,10 @@ export default function CandidatePublicProfile() {
                     {profile.address}
                   </div>
                 )}
-                {profile.user?.email && (
+                {profile.user?.notificationEmail && (
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                     <Mail className="h-3.5 w-3.5" />
-                    {profile.user.email}
+                    {profile.user.notificationEmail}
                   </div>
                 )}
               </div>

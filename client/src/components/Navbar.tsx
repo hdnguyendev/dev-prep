@@ -29,7 +29,7 @@ const isPlaceholderCandidateName = (firstName?: string | null, lastName?: string
   const em = (email || "").trim().toLowerCase();
   if (!fn || !ln) return true;
   if (fn.toLowerCase() === "candidate" && ln.toLowerCase() === "user") return true;
-  if (em.startsWith("clerk_user_") || em.endsWith("@candidate.temp")) return true;
+  if (em.startsWith("clerk_user_") || em.endsWith("@devprep.com")) return true;
   return false;
 };
 

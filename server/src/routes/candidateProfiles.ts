@@ -71,7 +71,14 @@ candidateProfilesRoutes.get("/public/candidate-profiles/:id", async (c) => {
       profile = await prisma.candidateProfile.findFirst({
         where: { id, isPublic: true },
         include: {
-          user: { select: { firstName: true, lastName: true, avatarUrl: true } },
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              notificationEmail: true,
+            },
+          },
           skills: { include: { skill: true } },
           experiences: true,
           educations: true,
@@ -84,15 +91,22 @@ candidateProfilesRoutes.get("/public/candidate-profiles/:id", async (c) => {
       if (dbError?.message?.includes('projects') || dbError?.code === 'P2021') {
         console.log("⚠️ Projects relation might not exist, trying without it...");
         profile = await prisma.candidateProfile.findFirst({
-      where: { id, isPublic: true },
-      include: {
-        user: { select: { firstName: true, lastName: true, avatarUrl: true } },
-        skills: { include: { skill: true } },
-        experiences: true,
-        educations: true,
+          where: { id, isPublic: true },
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+                notificationEmail: true,
+              },
+            },
+            skills: { include: { skill: true } },
+            experiences: true,
+            educations: true,
             // projects: true, // Skip projects if table doesn't exist
-      },
-    });
+          },
+        });
       } else {
         throw dbError;
       }
@@ -220,6 +234,80 @@ candidateProfilesRoutes.get("/candidate-profiles/:id/view", async (c) => {
       message: "Failed to fetch profile",
       error: process.env.NODE_ENV === "development" ? error?.message : undefined
     }, 500);
+  }
+});
+
+/**
+ * Candidate updates their own profile (headline, bio, links, isPublic, etc.)
+ */
+candidateProfilesRoutes.put("/candidate-profiles/:id", async (c) => {
+  try {
+    const { id } = c.req.param();
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.error || "Authentication failed" }, 401);
+    }
+    const user = result.user;
+
+    if (!user.candidateProfile || user.candidateProfile.id !== id) {
+      return c.json({ success: false, message: "Forbidden" }, 403);
+    }
+
+    const body = await c.req.json();
+    const {
+      headline,
+      bio,
+      website,
+      linkedin,
+      github,
+      address,
+      cvUrl,
+      isPublic,
+      notificationEmail,
+    } = body as {
+      headline?: string | null;
+      bio?: string | null;
+      website?: string | null;
+      linkedin?: string | null;
+      github?: string | null;
+      address?: string | null;
+      cvUrl?: string | null;
+      isPublic?: boolean;
+      notificationEmail?: string | null;
+    };
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const profile = await tx.candidateProfile.update({
+        where: { id },
+        data: {
+          headline: headline ?? null,
+          bio: bio ?? null,
+          website: website ?? null,
+          linkedin: linkedin ?? null,
+          github: github ?? null,
+          address: address ?? null,
+          cvUrl: cvUrl ?? null,
+          ...(typeof isPublic === "boolean" ? { isPublic } : {}),
+        },
+      });
+
+      if (typeof notificationEmail === "string") {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { notificationEmail: notificationEmail.trim() || null },
+        });
+      }
+
+      return profile;
+    });
+
+    return c.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Update candidate profile error:", error);
+    return c.json(
+      { success: false, message: "Failed to update candidate profile" },
+      500
+    );
   }
 });
 

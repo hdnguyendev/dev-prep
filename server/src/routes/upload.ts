@@ -71,16 +71,18 @@ uploadRoutes.post("/resume", async (c) => {
 
     return c.json({
       success: true,
-      url: fileUrl,
-      filename,
-      size: file.size,
-      type: file.type,
+      data: {
+        url: fileUrl,
+        filename,
+        size: file.size,
+        type: file.type,
+      },
     });
   } catch (error) {
     console.error("Upload error:", error);
-    return c.json({ 
-      success: false, 
-      message: "Failed to upload file" 
+    return c.json({
+      success: false,
+      message: "Failed to upload file",
     }, 500);
   }
 });
@@ -130,16 +132,18 @@ uploadRoutes.post("/image", async (c) => {
 
     return c.json({
       success: true,
-      url: fileUrl,
-      filename,
-      size: file.size,
-      type: file.type,
+      data: {
+        url: fileUrl,
+        filename,
+        size: file.size,
+        type: file.type,
+      },
     });
   } catch (error) {
     console.error("Upload error:", error);
-    return c.json({ 
-      success: false, 
-      message: "Failed to upload image" 
+    return c.json({
+      success: false,
+      message: "Failed to upload image",
     }, 500);
   }
 });

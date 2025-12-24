@@ -128,6 +128,7 @@ exports.Prisma.UserScalarFieldEnum = {
   lastName: 'lastName',
   phone: 'phone',
   avatarUrl: 'avatarUrl',
+  notificationEmail: 'notificationEmail',
   role: 'role',
   isVerified: 'isVerified',
   isActive: 'isActive',
@@ -431,7 +432,8 @@ exports.Prisma.UserOrderByRelevanceFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   phone: 'phone',
-  avatarUrl: 'avatarUrl'
+  avatarUrl: 'avatarUrl',
+  notificationEmail: 'notificationEmail'
 };
 
 exports.Prisma.CandidateProfileOrderByRelevanceFieldEnum = {

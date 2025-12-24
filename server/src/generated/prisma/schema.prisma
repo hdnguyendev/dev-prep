@@ -63,10 +63,12 @@ model User {
   email        String @unique
   passwordHash String
 
-  firstName String
-  lastName  String
-  phone     String?
-  avatarUrl String?
+  firstName         String
+  lastName          String
+  phone             String?
+  avatarUrl         String?
+  /// Email dùng để nhận notification (có thể khác email đăng nhập / email Clerk)
+  notificationEmail String?
 
   role UserRole @default(CANDIDATE)
 

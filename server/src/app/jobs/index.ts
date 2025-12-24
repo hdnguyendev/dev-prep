@@ -1,5 +1,6 @@
 import prisma from "@server/app/db/prisma";
 import { getNewJobMessage, getJobClosedMessage } from "@server/utils/notificationMessages";
+import { sendNewJobEmailToFollower } from "@server/app/services/email";
 
 type JobInput = {
   title: string;
@@ -55,7 +56,21 @@ export const createJob = async (payload: JobInput) => {
     const companyId = String(newJob.companyId);
     const follows = await prisma.companyFollow.findMany({
       where: { companyId },
-      select: { candidate: { select: { userId: true } } },
+      select: {
+        candidate: {
+          select: {
+            userId: true,
+            user: {
+              select: {
+                email: true,
+                notificationEmail: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     const notificationsData =
@@ -73,6 +88,37 @@ export const createJob = async (payload: JobInput) => {
     if (notificationsData.length > 0) {
       await prisma.notification.createMany({ data: notificationsData });
     }
+
+    // Gửi email cho candidate follow company (fire-and-forget, không block request)
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { name: true },
+    });
+
+    const jobLink = `/jobs/${newJob.id}`;
+
+    Promise.allSettled(
+      (follows || [])
+        .map((f) => f.candidate)
+        .filter((c): c is NonNullable<typeof c> => Boolean(c))
+        .map((candidate) => {
+          const email =
+            candidate.user?.notificationEmail || candidate.user?.email;
+          if (!email) return null;
+          const candidateName = `${candidate.user?.firstName ?? ""} ${candidate.user?.lastName ?? ""}`.trim() || undefined;
+
+          return sendNewJobEmailToFollower({
+            to: email,
+            candidateName,
+            jobTitle: newJob.title,
+            companyName: company?.name ?? null,
+            jobLink: (process.env.APP_BASE_URL || process.env.VITE_APP_URL || "http://localhost:5173") + jobLink,
+          });
+        })
+        .filter((p): p is Promise<void> => Boolean(p))
+    ).catch((err) => {
+      console.error("[EMAIL:NewJobFollower] Error sending follower emails:", err);
+    });
   }
 
   return newJob;
@@ -97,7 +143,21 @@ export const updateJob = async (id: string, payload: JobInput) => {
   const companyId = String(updatedJob.companyId);
   const follows = await prisma.companyFollow.findMany({
     where: { companyId },
-    select: { candidate: { select: { userId: true } } },
+    select: {
+      candidate: {
+        select: {
+          userId: true,
+          user: {
+            select: {
+              email: true,
+              notificationEmail: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   // Transition from DRAFT/CLOSED -> PUBLISHED => treat as new job posted
@@ -120,6 +180,37 @@ export const updateJob = async (id: string, payload: JobInput) => {
     if (notificationsData.length > 0) {
       await prisma.notification.createMany({ data: notificationsData });
     }
+
+    // Gửi email giống như createJob khi job được publish từ DRAFT/CLOSED
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { name: true },
+    });
+
+    const jobLink = `/jobs/${updatedJob.id}`;
+
+    Promise.allSettled(
+      (follows || [])
+        .map((f) => f.candidate)
+        .filter((c): c is NonNullable<typeof c> => Boolean(c))
+        .map((candidate) => {
+          const email =
+            candidate.user?.notificationEmail || candidate.user?.email;
+          if (!email) return null;
+          const candidateName = `${candidate.user?.firstName ?? ""} ${candidate.user?.lastName ?? ""}`.trim() || undefined;
+
+          return sendNewJobEmailToFollower({
+            to: email,
+            candidateName,
+            jobTitle: updatedJob.title,
+            companyName: company?.name ?? null,
+            jobLink: (process.env.APP_BASE_URL || process.env.VITE_APP_URL || "http://localhost:5173") + jobLink,
+          });
+        })
+        .filter((p): p is Promise<void> => Boolean(p))
+    ).catch((err) => {
+      console.error("[EMAIL:NewJobFollower] Error sending follower emails on publish:", err);
+    });
   }
   // Transition to CLOSED => job closed notification
   else if (existingJob.status !== "CLOSED" && updatedJob.status === "CLOSED") {

@@ -98,6 +98,7 @@ authRoutes.post("/register", async (c) => {
     const user = await prisma.user.create({
       data: {
         email,
+        notificationEmail: email,
         passwordHash,
         firstName,
         lastName,
@@ -135,6 +136,42 @@ authRoutes.post("/register", async (c) => {
       success: false, 
       message: error instanceof Error ? error.message : "Registration failed" 
     }, 500);
+  }
+});
+
+/**
+ * Update avatar URL for authenticated candidate (Clerk)
+ */
+authRoutes.put("/avatar", async (c) => {
+  try {
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json(
+        { success: false, message: result.error || "Authentication failed" },
+        401
+      );
+    }
+    const user = result.user;
+
+    const body = await c.req.json();
+    const avatarUrl = (body?.avatarUrl as string | undefined)?.trim() || null;
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        avatarUrl: true,
+      },
+    });
+
+    return c.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Update avatar error:", error);
+    return c.json(
+      { success: false, message: "Failed to update avatar" },
+      500
+    );
   }
 });
 
@@ -429,6 +466,7 @@ authRoutes.get("/me", async (c) => {
       success: true, 
       id: user.id,
       email: user.email,
+      notificationEmail: user.notificationEmail,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,

@@ -1,5 +1,9 @@
 import { Hono } from "hono";
 import prisma from "../app/db/prisma";
+import {
+  APPROVED_APPLICATION_STATUSES,
+  sendApplicationStatusEmail,
+} from "../app/services/email";
 import { getOrCreateClerkUser } from "../utils/clerkAuth";
 
 const applicationRoutes = new Hono();
@@ -147,7 +151,18 @@ applicationRoutes.patch("/:id/status", async (c) => {
       data: { status },
       include: {
         job: { include: { company: true } },
-        candidate: { include: { user: true } },
+        candidate: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                notificationEmail: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -163,6 +178,35 @@ applicationRoutes.patch("/:id/status", async (c) => {
       });
     } catch (historyError) {
       console.error("Failed to create application history:", historyError);
+    }
+
+    // Gửi email cho ứng viên nếu status mới nằm trong nhóm "được duyệt" hoặc bị từ chối
+    try {
+      if (
+        (APPROVED_APPLICATION_STATUSES.includes(status as any) ||
+          status === "REJECTED") &&
+        updated.candidate?.user
+      ) {
+        const targetEmail =
+          updated.candidate.user.notificationEmail || updated.candidate.user.email;
+
+        if (!targetEmail) {
+          console.warn(
+            "[EMAIL:ApplicationStatus] Missing both notificationEmail and email for user"
+          );
+          return;
+        }
+
+        await sendApplicationStatusEmail({
+          to: targetEmail,
+          candidateName: `${updated.candidate.user.firstName} ${updated.candidate.user.lastName}`.trim(),
+          jobTitle: updated.job?.title ?? undefined,
+          newStatus: status as any,
+        });
+      }
+    } catch (emailError) {
+      // Không được làm fail request nếu gửi email lỗi
+      console.error("Failed to send application status email:", emailError);
     }
 
     return c.json({ success: true, data: updated });

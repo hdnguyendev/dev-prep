@@ -516,6 +516,14 @@ class ApiClient {
     }, token);
   }
 
+  // Auth/profile endpoints
+  updateMyAvatar(avatarUrl: string | null, token?: string) {
+    return this.request<{ id: string; avatarUrl: string | null }>(`/auth/avatar`, {
+      method: "PUT",
+      body: JSON.stringify({ avatarUrl }),
+    }, token);
+  }
+
   // Job endpoints with include
   getJobWithInclude(jobId: string, include?: string, token?: string) {
     const params = include ? { include } : undefined;

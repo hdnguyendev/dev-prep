@@ -19,7 +19,7 @@ export async function getOrCreateClerkUser(c: Context) {
   
   // Try different field names that Clerk might use
   const sessionClaims = auth.sessionClaims as any;
-  const email = sessionClaims?.email as string || `clerk_${clerkUserId}@candidate.temp`;
+  const email = sessionClaims?.email as string || `clerk_${clerkUserId}@devprep.com`;
   // Use default names - user will update via profile form
   const firstName = "Candidate";
   const lastName = "User";

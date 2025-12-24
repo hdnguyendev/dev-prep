@@ -29,8 +29,12 @@ import {
   Loader2,
   GraduationCap,
   Code,
-  ExternalLink
+  ExternalLink,
+  Mail,
+  Camera,
+  Search,
 } from "lucide-react";
+import { apiClient } from "@/lib/api";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
@@ -109,7 +113,13 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
   const [cvUploadError, setCvUploadError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
-  const [user, setUser] = useState<{ firstName?: string | null; lastName?: string | null; email?: string } | null>(null);
+  const [user, setUser] = useState<{
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string;
+    notificationEmail?: string | null;
+    avatarUrl?: string | null;
+  } | null>(null);
   const [skills, setSkills] = useState<SkillOption[]>([]);
 
   // Draft form
@@ -122,9 +132,12 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
   const [github, setGithub] = useState("");
   const [address, setAddress] = useState("");
   const [cvUrl, setCvUrl] = useState("");
+  const [notificationEmail, setNotificationEmail] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [initialSkillIds, setInitialSkillIds] = useState<string[]>([]);
+  const [skillSearchQuery, setSkillSearchQuery] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [savingSkills, setSavingSkills] = useState(false);
   const [skillsError, setSkillsError] = useState<string | null>(null);
@@ -147,6 +160,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
     address: string;
     firstName: string;
     lastName: string;
+    notificationEmail: string;
   } | null>(null);
 
   // Experience form
@@ -237,6 +251,8 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
           firstName: me.firstName,
           lastName: me.lastName,
           email: me.email,
+          notificationEmail: me.notificationEmail ?? null,
+          avatarUrl: me.avatarUrl ?? null,
         });
         
         // Set name fields for editing
@@ -258,6 +274,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         setLinkedin(cp.linkedin ?? "");
         setGithub(cp.github ?? "");
         setAddress(cp.address ?? "");
+        setNotificationEmail(me.notificationEmail ?? "");
         setCvUrl(cp.cvUrl ?? "");
         setIsPublic(Boolean(cp.isPublic));
         const ids = (cp.skills || [])
@@ -276,6 +293,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
           address: cp.address ?? "",
           firstName: me.firstName || "",
           lastName: me.lastName || "",
+          notificationEmail: (me.notificationEmail ?? me.email ?? "").trim(),
         };
 
         // Clear forms on load
@@ -477,6 +495,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         address: address.trim() || null,
         cvUrl: cvUrl.trim() || null,
         isPublic,
+        notificationEmail: notificationEmail.trim() || null,
       };
 
       const res = await fetch(`${API_BASE}/candidate-profiles/${encodeURIComponent(profile.id)}`, {
@@ -509,6 +528,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
             address: address.trim() || "",
             firstName: firstName.trim() || "",
             lastName: lastName.trim() || "",
+            notificationEmail: notificationEmail.trim() || "",
           };
         }
       }
@@ -533,11 +553,12 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       address.trim() !== initial.address ||
       firstName.trim() !== initial.firstName ||
       lastName.trim() !== initial.lastName ||
+      notificationEmail.trim() !== initial.notificationEmail ||
       expEditingId !== null ||
       eduEditingId !== null ||
       projEditingId !== null
     );
-  }, [headline, bio, website, linkedin, github, address, firstName, lastName, expEditingId, eduEditingId, projEditingId]);
+  }, [headline, bio, website, linkedin, github, address, firstName, lastName, notificationEmail, expEditingId, eduEditingId, projEditingId]);
 
   // Handle browser navigation away
   useEffect(() => {
@@ -953,20 +974,48 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          {clerkUser?.imageUrl ? (
-            <div className="relative">
-              <img 
-                src={clerkUser.imageUrl} 
-                alt="avatar" 
-                className="h-16 w-16 rounded-full object-cover border-4 border-primary/20 shadow-lg" 
+          <div className="relative h-16 w-16">
+            <img 
+              src={user?.avatarUrl || clerkUser?.imageUrl || "/default-avatar.png"} 
+              alt="avatar" 
+              className="h-16 w-16 rounded-full object-cover border-4 border-primary/20 shadow-lg" 
+            />
+            <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-green-500 border-2 border-background"></div>
+            <label className="absolute -bottom-1 -left-1 h-7 w-7 rounded-full bg-background border border-border flex items-center justify-center cursor-pointer shadow-sm hover:bg-accent transition">
+              <Camera className="h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    setAvatarUploading(true);
+                    const token = await getToken();
+                    const uploadRes = await apiClient.uploadImage(file, token ?? undefined);
+                    if (!uploadRes.success || !uploadRes.data?.url) {
+                      alert(uploadRes.message || "Failed to upload avatar");
+                      return;
+                    }
+                    await apiClient.updateMyAvatar(uploadRes.data.url, token ?? undefined);
+                    setUser((prev) => prev ? { ...prev, avatarUrl: uploadRes.data.url } : prev);
+                  } catch (err) {
+                    console.error("Upload avatar failed", err);
+                    alert("Failed to upload avatar");
+                  } finally {
+                    setAvatarUploading(false);
+                    e.target.value = "";
+                  }
+                }}
               />
-              <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-green-500 border-2 border-background"></div>
-            </div>
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center border-4 border-primary/20 shadow-lg">
-              <User className="h-8 w-8 text-white" />
-            </div>
-          )}
+            </label>
+            {avatarUploading && (
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                <Loader2 className="h-4 w-4 text-white animate-spin" />
+              </div>
+            )}
+          </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">
               {user?.firstName && user?.lastName 
@@ -974,12 +1023,12 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                 : user?.email || clerkUser?.emailAddresses?.[0]?.emailAddress || "My Profile"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">Manage your professional profile and CV</p>
+          </div>
         </div>
-      </div>
 
         {/* Public Profile Toggle - Compact */}
         <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">
               <span className="text-sm font-medium text-foreground">Profile Visibility</span>
               <span className={`text-xs transition-colors ${
@@ -988,12 +1037,31 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                 {isPublic ? "Visible to recruiters" : "Only you can see"}
               </span>
             </div>
-            <button
+              <button
                 type="button"
-              role="switch"
-              aria-checked={isPublic}
-              aria-label="Toggle profile visibility"
-                onClick={() => setIsPublic((v) => !v)}
+                role="switch"
+                aria-checked={isPublic}
+                aria-label="Toggle profile visibility"
+                onClick={async () => {
+                  if (!profile) return;
+                  const token = await getToken();
+                  if (!token) return;
+                  const next = !isPublic;
+                  setIsPublic(next);
+                  try {
+                    await fetch(`${API_BASE}/candidate-profiles/${encodeURIComponent(profile.id)}`, {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ isPublic: next }),
+                    });
+                  } catch (err) {
+                    console.error("Failed to toggle public profile", err);
+                    setIsPublic(!next);
+                  }
+                }}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 isPublic 
                   ? "bg-green-500 hover:bg-green-600 focus:ring-green-500 shadow-lg shadow-green-500/50" 
@@ -1048,7 +1116,6 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
               </Button>
             </div>
           )}
-
 
       {loading ? (
         <Card>
@@ -1183,18 +1250,43 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                   )}
                 </div>
 
-                {/* Address Section */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    Address
-                  </Label>
-                  <Input 
-                    value={address} 
-                    onChange={(e) => setAddress(e.target.value)} 
-                    placeholder="e.g. Ho Chi Minh City, Vietnam" 
-                    className="bg-background"
-                  />
+                {/* Address + Email Section (7 / 3 layout on desktop) */}
+                <div className="grid gap-4 md:grid-cols-12">
+                  <div className="space-y-2 md:col-span-7">
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      Address
+                    </Label>
+                    <Input 
+                      value={address} 
+                      onChange={(e) => setAddress(e.target.value)} 
+                      placeholder="e.g. Ho Chi Minh City, Vietnam" 
+                      className="bg-background"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-5">
+                    <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <span className="text-foreground text-sm flex items-center gap-1">
+                          <Mail className="h-3.5 w-3.5 text-primary" />
+                          Email
+                        </span>
+                        <span
+                          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/40 text-[10px] text-muted-foreground cursor-help"
+                          title="This email will be used for job & application notifications"
+                        >
+                          i
+                        </span>
+                      </div>
+                    </Label>
+                    <Input
+                      type="email"
+                      value={notificationEmail}
+                      onChange={(e) => setNotificationEmail(e.target.value)}
+                      placeholder="your.email@example.com"
+                      className="bg-background"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -1367,12 +1459,28 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                 <CardDescription>Select your technical skills</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-6">
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search skills..."
+                    value={skillSearchQuery}
+                    onChange={(e) => setSkillSearchQuery(e.target.value)}
+                    className="pl-9 bg-background"
+                  />
+                </div>
                 <div className="text-sm text-muted-foreground">
                   Click on skills to add or remove them from your profile
                 </div>
                 <div className="max-h-[400px] overflow-y-auto space-y-2">
                   <div className="flex flex-wrap gap-2">
-                    {skills.map((s) => {
+                    {skills
+                      .filter((s) => 
+                        skillSearchQuery.trim() === "" || 
+                        s.name.toLowerCase().includes(skillSearchQuery.toLowerCase())
+                      )
+                      .map((s) => {
                       const active = selectedSkillIds.includes(s.id);
                       return (
                         <Badge
@@ -1390,9 +1498,12 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                         </Badge>
                       );
                     })}
-                    {skills.length === 0 && (
+                    {skills.filter((s) => 
+                      skillSearchQuery.trim() === "" || 
+                      s.name.toLowerCase().includes(skillSearchQuery.toLowerCase())
+                    ).length === 0 && (
                       <div className="text-sm text-muted-foreground py-4 text-center w-full">
-                        No skills available.
+                        {skillSearchQuery.trim() ? "No skills found matching your search." : "No skills available."}
                       </div>
                     )}
                   </div>
