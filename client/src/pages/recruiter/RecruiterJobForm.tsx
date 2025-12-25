@@ -16,8 +16,6 @@ import {
   FileText,
   Clock,
   Plus,
-  ChevronDown,
-  ChevronUp,
   Search,
 } from "lucide-react";
 
@@ -48,6 +46,8 @@ type Job = {
     name: string;
     logo?: string;
   };
+  skills?: Array<{ skillId: string; skill?: { id: string; name: string } }>;
+  categories?: Array<{ categoryId: string; category?: { id: string; name: string } }>;
 };
 
 type JobFormData = {

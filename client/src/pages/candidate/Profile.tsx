@@ -151,6 +151,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
   // Unsaved changes detection
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [saveVersion, setSaveVersion] = useState(0); // Force re-render after save
   const initialFormDataRef = useRef<{
     headline: string;
     bio: string;
@@ -293,7 +294,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
           address: cp.address ?? "",
           firstName: me.firstName || "",
           lastName: me.lastName || "",
-          notificationEmail: (me.notificationEmail ?? me.email ?? "").trim(),
+          notificationEmail: me.notificationEmail ?? "",
         };
 
         // Clear forms on load
@@ -364,11 +365,11 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         body: form,
       });
       const json = await res.json().catch(() => null);
-      if (!json?.success || !json?.url) {
+      if (!json?.success || !json?.data?.url) {
         setCvUploadError(json?.message || "Failed to upload CV.");
         return null;
       }
-      return String(json.url);
+      return String(json.data.url);
     } catch (e) {
       console.error(e);
       setCvUploadError("Failed to upload CV.");
@@ -515,22 +516,48 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       const meRes = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
       const me = await meRes.json();
       if (me?.success && me?.candidateProfile) {
-        setProfile(me.candidateProfile as CandidateProfile);
+        const cp = me.candidateProfile as CandidateProfile;
+        setProfile(cp);
         
-        // Update initial form data after successful save
-        if (initialFormDataRef.current) {
-          initialFormDataRef.current = {
-            headline: headline.trim() || "",
-            bio: bio.trim() || "",
-            website: website.trim() || "",
-            linkedin: linkedin.trim() || "",
-            github: github.trim() || "",
-            address: address.trim() || "",
-            firstName: firstName.trim() || "",
-            lastName: lastName.trim() || "",
-            notificationEmail: notificationEmail.trim() || "",
-          };
-        }
+        // Prepare server values - these are the actual saved values from server
+        const serverValues = {
+          headline: cp.headline ?? "",
+          bio: cp.bio ?? "",
+          website: cp.website ?? "",
+          linkedin: cp.linkedin ?? "",
+          github: cp.github ?? "",
+          address: cp.address ?? "",
+          firstName: me.firstName || "",
+          lastName: me.lastName || "",
+          notificationEmail: me.notificationEmail ?? "",
+        };
+        
+        // Update initial form data FIRST with server values
+        // This ensures hasUnsavedChanges will correctly detect no changes after save
+        initialFormDataRef.current = {
+          headline: serverValues.headline,
+          bio: serverValues.bio,
+          website: serverValues.website,
+          linkedin: serverValues.linkedin,
+          github: serverValues.github,
+          address: serverValues.address,
+          firstName: serverValues.firstName,
+          lastName: serverValues.lastName,
+          notificationEmail: serverValues.notificationEmail,
+        };
+        
+        // Then update all form states from server response to match
+        // This ensures state matches what was actually saved on the server
+        setHeadline(serverValues.headline);
+        setBio(serverValues.bio);
+        setWebsite(serverValues.website);
+        setLinkedin(serverValues.linkedin);
+        setGithub(serverValues.github);
+        setAddress(serverValues.address);
+        setNotificationEmail(serverValues.notificationEmail);
+        
+        // Force re-render to ensure useMemo recalculates hasUnsavedChanges
+        setSaveVersion(prev => prev + 1);
       }
     } catch (err) {
       console.error("Save profile failed", err);
@@ -545,20 +572,20 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
     if (!initialFormDataRef.current) return false;
     const initial = initialFormDataRef.current;
     return (
-      headline.trim() !== initial.headline ||
-      bio.trim() !== initial.bio ||
-      website.trim() !== initial.website ||
-      linkedin.trim() !== initial.linkedin ||
-      github.trim() !== initial.github ||
-      address.trim() !== initial.address ||
-      firstName.trim() !== initial.firstName ||
-      lastName.trim() !== initial.lastName ||
-      notificationEmail.trim() !== initial.notificationEmail ||
+      headline.trim() !== (initial.headline || "").trim() ||
+      bio.trim() !== (initial.bio || "").trim() ||
+      website.trim() !== (initial.website || "").trim() ||
+      linkedin.trim() !== (initial.linkedin || "").trim() ||
+      github.trim() !== (initial.github || "").trim() ||
+      address.trim() !== (initial.address || "").trim() ||
+      firstName.trim() !== (initial.firstName || "").trim() ||
+      lastName.trim() !== (initial.lastName || "").trim() ||
+      notificationEmail.trim() !== (initial.notificationEmail || "").trim() ||
       expEditingId !== null ||
       eduEditingId !== null ||
       projEditingId !== null
     );
-  }, [headline, bio, website, linkedin, github, address, firstName, lastName, notificationEmail, expEditingId, eduEditingId, projEditingId]);
+  }, [headline, bio, website, linkedin, github, address, firstName, lastName, notificationEmail, expEditingId, eduEditingId, projEditingId, saveVersion]);
 
   // Handle browser navigation away
   useEffect(() => {
@@ -1016,53 +1043,58 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
               </div>
             )}
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">
               {user?.firstName && user?.lastName 
                 ? `${user.firstName} ${user.lastName}` 
                 : user?.email || clerkUser?.emailAddresses?.[0]?.emailAddress || "My Profile"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage your professional profile and CV</p>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">Manage your professional profile and CV</p>
           </div>
         </div>
 
-        {/* Public Profile Toggle - Compact */}
-        <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end">
+        {/* Public Profile Toggle - Responsive */}
+        <div className="flex flex-col items-start md:items-end gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-between md:justify-end">
+            <div className="flex flex-col items-start md:items-end min-w-0 flex-1 md:flex-none">
               <span className="text-sm font-medium text-foreground">Profile Visibility</span>
               <span className={`text-xs transition-colors ${
                 isPublic ? "text-green-600 dark:text-green-400 font-medium" : "text-muted-foreground"
               }`}>
-                {isPublic ? "Visible to recruiters" : "Only you can see"}
+                <span className="hidden md:inline">
+                  {isPublic ? "Visible to recruiters" : "Only you can see"}
+                </span>
+                <span className="md:hidden">
+                  {isPublic ? "Public" : "Private"}
+                </span>
               </span>
             </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isPublic}
-                aria-label="Toggle profile visibility"
-                onClick={async () => {
-                  if (!profile) return;
-                  const token = await getToken();
-                  if (!token) return;
-                  const next = !isPublic;
-                  setIsPublic(next);
-                  try {
-                    await fetch(`${API_BASE}/candidate-profiles/${encodeURIComponent(profile.id)}`, {
-                      method: "PUT",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({ isPublic: next }),
-                    });
-                  } catch (err) {
-                    console.error("Failed to toggle public profile", err);
-                    setIsPublic(!next);
-                  }
-                }}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPublic}
+              aria-label="Toggle profile visibility"
+              onClick={async () => {
+                if (!profile) return;
+                const token = await getToken();
+                if (!token) return;
+                const next = !isPublic;
+                setIsPublic(next);
+                try {
+                  await fetch(`${API_BASE}/candidate-profiles/${encodeURIComponent(profile.id)}`, {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ isPublic: next }),
+                  });
+                } catch (err) {
+                  console.error("Failed to toggle public profile", err);
+                  setIsPublic(!next);
+                }
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 flex-shrink-0 ${
                 isPublic 
                   ? "bg-green-500 hover:bg-green-600 focus:ring-green-500 shadow-lg shadow-green-500/50" 
                   : "bg-muted hover:bg-muted/80 focus:ring-muted"
@@ -1080,13 +1112,13 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
             </button>
           </div>
           {isPublic && (
-            <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 animate-in fade-in slide-in-from-top-2 duration-300">
+            <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 animate-in fade-in slide-in-from-top-2 duration-300 self-start md:self-end">
               <Eye className="h-3 w-3 mr-1 animate-pulse" />
               Public
-              </Badge>
+            </Badge>
           )}
-            </div>
-          </div>
+        </div>
+      </div>
 
       {/* Public Profile Link - Show when public */}
       {isPublic && profile?.id && (

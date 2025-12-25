@@ -9,9 +9,7 @@ import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import {
   BriefcaseBusiness,
   Plus,
-  Edit,
   Trash2,
-  Eye,
   CheckCircle2,
   Clock,
   XCircle,
@@ -20,7 +18,6 @@ import {
   Building2,
   ClipboardList,
   DollarSign,
-  Users,
   Filter,
   X,
   ArrowUpDown,
@@ -252,11 +249,6 @@ const RecruiterJobs = () => {
     navigate("/recruiter/jobs/new");
   };
 
-  // Navigate to edit page
-  const handleEdit = (job: Job) => {
-    navigate(`/recruiter/jobs/${job.id}/edit`);
-  };
-
   // Delete job
   const handleDeleteClick = (job: Job) => {
     setJobToDelete(job);
@@ -298,11 +290,6 @@ const RecruiterJobs = () => {
   };
 
   // Helper functions
-  const stripHtmlTags = (html: string | null | undefined): string => {
-    if (!html) return "";
-    return html.replace(/<[^>]*>/g, "").trim();
-  };
-
   const formatSalary = (job: Job): string => {
     if (!job.salaryMin && !job.salaryMax) return "—";
     const currency = job.salaryCurrency || "USD";
@@ -549,7 +536,7 @@ const RecruiterJobs = () => {
                   <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
                     <span className="text-xs font-medium text-muted-foreground">Active filters:</span>
                     {search && (
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge variant="outline" className="gap-1">
                         Search: {search}
                         <button
                           onClick={() => {
@@ -563,7 +550,7 @@ const RecruiterJobs = () => {
                       </Badge>
                     )}
                     {statusFilter && (
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge variant="outline" className="gap-1">
                         Status: {statusFilter}
                         <button
                           onClick={() => setStatusFilter("")}
@@ -574,7 +561,7 @@ const RecruiterJobs = () => {
                       </Badge>
                     )}
                     {employmentTypeFilter && (
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge variant="outline" className="gap-1">
                         Type: {employmentTypeFilter.replace(/_/g, " ")}
                         <button
                           onClick={() => setEmploymentTypeFilter("")}
@@ -585,7 +572,7 @@ const RecruiterJobs = () => {
                       </Badge>
                     )}
                     {locationTypeFilter && (
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge variant="outline" className="gap-1">
                         Location: {locationTypeFilter.replace(/_/g, " ")}
                         <button
                           onClick={() => setLocationTypeFilter("")}
@@ -624,7 +611,7 @@ const RecruiterJobs = () => {
                       <tr
                         key={job.id}
                         className="hover:bg-muted/40 transition cursor-pointer"
-                        onClick={() => handleEdit(job)}
+                        onClick={() => navigate(`/recruiter/jobs/${job.id}/edit`)}
                       >
                         <td className="px-4 py-3">
                           <div className="space-y-1.5">
@@ -687,7 +674,7 @@ const RecruiterJobs = () => {
                               <ClipboardList className="h-4 w-4" />
                               <span>Applications</span>
                               <Badge 
-                                variant="secondary" 
+                                variant="outline" 
                                 className="ml-1 bg-primary-foreground/30 text-primary-foreground border-0 font-bold min-w-[24px] h-5 flex items-center justify-center"
                               >
                                 {applicationsCounts[job.id] ?? 0}
@@ -754,7 +741,6 @@ const RecruiterJobs = () => {
         description={jobToDelete ? `Are you sure you want to delete "${jobToDelete.title}"? This action cannot be undone.` : "This action cannot be undone."}
         confirmText="Delete"
         cancelText="Cancel"
-        variant="destructive"
         loading={deleting}
       />
     </div>

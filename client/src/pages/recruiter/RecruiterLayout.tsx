@@ -29,7 +29,6 @@ const NavItem = ({ to, label, icon, onNavigate, mobileMenuOpen }: { to: string; 
 
 export default function RecruiterLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {

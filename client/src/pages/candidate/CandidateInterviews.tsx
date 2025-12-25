@@ -35,9 +35,9 @@ type InterviewRow = {
   } | null;
 };
 
-const statusVariant = (status: string): "default" | "outline" | "success" | "destructive" => {
+const statusVariant = (status: string): "default" | "outline" | "success" => {
   if (status === "COMPLETED") return "success";
-  if (status === "FAILED" || status === "EXPIRED") return "destructive";
+  if (status === "FAILED" || status === "EXPIRED") return "outline";
   if (status === "SCHEDULED" || status === "IN_PROGRESS") return "default";
   return "outline";
 };
@@ -63,7 +63,7 @@ export default function CandidateInterviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<InterviewRow[]>([]);
-  const [qInput, setQInput] = useState("");
+  const [_qInput] = useState("");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
@@ -89,15 +89,15 @@ export default function CandidateInterviews() {
     return { total, completed, scheduled, inProgress, failed, avgScore };
   }, [rows]);
 
-  const handleSearch = () => {
-    setQ(qInput);
-  };
+  // const handleSearch = () => {
+  //   setQ(qInput);
+  // };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
+  // const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  //   if (e.key === "Enter") {
+  //     handleSearch();
+  //   }
+  // };
 
   useEffect(() => {
     let abort = false;

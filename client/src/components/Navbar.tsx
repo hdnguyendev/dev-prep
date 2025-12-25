@@ -1,25 +1,25 @@
-import { SignedIn, SignedOut, UserButton, useAuth, useUser } from "@clerk/clerk-react";
-import { Link, useNavigate } from "react-router";
-import { useState, useEffect, useMemo } from "react";
 import logo from "@/assets/logo.svg";
+import { apiClient, type UserNotification } from "@/lib/api";
 import { getCurrentUser, logout } from "@/lib/auth";
-import { 
-  Briefcase, 
-  Building2, 
+import { SignedIn, SignedOut, UserButton, useAuth } from "@clerk/clerk-react";
+import {
+  Bell,
+  Briefcase,
+  Building2,
+  FileText,
   Home,
+  LayoutDashboard,
   LogOut,
   Menu,
   X,
-  FileText,
-  Bell,
-  LayoutDashboard,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { ThemeToggle } from "./ThemeToggle";
-import { apiClient, type UserNotification } from "@/lib/api";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
@@ -38,13 +38,10 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoMenuOpen, setLogoMenuOpen] = useState(false);
   const { getToken, isSignedIn } = useAuth();
-  const { user: clerkUser } = useUser();
   
   // Use state to force re-render when auth changes
   const [customUser, setCustomUser] = useState(getCurrentUser());
   const isStaffLoggedIn = customUser !== null;
-  const isAdmin = customUser?.role === "ADMIN";
-  const isRecruiter = customUser?.role === "RECRUITER"; // Only RECRUITER, not ADMIN
 
   const [needCandidateName, setNeedCandidateName] = useState(false);
   const [candidateEmail, setCandidateEmail] = useState<string>("");

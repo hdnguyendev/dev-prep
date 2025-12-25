@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,10 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isRecruiterLoggedIn, logout, getCurrentUser } from "@/lib/auth";
+import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import {
   BriefcaseBusiness,
-  Users,
   ClipboardList,
   Calendar,
   MessageSquare,
@@ -21,7 +20,6 @@ import {
   Building2,
   Search,
   MapPin,
-  Globe,
   Save,
   Plus,
   User,
@@ -226,7 +224,7 @@ function normalizeOptionalInt(value: unknown): number | null | undefined {
 
 const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company" } = {}) => {
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats>({
@@ -242,7 +240,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   const [allApplications, setAllApplications] = useState<RecruiterApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<RecruiterApplication | null>(null);
   const [recruiterProfileId, setRecruiterProfileId] = useState<string | null>(null);
-  const [loadingApplicationDetail, setLoadingApplicationDetail] = useState(false);
+  const [_loadingApplicationDetail, setLoadingApplicationDetail] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteText, setEditingNoteText] = useState("");
@@ -269,7 +267,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   const [appSearchInput, setAppSearchInput] = useState("");
   const [appSearch, setAppSearch] = useState("");
   const [appStatusFilter, setAppStatusFilter] = useState<string>("");
-  const [appSortBy, setAppSortBy] = useState<"newest" | "oldest">("newest");
+  // const [appSortBy, setAppSortBy] = useState<"newest" | "oldest">("newest");
   const [appPage, setAppPage] = useState(1);
   const appPageSize = 10;
 
@@ -285,10 +283,10 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
     }
   }, [navigate]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  // const handleLogout = () => {
+  //   logout();
+  //   navigate("/login");
+  // };
 
   const currentUser = getCurrentUser();
   const recruiterUserId = currentUser?.id;
@@ -1252,21 +1250,21 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
 
       const data = await response.json();
 
-      if (data.success && data.url) {
+      if (data.success && data.data?.url) {
         if (type === "logo") {
-          const newForm = { ...editForm, logoUrl: data.url };
+          const newForm = { ...editForm, logoUrl: data.data.url };
           setEditForm(newForm);
           // Cập nhật luôn company state để logo hiển thị ngay
           if (company) {
-            setCompany({ ...company, logoUrl: data.url });
+            setCompany({ ...company, logoUrl: data.data.url });
           }
           alert("Upload logo thành công!");
         } else {
-          const newForm = { ...editForm, coverUrl: data.url };
+          const newForm = { ...editForm, coverUrl: data.data.url };
           setEditForm(newForm);
           // Cập nhật luôn company state để cover hiển thị ngay
           if (company) {
-            setCompany({ ...company, coverUrl: data.url });
+            setCompany({ ...company, coverUrl: data.data.url });
           }
           alert("Upload cover image thành công!");
         }
@@ -1583,7 +1581,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                       <p className="text-sm text-muted-foreground">No jobs posted yet.</p>
                     ) : (
                       <div className="space-y-3">
-                        {recentJobs.map((job, index) => {
+                        {recentJobs.map((job) => {
                           const statusColors: Record<string, string> = {
                             PUBLISHED: "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
                             DRAFT: "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",

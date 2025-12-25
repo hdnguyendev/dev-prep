@@ -298,13 +298,17 @@ const JobDetail = () => {
       const token = await getToken();
       const response = await apiClient.uploadResume(file, token ?? undefined);
 
-      if (response.success && response.data.url) {
+      console.log("Upload resume response:", response);
+
+      if (response.success && response.data?.url) {
         return response.data.url;
       } else {
+        console.error("Upload failed:", response);
         alert(response.message || "Failed to upload resume");
         return null;
       }
-      } catch {
+    } catch (error) {
+      console.error("Upload resume error:", error);
       alert("Failed to upload resume. Please try again.");
       return null;
     } finally {

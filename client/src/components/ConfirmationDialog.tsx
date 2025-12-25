@@ -73,7 +73,8 @@ export function ConfirmationDialog({
             {cancelText}
           </Button>
           <Button
-            variant={variant === "destructive" ? "destructive" : "default"}
+            variant={variant === "destructive" ? "default" : "default"}
+            className={variant === "destructive" ? "bg-red-600 hover:bg-red-700 text-white" : ""}
             onClick={handleConfirm}
             disabled={loading}
           >

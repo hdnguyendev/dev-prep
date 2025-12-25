@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Calendar, ClipboardList, FileText, Heart, Zap } from "lucide-react";
+import { Calendar, ClipboardList, FileText, Heart, Zap, Building2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -15,6 +15,7 @@ const LINKS: QuickLink[] = [
   { label: "Interviews", href: "/interviews", icon: <Calendar className="h-4 w-4" />, description: "Xem lịch + feedback phỏng vấn" },
   { label: "Applications", href: "/applications", icon: <ClipboardList className="h-4 w-4" />, description: "Track jobs you have applied to" },
   { label: "Saved jobs", href: "/saved-jobs", icon: <Heart className="h-4 w-4" />, description: "Your list of saved jobs" },
+  { label: "Followed companies", href: "/followed-companies", icon: <Building2 className="h-4 w-4" />, description: "Companies you are following" },
   { label: "Interview prep", href: "/interview", icon: <FileText className="h-4 w-4" />, description: "Luyện phỏng vấn" },
 ];
 

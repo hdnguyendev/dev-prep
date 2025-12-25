@@ -23,6 +23,7 @@ import CandidateInterviews from "@/pages/candidate/CandidateInterviews";
 import CandidateQuickAccess from "@/pages/candidate/CandidateQuickAccess";
 import CandidateProfile from "@/pages/candidate/CandidateProfile";
 import CandidateSavedJobs from "@/pages/candidate/CandidateSavedJobs";
+import CandidateFollowedCompanies from "@/pages/candidate/CandidateFollowedCompanies";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import RecruiterLayout from "@/pages/recruiter/RecruiterLayout";
 import RecruiterDashboard from "@/pages/recruiter/RecruiterDashboard";
@@ -57,6 +58,7 @@ function AppRoutes() {
           <Route path="interviews" element={<CandidateInterviews />} />
           <Route path="profile" element={<CandidateProfile />} />
           <Route path="saved-jobs" element={<CandidateSavedJobs />} />
+          <Route path="followed-companies" element={<CandidateFollowedCompanies />} />
           <Route path="quick-access" element={<CandidateQuickAccess />} />
         </Route>
 

@@ -67,13 +67,13 @@ interface VapiTranscriptMessage extends VapiMessageBase {
 
 type VapiMessage = VapiTranscriptMessage | VapiMessageBase;
 
-type FeedbackJson = {
-  totalScore: number;
-  categoryScores: Array<{ name: string; score: number; comment: string }>;
-  strengths: string[];
-  areasForImprovement: string[];
-  finalAssessment: string;
-};
+// type FeedbackJson = {
+//   totalScore: number;
+//   categoryScores: Array<{ name: string; score: number; comment: string }>;
+//   strengths: string[];
+//   areasForImprovement: string[];
+//   finalAssessment: string;
+// };
 
 /**
  * Build plain-text transcript from the collected Vapi transcript messages.
@@ -89,21 +89,21 @@ function buildFullTranscript(messages: SavedMessage[]): string {
  * Extract FEEDBACK_JSON payload from transcript (if assistant emitted it).
  * Expected format: `FEEDBACK_JSON: {...valid json...}`
  */
-function extractFeedbackJson(messages: SavedMessage[]): FeedbackJson | null {
-  const marker = "FEEDBACK_JSON:";
-  const haystack = messages.map((m) => m.content).join("\n");
-  const idx = haystack.lastIndexOf(marker);
-  if (idx < 0) return null;
+// function extractFeedbackJson(messages: SavedMessage[]): FeedbackJson | null {
+//   const marker = "FEEDBACK_JSON:";
+//   const haystack = messages.map((m) => m.content).join("\n");
+//   const idx = haystack.lastIndexOf(marker);
+//   if (idx < 0) return null;
 
-  const jsonText = haystack.slice(idx + marker.length).trim();
-  if (!jsonText) return null;
+//   const jsonText = haystack.slice(idx + marker.length).trim();
+//   if (!jsonText) return null;
 
-  try {
-    return JSON.parse(jsonText) as FeedbackJson;
-  } catch {
-    return null;
-  }
-}
+//   try {
+//     return JSON.parse(jsonText) as FeedbackJson;
+//   } catch {
+//     return null;
+//   }
+// }
 
 type InterviewTurn = {
   orderIndex: number;

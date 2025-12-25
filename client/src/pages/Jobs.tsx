@@ -21,6 +21,7 @@ import {
   CheckCircle,
   LayoutGrid,
   Table,
+  Star,
 } from "lucide-react";
 
 const Jobs = () => {
@@ -632,6 +633,23 @@ const Jobs = () => {
                             <div className="text-xs text-muted-foreground">
                               {job.company?.name || "Company"}
                             </div>
+                            <div className="flex items-center gap-1 mt-1">
+                              {job.company?.averageRating && job.company.averageRating > 0 ? (
+                                <>
+                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs font-medium">
+                                    {job.company.averageRating.toFixed(1)}
+                                  </span>
+                                  {job.company.totalReviews && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ({job.company.totalReviews})
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No rating</span>
+                              )}
+                            </div>
                             <Badge variant="outline" className="mt-1 text-xs">
                               {getEmploymentTypeLabel(job)}
                             </Badge>
@@ -772,7 +790,22 @@ const Jobs = () => {
                                 >
                                   {getCompanyInitial(job)}
                                 </div>
-                                <span className="text-sm">{job.company?.name || "Company"}</span>
+                                <div>
+                                  <div className="text-sm">{job.company?.name || "Company"}</div>
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    {job.company?.averageRating && job.company.averageRating > 0 ? (
+                                      <>
+                                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                        <span className="text-xs text-muted-foreground">
+                                          {job.company.averageRating.toFixed(1)}
+                                          {job.company.totalReviews && ` (${job.company.totalReviews})`}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">No rating</span>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             </td>
                             <td className="px-4 py-4 text-sm text-muted-foreground">

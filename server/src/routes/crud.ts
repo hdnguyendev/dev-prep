@@ -57,6 +57,27 @@ const handlePrismaNotFound = (error: unknown, c: Context) => {
   if (code === "P2025") {
     return c.json({ success: false, message: "Record not found" }, 404);
   }
+  // Handle foreign key constraint violation
+  if (code === "P2003") {
+    const meta = (error as any)?.meta;
+    const field = meta?.field_name;
+    if (field?.includes("Application")) {
+      return c.json(
+        { 
+          success: false, 
+          message: "Cannot delete this record because it has associated applications. Please remove all applications first." 
+        }, 
+        400
+      );
+    }
+    return c.json(
+      { 
+        success: false, 
+        message: "Cannot delete this record because it has associated data. Please remove all related records first." 
+      }, 
+      400
+    );
+  }
   throw error;
 };
 
@@ -134,7 +155,7 @@ const createCrudRouter = (config: ResourceConfig) => {
       }
     }
 
-    const [data, total] = await Promise.all([
+    let [data, total] = await Promise.all([
       client.findMany({ 
         take, 
         skip, 
@@ -144,6 +165,86 @@ const createCrudRouter = (config: ResourceConfig) => {
       }),
       client.count({ where: dynamicWhere }),
     ]);
+
+    // Calculate averageRating for companies
+    if (Array.isArray(data) && data.length > 0) {
+      let companyIds: string[] = [];
+
+      // If this is jobs route and includes company
+      if (config.model === Prisma.ModelName.Job && config.include?.company) {
+        companyIds = [...new Set(data.map((job: any) => job.company?.id).filter(Boolean))];
+      }
+      // If this is companies route
+      else if (config.model === Prisma.ModelName.Company) {
+        companyIds = data.map((company: any) => company.id).filter(Boolean);
+      }
+
+      if (companyIds.length > 0) {
+        const reviewStats = await Promise.all(
+          companyIds.map(async (companyId: string) => {
+            const stats = await prisma.companyReview.aggregate({
+              where: { companyId },
+              _avg: { rating: true },
+              _count: { rating: true },
+            });
+            return {
+              companyId,
+              averageRating: stats._avg.rating ?? null,
+              totalReviews: stats._count.rating || 0,
+            };
+          })
+        );
+
+        const statsMap = new Map(
+          reviewStats.map((s) => [s.companyId, { averageRating: s.averageRating, totalReviews: s.totalReviews }])
+        );
+
+        // Add rating to each company
+        if (config.model === Prisma.ModelName.Job && config.include?.company) {
+          // For jobs, add rating to job.company
+          data = data.map((job: any) => {
+            if (job.company?.id) {
+              const stats = statsMap.get(job.company.id);
+              if (stats && stats.totalReviews > 0) {
+                job.company = {
+                  ...job.company,
+                  averageRating: stats.averageRating,
+                  totalReviews: stats.totalReviews,
+                };
+              } else {
+                job.company = {
+                  ...job.company,
+                  averageRating: null,
+                  totalReviews: 0,
+                };
+              }
+            }
+            return job;
+          });
+        } else if (config.model === Prisma.ModelName.Company) {
+          // For companies, add rating directly to company
+          data = data.map((company: any) => {
+            if (company.id) {
+              const stats = statsMap.get(company.id);
+              if (stats && stats.totalReviews > 0) {
+                return {
+                  ...company,
+                  averageRating: stats.averageRating,
+                  totalReviews: stats.totalReviews,
+                };
+              } else {
+                return {
+                  ...company,
+                  averageRating: null,
+                  totalReviews: 0,
+                };
+              }
+            }
+            return company;
+          });
+        }
+      }
+    }
 
     return c.json({ success: true, data, meta: { page, pageSize: take, total } });
   });
@@ -284,6 +385,27 @@ const createCrudRouter = (config: ResourceConfig) => {
     try {
       const client = getModelClient(config.model);
       const where = buildWhere(c.req.param(), config.primaryKeys);
+      
+      // Check for related applications if deleting a Job
+      if (config.model === Prisma.ModelName.Job) {
+        const jobId = where.id;
+        if (jobId) {
+          const applicationCount = await prisma.application.count({
+            where: { jobId: jobId as string },
+          });
+          
+          if (applicationCount > 0) {
+            return c.json(
+              {
+                success: false,
+                message: `Cannot delete this job because it has ${applicationCount} associated application${applicationCount > 1 ? 's' : ''}. Please remove all applications first.`,
+              },
+              400
+            );
+          }
+        }
+      }
+      
       const deleted = await client.delete({ where, include: config.include });
       return c.json({ success: true, data: deleted });
     } catch (error) {

@@ -35,14 +35,79 @@ export const getJobs = async () => {
         notIn: ["DRAFT", "CLOSED"],
       },
     },
+    include: {
+      company: true,
+    },
   });
+
+  // Calculate averageRating for each company
+  if (jobs.length > 0) {
+    const companyIds = [...new Set(jobs.map((job) => job.company?.id).filter(Boolean))];
+    
+    if (companyIds.length > 0) {
+      const reviewStats = await Promise.all(
+        companyIds.map(async (companyId: string) => {
+          const stats = await prisma.companyReview.aggregate({
+            where: { companyId },
+            _avg: { rating: true },
+            _count: { rating: true },
+          });
+          return {
+            companyId,
+            averageRating: stats._avg.rating || 0,
+            totalReviews: stats._count.rating || 0,
+          };
+        })
+      );
+
+      const statsMap = new Map(
+        reviewStats.map((s) => [s.companyId, { averageRating: s.averageRating, totalReviews: s.totalReviews }])
+      );
+
+      // Add rating to each job's company
+      jobs.forEach((job: any) => {
+        if (job.company?.id) {
+          const stats = statsMap.get(job.company.id);
+          if (stats) {
+            job.company = {
+              ...job.company,
+              averageRating: stats.averageRating,
+              totalReviews: stats.totalReviews,
+            };
+          }
+        }
+      });
+    }
+  }
+
   return jobs;
 };
 
 export const getJobById = async (id: string) => {
   const job = await prisma.job.findUnique({
     where: { id },
+    include: {
+      company: true,
+    },
   });
+
+  // Calculate averageRating for company if job exists
+  if (job?.company?.id) {
+    const stats = await prisma.companyReview.aggregate({
+      where: { companyId: job.company.id },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    if (job.company) {
+      job.company = {
+        ...job.company,
+        averageRating: stats._avg.rating || 0,
+        totalReviews: stats._count.rating || 0,
+      };
+    }
+  }
+
   return job;
 };
 

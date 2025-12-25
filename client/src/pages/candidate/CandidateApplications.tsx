@@ -2,18 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { APPLICATION_STATUS_META } from "@/constants/applications";
 import { useAuth } from "@clerk/clerk-react";
-import { ExternalLink, Loader2, Search, ClipboardList, CheckCircle2, Clock, TrendingUp, Building2, Calendar, MapPin, Briefcase, FileText, Sparkles, Eye } from "lucide-react";
+import { Briefcase, Building2, Calendar, CheckCircle2, ClipboardList, Clock, ExternalLink, Eye, Loader2, MapPin, Search, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { APPLICATION_STATUS_META } from "@/constants/applications";
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -41,9 +38,9 @@ type ApplicationRow = {
   } | null;
 };
 
-const statusVariant = (status: string): "default" | "outline" | "success" | "destructive" => {
+const statusVariant = (status: string): "default" | "outline" | "success" => {
   if (status === "HIRED" || status === "OFFER_SENT" || status === "SHORTLISTED") return "success";
-  if (status === "REJECTED" || status === "WITHDRAWN") return "destructive";
+  if (status === "REJECTED" || status === "WITHDRAWN") return "outline";
   if (status === "APPLIED" || status === "REVIEWING") return "outline";
   return "default";
 };
@@ -249,20 +246,20 @@ export default function CandidateApplications() {
     }));
   }, [rows, trendDays]);
 
-  const topCompanies = useMemo(() => {
-    const counts: Record<string, number> = {};
-    rows.forEach((r) => {
-      const company = r.job?.company?.name || "Unknown";
-      counts[company] = (counts[company] ?? 0) + 1;
-    });
-    return Object.entries(counts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
-  }, [rows]);
+  // const topCompanies = useMemo(() => {
+  //   const counts: Record<string, number> = {};
+  //   rows.forEach((r) => {
+  //     const company = r.job?.company?.name || "Unknown";
+  //     counts[company] = (counts[company] ?? 0) + 1;
+  //   });
+  //   return Object.entries(counts)
+  //     .map(([name, value]) => ({ name, value }))
+  //     .sort((a, b) => b.value - a.value)
+  //     .slice(0, 5);
+  // }, [rows]);
 
   // Monthly trend (last 6 months)
-  const monthlyTrend = useMemo(() => {
+  // const monthlyTrend = useMemo(() => {
     const months: Record<string, number> = {};
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
@@ -280,45 +277,45 @@ export default function CandidateApplications() {
       }
     });
     
-    return Object.entries(months).map(([month, count]) => ({ month, count }));
-  }, [rows]);
+  //   return Object.entries(months).map(([month, count]) => ({ month, count }));
+  // }, [rows]);
 
   // Application funnel
-  const applicationFunnel = useMemo(() => {
-    const stages = [
-      { name: "Applied", statuses: ["APPLIED"] },
-      { name: "Reviewing", statuses: ["REVIEWING"] },
-      { name: "Shortlisted", statuses: ["SHORTLISTED"] },
-      { name: "Interview", statuses: ["INTERVIEW_SCHEDULED", "INTERVIEWED"] },
-      { name: "Offer", statuses: ["OFFER_SENT"] },
-      { name: "Hired", statuses: ["HIRED"] },
-    ];
-    
-    return stages.map((stage) => {
-      const count = rows.filter((r) => stage.statuses.includes(r.status)).length;
-      return { name: stage.name, value: count };
-    }).filter((s) => s.value > 0);
-  }, [rows]);
+  // const applicationFunnel = useMemo(() => {
+  //   const stages = [
+  //     { name: "Applied", statuses: ["APPLIED"] },
+  //     { name: "Reviewing", statuses: ["REVIEWING"] },
+  //     { name: "Shortlisted", statuses: ["SHORTLISTED"] },
+  //     { name: "Interview", statuses: ["INTERVIEW_SCHEDULED", "INTERVIEWED"] },
+  //     { name: "Offer", statuses: ["OFFER_SENT"] },
+  //     { name: "Hired", statuses: ["HIRED"] },
+  //   ];
+  //   
+  //   return stages.map((stage) => {
+  //     const count = rows.filter((r) => stage.statuses.includes(r.status)).length;
+  //     return { name: stage.name, value: count };
+  //   }).filter((s) => s.value > 0);
+  // }, [rows]);
 
   // Status progression (showing transitions)
-  const statusBreakdown = useMemo(() => {
-    const statusOrder = [
-      "APPLIED",
-      "REVIEWING", 
-      "SHORTLISTED",
-      "INTERVIEW_SCHEDULED",
-      "INTERVIEWED",
-      "OFFER_SENT",
-      "HIRED",
-      "REJECTED",
-      "WITHDRAWN"
-    ];
-    
-    return statusOrder.map((status) => {
-      const count = rows.filter((r) => r.status === status).length;
-      return { status, count };
-    }).filter((s) => s.count > 0);
-  }, [rows]);
+  // const _statusBreakdown = useMemo(() => {
+  //   const statusOrder = [
+  //     "APPLIED",
+  //     "REVIEWING", 
+  //     "SHORTLISTED",
+  //     "INTERVIEW_SCHEDULED",
+  //     "INTERVIEWED",
+  //     "OFFER_SENT",
+  //     "HIRED",
+  //     "REJECTED",
+  //     "WITHDRAWN"
+  //   ];
+  //   
+  //   return statusOrder.map((status) => {
+  //     const count = rows.filter((r) => r.status === status).length;
+  //     return { status, count };
+  //   }).filter((s) => s.count > 0);
+  // }, [rows]);
 
   if (loading) {
     return (

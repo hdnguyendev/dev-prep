@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -34,31 +34,31 @@ const countBy = (rows: any[], field: string) => {
   return Object.entries(counts).map(([name, value]) => ({ name, value }));
 };
 
-const startOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
+// const startOfDay = (d: Date) => {
+//   const x = new Date(d);
+//   x.setHours(0, 0, 0, 0);
+//   return x;
+// };
 
-const dayKey = (d: Date) => startOfDay(d).toISOString().slice(0, 10);
+// const dayKey = (d: Date) => startOfDay(d).toISOString().slice(0, 10);
 
-const lastNDays = (n: number) => {
-  const out: string[] = [];
-  const today = startOfDay(new Date());
-  for (let i = n - 1; i >= 0; i -= 1) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    out.push(dayKey(d));
-  }
-  return out;
-};
+  // const lastNDays = (n: number) => {
+  //   const out: string[] = [];
+  //   const today = startOfDay(new Date());
+  //   for (let i = n - 1; i >= 0; i -= 1) {
+  //     const d = new Date(today);
+  //     d.setDate(today.getDate() - i);
+  //     out.push(dayKey(d));
+  //   }
+  //   return out;
+  // };
 
-const bucketScore0to100 = (score: number) => {
-  const s = Math.max(0, Math.min(100, Math.round(score)));
-  const base = Math.floor(s / 10) * 10;
-  const hi = Math.min(100, base + 9);
-  return `${base}-${hi}`;
-};
+// const bucketScore0to100 = (score: number) => {
+//   const s = Math.max(0, Math.min(100, Math.round(score)));
+//   const base = Math.floor(s / 10) * 10;
+//   const hi = Math.min(100, base + 9);
+//   return `${base}-${hi}`;
+// };
 
 export default function CandidateDashboard() {
   const { getToken, isLoaded } = useAuth();
@@ -66,7 +66,7 @@ export default function CandidateDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [interviews, setInterviews] = useState<InterviewRow[]>([]);
-  const [followedCompanies, setFollowedCompanies] = useReactState<Company[]>([]);
+  const [_followedCompanies, setFollowedCompanies] = useReactState<Company[]>([]);
   const [realtimeMessages] = useReactState<string[]>([]);
 
   useEffect(() => {
@@ -108,39 +108,39 @@ export default function CandidateDashboard() {
   const appsByStatus = useMemo(() => countBy(applications, "status"), [applications]);
   const intsByStatus = useMemo(() => countBy(interviews, "status"), [interviews]);
 
-  const trendDays = useMemo(() => lastNDays(14), []);
-  const trend = useMemo(() => {
-    const appsByDay: Record<string, number> = {};
-    const intsByDay: Record<string, number> = {};
-    applications.forEach((a) => {
-      const k = a.appliedAt ? dayKey(new Date(a.appliedAt)) : null;
-      if (!k) return;
-      appsByDay[k] = (appsByDay[k] ?? 0) + 1;
-    });
-    interviews.forEach((i) => {
-      const k = i.createdAt ? dayKey(new Date(i.createdAt)) : null;
-      if (!k) return;
-      intsByDay[k] = (intsByDay[k] ?? 0) + 1;
-    });
-    return trendDays.map((k) => ({
-      day: k.slice(5), // MM-DD
-      applications: appsByDay[k] ?? 0,
-      interviews: intsByDay[k] ?? 0,
-    }));
-  }, [applications, interviews, trendDays]);
+  // const trendDays = useMemo(() => lastNDays(14), []);
+  // const _trend = useMemo(() => {
+  //   const appsByDay: Record<string, number> = {};
+  //   const intsByDay: Record<string, number> = {};
+  //   applications.forEach((a) => {
+  //     const k = a.appliedAt ? dayKey(new Date(a.appliedAt)) : null;
+  //     if (!k) return;
+  //     appsByDay[k] = (appsByDay[k] ?? 0) + 1;
+  //   });
+  //   interviews.forEach((i) => {
+  //     const k = i.createdAt ? dayKey(new Date(i.createdAt)) : null;
+  //     if (!k) return;
+  //     intsByDay[k] = (intsByDay[k] ?? 0) + 1;
+  //   });
+  //   return trendDays.map((k) => ({
+  //     day: k.slice(5), // MM-DD
+  //     applications: appsByDay[k] ?? 0,
+  //     interviews: intsByDay[k] ?? 0,
+  //   }));
+  // }, [applications, interviews, trendDays]);
 
-  const scoreHistogram = useMemo(() => {
-    const counts: Record<string, number> = {};
-    interviews
-      .filter((i) => typeof i.overallScore === "number")
-      .forEach((i) => {
-        const k = bucketScore0to100(Number(i.overallScore));
-        counts[k] = (counts[k] ?? 0) + 1;
-      });
-    // Ensure stable bucket ordering 0-9 ... 90-99, 100-100 would map to 100-100? keep 100 in 100-100 by bucket fn.
-    const buckets = Array.from({ length: 11 }, (_, idx) => idx * 10).map((b) => bucketScore0to100(b));
-    return buckets.map((b) => ({ bucket: b, value: counts[b] ?? 0 }));
-  }, [interviews]);
+  // const _scoreHistogram = useMemo(() => {
+  //   const counts: Record<string, number> = {};
+  //   interviews
+  //     .filter((i) => typeof i.overallScore === "number")
+  //     .forEach((i) => {
+  //       const k = bucketScore0to100(Number(i.overallScore));
+  //       counts[k] = (counts[k] ?? 0) + 1;
+  //     });
+  //   // Ensure stable bucket ordering 0-9 ... 90-99, 100-100 would map to 100-100? keep 100 in 100-100 by bucket fn.
+  //   const buckets = Array.from({ length: 11 }, (_, idx) => idx * 10).map((b) => bucketScore0to100(b));
+  //   return buckets.map((b) => ({ bucket: b, value: counts[b] ?? 0 }));
+  // }, [interviews]);
 
   // Monthly application trend
   const monthlyTrend = useMemo(() => {

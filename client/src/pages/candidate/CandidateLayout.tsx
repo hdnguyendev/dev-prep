@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import DashboardTopbar from "@/components/DashboardTopbar";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
-import { Calendar, ClipboardList, FileText, Heart, LayoutDashboard, UserRound, Menu, X } from "lucide-react";
+import { Calendar, ClipboardList, FileText, Heart, LayoutDashboard, UserRound, Menu, X, Building2 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { useState } from "react";
 
@@ -144,6 +144,18 @@ export default function CandidateLayout() {
                 >
                   <Heart className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />
                       Saved jobs
+                    </Button>
+                <Button 
+                  variant="outline" 
+                  size={mobileMenuOpen ? "lg" : "sm"} 
+                  className={`w-full justify-start gap-3 ${mobileMenuOpen ? "h-14 text-base" : ""}`} 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate("/candidate/followed-companies");
+                  }}
+                >
+                  <Building2 className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />
+                      Followed companies
                     </Button>
                 </Card>
               </aside>

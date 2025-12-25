@@ -111,9 +111,9 @@ export const RichTextEditor = ({ value, onChange, placeholder, className }: Rich
 
       const data = await response.json();
 
-      if (data.success && data.url && editor) {
+      if (data.success && data.data?.url && editor) {
         // Insert image vào editor
-        editor.chain().focus().setImage({ src: data.url }).run();
+        editor.chain().focus().setImage({ src: data.data.url }).run();
       } else {
         alert(data.message || "Failed to upload image");
       }

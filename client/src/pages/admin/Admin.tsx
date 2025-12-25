@@ -1,17 +1,39 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { adminResources, type AdminResource } from "@/lib/adminResources";
-import { adminClient, useAdminToken } from "@/lib/adminClient";
-import { normalizeAdminPayload } from "@/lib/adminNormalize";
-import { ADMIN_NUMERIC_FIELDS_BY_RESOURCE } from "@/constants/admin";
-import { getFoundedYearOptions } from "@/constants/company";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { ADMIN_NUMERIC_FIELDS_BY_RESOURCE } from "@/constants/admin";
+import { getFoundedYearOptions } from "@/constants/company";
+import { adminClient, useAdminToken } from "@/lib/adminClient";
+import { normalizeAdminPayload } from "@/lib/adminNormalize";
+import { adminResources, type AdminResource } from "@/lib/adminResources";
+import { isAdminLoggedIn } from "@/lib/auth";
+import {
+  AlarmClock,
+  AlertTriangle,
+  Ban,
+  Blocks,
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  Circle,
+  ClipboardList,
+  GraduationCap,
+  LayoutPanelLeft,
+  MessageSquare,
+  PauseCircle,
+  Search,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  XCircle,
+} from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { isAdminLoggedIn, logout, getCurrentUser } from "@/lib/auth";
 import {
   Area,
   AreaChart,
@@ -19,8 +41,6 @@ import {
   BarChart,
   Cell,
   Legend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -28,28 +48,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  Blocks,
-  BriefcaseBusiness,
-  Building2,
-  ClipboardList,
-  GraduationCap,
-  LayoutPanelLeft,
-  MessageSquare,
-  ShieldCheck,
-  Sparkles,
-  UserRound,
-  ChevronRight,
-  CheckCircle2,
-  XCircle,
-  Shield,
-  Circle,
-  PauseCircle,
-  AlertTriangle,
-  Ban,
-  AlarmClock,
-  Search,
-} from "lucide-react";
 
 type AdminRow = Record<string, unknown>;
 type ModalMode = "create" | "edit";
@@ -340,7 +338,7 @@ const AdminDashboard = ({
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
@@ -406,7 +404,7 @@ const AdminDashboard = ({
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
@@ -518,7 +516,7 @@ const AdminDashboard = ({
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
@@ -598,12 +596,6 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
     }
   }, [embedded, navigate]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  const currentUser = getCurrentUser();
 
   const resourceIcons: Record<string, React.ReactNode> = {
     users: <UserRound className="h-4 w-4" />,
@@ -1216,8 +1208,8 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
           body: form,
         });
         const json = await res.json();
-        if (!json?.success) throw new Error(json?.message || "Upload failed");
-        return String(json.url);
+        if (!json?.success || !json?.data?.url) throw new Error(json?.message || "Upload failed");
+        return String(json.data.url);
       } finally {
         setUploadingField(null);
       }

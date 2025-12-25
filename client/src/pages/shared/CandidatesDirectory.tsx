@@ -58,7 +58,7 @@ export default function CandidatesDirectory() {
 
         const [profilesRes, skillsRes] = await Promise.all([
           fetch(`${API_BASE}/public/candidate-profiles?${qs.toString()}`),
-          skills.length ? Promise.resolve(null as any) : fetch(`${API_BASE}/skills?pageSize=200`),
+          skills.length ? Promise.resolve(null as Response | null) : fetch(`${API_BASE}/skills?pageSize=200`),
         ]);
 
         const profilesJson = await profilesRes.json();
@@ -77,7 +77,10 @@ export default function CandidatesDirectory() {
         setTotal(Number(profilesJson?.meta?.total || 0));
 
         if (skillsJson?.data) {
-          setSkills((skillsJson.data || []).map((r: any) => ({ id: String(r.id), name: String(r.name ?? r.id) })));
+          setSkills((skillsJson.data || []).map((r: { id: string | number; name?: string | null }) => ({ 
+            id: String(r.id), 
+            name: String(r.name ?? r.id) 
+          })));
         }
       } catch (e) {
         if (abort) return;
@@ -150,7 +153,7 @@ export default function CandidatesDirectory() {
                       <div className="flex flex-wrap gap-2">
                         {topSkills.length ? (
                           topSkills.map((s) => (
-                            <Badge key={`${p.id}-${s}`} variant="secondary" className="max-w-full break-words">
+                            <Badge key={`${p.id}-${s}`} variant="outline" className="max-w-full break-words">
                               {s}
                             </Badge>
                           ))

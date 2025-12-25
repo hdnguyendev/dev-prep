@@ -387,6 +387,46 @@ filteredRoutes.get("/jobs", async (c) => {
       prisma.job.count({ where: whereClause }),
     ]);
 
+    // Calculate averageRating for each company
+    if (Array.isArray(data) && data.length > 0) {
+      const companyIds = [...new Set(data.map((job: any) => job.company?.id).filter(Boolean))];
+      
+      if (companyIds.length > 0) {
+        const reviewStats = await Promise.all(
+          companyIds.map(async (companyId: string) => {
+            const stats = await prisma.companyReview.aggregate({
+              where: { companyId },
+              _avg: { rating: true },
+              _count: { rating: true },
+            });
+            return {
+              companyId,
+              averageRating: stats._avg.rating || 0,
+              totalReviews: stats._count.rating || 0,
+            };
+          })
+        );
+
+        const statsMap = new Map(
+          reviewStats.map((s) => [s.companyId, { averageRating: s.averageRating, totalReviews: s.totalReviews }])
+        );
+
+        // Add rating to each job's company
+        data.forEach((job: any) => {
+          if (job.company?.id) {
+            const stats = statsMap.get(job.company.id);
+            if (stats) {
+              job.company = {
+                ...job.company,
+                averageRating: stats.averageRating,
+                totalReviews: stats.totalReviews,
+              };
+            }
+          }
+        });
+      }
+    }
+
     return c.json({
       success: true,
       data,

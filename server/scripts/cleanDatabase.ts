@@ -1,145 +1,166 @@
 import prisma from "../src/app/db/prisma";
 
+/**
+ * Xóa toàn bộ dữ liệu trong database theo thứ tự để tránh lỗi foreign key constraints
+ */
 async function cleanDatabase() {
-  console.log("🧹 Starting database cleanup...");
+  console.log("🧹 Bắt đầu xóa toàn bộ dữ liệu trong database...");
 
   try {
-    // Delete in order (respecting foreign key constraints)
-    console.log("Deleting InterviewExchanges...");
-    await prisma.interviewExchange.deleteMany({});
+    // Xóa theo thứ tự từ child tables đến parent tables
+    // 1. Interview related
+    console.log("📝 Đang xóa InterviewExchanges...");
+    const deletedExchanges = await prisma.interviewExchange.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedExchanges.count} InterviewExchanges`);
 
-    console.log("Deleting Interviews...");
-    await prisma.interview.deleteMany({});
+    console.log("📝 Đang xóa Interviews...");
+    const deletedInterviews = await prisma.interview.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedInterviews.count} Interviews`);
 
-    console.log("Deleting ApplicationNotes...");
-    await prisma.applicationNote.deleteMany({});
+    // 2. Application related
+    console.log("📝 Đang xóa ApplicationNotes...");
+    const deletedNotes = await prisma.applicationNote.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedNotes.count} ApplicationNotes`);
 
-    console.log("Deleting ApplicationHistory...");
-    await prisma.applicationHistory.deleteMany({});
+    console.log("📝 Đang xóa ApplicationHistory...");
+    const deletedHistory = await prisma.applicationHistory.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedHistory.count} ApplicationHistory`);
 
-    console.log("Deleting Applications...");
-    await prisma.application.deleteMany({});
+    console.log("📝 Đang xóa Applications...");
+    const deletedApplications = await prisma.application.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedApplications.count} Applications`);
 
-    console.log("Deleting SavedJobs...");
-    await prisma.savedJob.deleteMany({});
+    // 3. Job related
+    console.log("📝 Đang xóa SavedJobs...");
+    const deletedSavedJobs = await prisma.savedJob.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedSavedJobs.count} SavedJobs`);
 
-    console.log("Deleting CompanyReviews...");
-    await prisma.companyReview.deleteMany({});
+    console.log("📝 Đang xóa JobSkills...");
+    const deletedJobSkills = await prisma.jobSkill.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedJobSkills.count} JobSkills`);
 
-    console.log("Deleting JobSkills...");
-    await prisma.jobSkill.deleteMany({});
+    console.log("📝 Đang xóa JobCategories...");
+    const deletedJobCategories = await prisma.jobCategory.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedJobCategories.count} JobCategories`);
 
-    console.log("Deleting JobCategories...");
-    await prisma.jobCategory.deleteMany({});
+    console.log("📝 Đang xóa Jobs...");
+    const deletedJobs = await prisma.job.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedJobs.count} Jobs`);
 
-    console.log("Deleting Jobs...");
-    await prisma.job.deleteMany({});
+    // 4. Company related
+    console.log("📝 Đang xóa CompanyReviews...");
+    const deletedReviews = await prisma.companyReview.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedReviews.count} CompanyReviews`);
 
-    console.log("Deleting CandidateSkills...");
-    await prisma.candidateSkill.deleteMany({});
+    console.log("📝 Đang xóa CompanyFollows...");
+    const deletedFollows = await prisma.companyFollow.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedFollows.count} CompanyFollows`);
 
-    console.log("Deleting Skills...");
-    await prisma.skill.deleteMany({});
+    // 5. Candidate Profile related
+    console.log("📝 Đang xóa CandidateSkills...");
+    const deletedCandidateSkills = await prisma.candidateSkill.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedCandidateSkills.count} CandidateSkills`);
 
-    console.log("Deleting Categories...");
-    await prisma.category.deleteMany({});
+    console.log("📝 Đang xóa Projects...");
+    const deletedProjects = await prisma.project.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedProjects.count} Projects`);
 
-    console.log("Deleting Experiences...");
-    await prisma.experience.deleteMany({});
+    console.log("📝 Đang xóa Experiences...");
+    const deletedExperiences = await prisma.experience.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedExperiences.count} Experiences`);
 
-    console.log("Deleting Education...");
-    await prisma.education.deleteMany({});
+    console.log("📝 Đang xóa Education...");
+    const deletedEducation = await prisma.education.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedEducation.count} Education`);
 
-    console.log("Deleting CandidateProfiles...");
-    await prisma.candidateProfile.deleteMany({});
+    console.log("📝 Đang xóa CandidateProfiles...");
+    const deletedCandidateProfiles = await prisma.candidateProfile.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedCandidateProfiles.count} CandidateProfiles`);
 
-    console.log("Deleting RecruiterProfiles...");
-    await prisma.recruiterProfile.deleteMany({});
+    // 6. Recruiter Profile related
+    console.log("📝 Đang xóa RecruiterProfiles...");
+    const deletedRecruiterProfiles = await prisma.recruiterProfile.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedRecruiterProfiles.count} RecruiterProfiles`);
 
-    console.log("Deleting Companies...");
-    await prisma.company.deleteMany({});
+    // 7. Company
+    console.log("📝 Đang xóa Companies...");
+    const deletedCompanies = await prisma.company.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedCompanies.count} Companies`);
 
-    console.log("Deleting Messages...");
-    await prisma.message.deleteMany({});
+    // 8. Skills & Categories (independent)
+    console.log("📝 Đang xóa Skills...");
+    const deletedSkills = await prisma.skill.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedSkills.count} Skills`);
 
-    console.log("Deleting Notifications...");
-    await prisma.notification.deleteMany({});
+    console.log("📝 Đang xóa Categories...");
+    const deletedCategories = await prisma.category.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedCategories.count} Categories`);
 
-    console.log("Deleting QuestionBank...");
-    await prisma.questionBank.deleteMany({});
+    // 9. Messages & Notifications
+    console.log("📝 Đang xóa Messages...");
+    const deletedMessages = await prisma.message.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedMessages.count} Messages`);
 
-    console.log("Deleting all Users...");
-    await prisma.user.deleteMany({});
+    console.log("📝 Đang xóa Notifications...");
+    const deletedNotifications = await prisma.notification.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedNotifications.count} Notifications`);
 
-    // Create 1 admin account
-    console.log("\n✨ Creating admin account...");
-    const admin = await prisma.user.create({
-      data: {
-        email: "admin@devprep.com",
-        passwordHash: "$2a$10$YourHashedPasswordHere", // You should hash "admin123" properly
-        firstName: "Admin",
-        lastName: "User",
-        role: "ADMIN",
-        isVerified: true,
-        isActive: true,
-      },
-    });
+    // 10. QuestionBank
+    console.log("📝 Đang xóa QuestionBank...");
+    const deletedQuestionBank = await prisma.questionBank.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedQuestionBank.count} QuestionBank entries`);
 
-    // Create 1 sample company and recruiter
-    console.log("\n🏢 Creating sample company...");
-    const company = await prisma.company.create({
-      data: {
-        name: "DevPrep Corp",
-        slug: "devprep-corp",
-        industry: "Technology",
-        companySize: "50-100",
-        city: "Remote",
-        country: "Global",
-        isVerified: true,
-      },
-    });
+    // 11. Users (cuối cùng vì nhiều bảng phụ thuộc)
+    console.log("📝 Đang xóa Users...");
+    const deletedUsers = await prisma.user.deleteMany({});
+    console.log(`   ✅ Đã xóa ${deletedUsers.count} Users`);
 
-    console.log("\n👤 Creating recruiter account...");
-    const recruiterUser = await prisma.user.create({
-      data: {
-        email: "recruiter@devprep.com",
-        passwordHash: "$2a$10$YourHashedPasswordHere", // Hash for recruiter (e.g., recruiter123)
-        firstName: "Recruiter",
-        lastName: "User",
-        role: "RECRUITER",
-        isVerified: true,
-        isActive: true,
-        recruiterProfile: {
-          create: {
-            companyId: company.id,
-            position: "Talent Lead",
-          },
-        },
-      },
-    });
+    // Tổng kết
+    const totalDeleted =
+      deletedExchanges.count +
+      deletedInterviews.count +
+      deletedNotes.count +
+      deletedHistory.count +
+      deletedApplications.count +
+      deletedSavedJobs.count +
+      deletedJobSkills.count +
+      deletedJobCategories.count +
+      deletedJobs.count +
+      deletedReviews.count +
+      deletedFollows.count +
+      deletedCandidateSkills.count +
+      deletedProjects.count +
+      deletedExperiences.count +
+      deletedEducation.count +
+      deletedCandidateProfiles.count +
+      deletedRecruiterProfiles.count +
+      deletedCompanies.count +
+      deletedSkills.count +
+      deletedCategories.count +
+      deletedMessages.count +
+      deletedNotifications.count +
+      deletedQuestionBank.count +
+      deletedUsers.count;
 
-    console.log("\n✅ Database cleaned successfully!");
-    console.log("\n🔐 Admin Account Created:");
-    console.log("   Email: admin@devprep.com");
-    console.log("   Password: admin123");
-    console.log("   ID:", admin.id);
-    console.log("\n👤 Recruiter Account Created:");
-    console.log("   Email: recruiter@devprep.com");
-    console.log("   Password: recruiter123");
-    console.log("   ID:", recruiterUser.id);
-    console.log("\n📊 Database is now clean and ready for setup!");
+    console.log("\n✅ Hoàn thành! Đã xóa toàn bộ dữ liệu trong database.");
+    console.log(`📊 Tổng số bản ghi đã xóa: ${totalDeleted}`);
+    console.log("\n💡 Database hiện tại đã trống và sẵn sàng để seed dữ liệu mới.");
 
   } catch (error) {
-    console.error("❌ Error cleaning database:", error);
+    console.error("❌ Lỗi khi xóa dữ liệu:", error);
     throw error;
   } finally {
     await prisma.$disconnect();
   }
 }
 
+// Chạy script
 cleanDatabase()
-  .then(() => process.exit(0))
+  .then(() => {
+    console.log("\n✨ Script hoàn thành thành công!");
+    process.exit(0);
+  })
   .catch((error) => {
-    console.error(error);
+    console.error("\n💥 Script thất bại:", error);
     process.exit(1);
   });

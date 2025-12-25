@@ -286,10 +286,20 @@ class ApiClient {
         }
 
         const raw = await response.json();
+        
+        // Normalize response format
+        // Backend can return either { success, data } or { ok, data }
         const normalized: ApiResponse<T> =
           raw && typeof raw === "object" && "ok" in raw
             ? {
                 success: Boolean((raw as any).ok),
+                data: (raw as any).data as T,
+                message: (raw as any).message as string | undefined,
+                meta: (raw as any).meta,
+              }
+            : raw && typeof raw === "object" && "success" in raw
+            ? {
+                success: Boolean((raw as any).success),
                 data: (raw as any).data as T,
                 message: (raw as any).message as string | undefined,
                 meta: (raw as any).meta,

@@ -22,6 +22,9 @@ import {
   Star,
   Award,
   Bell,
+  LayoutGrid,
+  Table,
+  Clock,
 } from "lucide-react";
 
 const CompanyDetail = () => {
@@ -32,6 +35,10 @@ const CompanyDetail = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [reviews, setReviews] = useState<CompanyReview[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsPageSize] = useState(3);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
   const [myReview, setMyReview] = useState<CompanyReview | null>(null);
   const [reviewStats, setReviewStats] = useState<{
     averageRating: number;
@@ -56,6 +63,40 @@ const CompanyDetail = () => {
   const [followLoading, setFollowLoading] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingReview, setDeletingReview] = useState(false);
+  const [jobsViewMode, setJobsViewMode] = useState<"grid" | "table">(() => {
+    const saved = localStorage.getItem("company-jobs-view-mode");
+    return (saved === "table" || saved === "grid") ? saved : "grid";
+  });
+
+  // Fetch reviews when page changes
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!company) return;
+
+      try {
+        const token = await getToken();
+        const reviewsResponse = await apiClient.getCompanyReviews(
+          company.id,
+          { page: reviewsPage, pageSize: reviewsPageSize },
+          token ?? undefined
+        );
+
+        if (reviewsResponse.success) {
+          setReviews(reviewsResponse.data);
+          if (reviewsResponse.meta) {
+            setReviewsTotal(reviewsResponse.meta.total || 0);
+            const total = reviewsResponse.meta.total || 0;
+            const pageSize = reviewsResponse.meta.pageSize || reviewsPageSize;
+            setReviewsTotalPages(Math.ceil(total / pageSize));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      }
+    };
+
+    fetchReviews();
+  }, [company, reviewsPage, reviewsPageSize, getToken]);
 
   // Fetch company details and jobs
   useEffect(() => {
@@ -92,16 +133,7 @@ const CompanyDetail = () => {
           setJobs(jobsResponse.data);
         }
 
-        // Fetch reviews
-        const reviewsResponse = await apiClient.getCompanyReviews(
-          foundCompany.id,
-          { page: 1, pageSize: 10 },
-          token ?? undefined
-        );
-
-        if (reviewsResponse.success) {
-          setReviews(reviewsResponse.data);
-        }
+        // Initial reviews fetch will be handled by the reviews useEffect
 
         // Fetch review stats
         const statsResponse = await apiClient.getCompanyReviewStats(
@@ -242,6 +274,33 @@ const CompanyDetail = () => {
     return html.replace(/<[^>]*>/g, "").trim() || "No description available";
   };
 
+  const postedAgo = (createdAt: string) => {
+    const ts = createdAt ? new Date(createdAt).getTime() : 0;
+    if (!ts) return "";
+    const diffMs = Date.now() - ts;
+    const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    if (days <= 0) return "Today";
+    if (days === 1) return "1 day ago";
+    return `${days} days ago`;
+  };
+
+  const getEmploymentTypeLabel = (type: JobType) => {
+    const labels: Record<JobType, string> = {
+      FULL_TIME: "Full-time",
+      PART_TIME: "Part-time",
+      CONTRACT: "Contract",
+      FREELANCE: "Freelance",
+      INTERNSHIP: "Internship",
+      REMOTE: "Remote",
+    };
+    return labels[type] ?? type;
+  };
+
+  const handleJobsViewModeChange = (mode: "grid" | "table") => {
+    setJobsViewMode(mode);
+    localStorage.setItem("company-jobs-view-mode", mode);
+  };
+
   // Handle review submission
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -265,11 +324,19 @@ const CompanyDetail = () => {
         
         // Refresh reviews and stats
         const [reviewsResponse, statsResponse] = await Promise.all([
-          apiClient.getCompanyReviews(company.id, { page: 1, pageSize: 10 }, token ?? undefined),
+          apiClient.getCompanyReviews(company.id, { page: reviewsPage, pageSize: reviewsPageSize }, token ?? undefined),
           apiClient.getCompanyReviewStats(company.id, token ?? undefined),
         ]);
 
-        if (reviewsResponse.success) setReviews(reviewsResponse.data);
+        if (reviewsResponse.success) {
+          setReviews(reviewsResponse.data);
+          if (reviewsResponse.meta) {
+            setReviewsTotal(reviewsResponse.meta.total || 0);
+            const total = reviewsResponse.meta.total || 0;
+            const pageSize = reviewsResponse.meta.pageSize || reviewsPageSize;
+            setReviewsTotalPages(Math.ceil(total / pageSize));
+          }
+        }
         if (statsResponse.success) setReviewStats(statsResponse.data);
 
         alert(myReview ? "Review updated successfully!" : "Review submitted successfully!");
@@ -311,11 +378,17 @@ const CompanyDetail = () => {
         // Refresh reviews and stats
         if (company) {
           const [reviewsResponse, statsResponse] = await Promise.all([
-            apiClient.getCompanyReviews(company.id, { page: 1, pageSize: 10 }, token ?? undefined),
+            apiClient.getCompanyReviews(company.id, { page: reviewsPage, pageSize: reviewsPageSize }, token ?? undefined),
             apiClient.getCompanyReviewStats(company.id, token ?? undefined),
           ]);
 
-          if (reviewsResponse.success) setReviews(reviewsResponse.data);
+          if (reviewsResponse.success) {
+            setReviews(reviewsResponse.data);
+            if (reviewsResponse.meta) {
+              setReviewsTotal(reviewsResponse.meta.total || 0);
+              setReviewsTotalPages(reviewsResponse.meta.totalPages || 0);
+            }
+          }
           if (statsResponse.success) setReviewStats(statsResponse.data);
         }
 
@@ -557,7 +630,18 @@ const CompanyDetail = () => {
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Rating</div>
-                  <div className="text-xl font-bold">4.5/5</div>
+                  <div className="text-xl font-bold">
+                    {company.averageRating && company.averageRating > 0
+                      ? `${company.averageRating.toFixed(1)}/5`
+                      : reviewStats && reviewStats.averageRating > 0
+                      ? `${reviewStats.averageRating.toFixed(1)}/5`
+                      : "No rating"}
+                  </div>
+                  {(company.totalReviews && company.totalReviews > 0) || (reviewStats && reviewStats.totalReviews > 0) ? (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {(company.totalReviews || reviewStats?.totalReviews || 0)} review{(company.totalReviews || reviewStats?.totalReviews || 0) !== 1 ? 's' : ''}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -574,6 +658,26 @@ const CompanyDetail = () => {
               <p className="text-sm text-muted-foreground mt-1">
                 Explore career opportunities at {company.name}
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={jobsViewMode === "grid" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleJobsViewModeChange("grid")}
+                className="gap-2"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Grid
+              </Button>
+              <Button
+                variant={jobsViewMode === "table" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleJobsViewModeChange("table")}
+                className="gap-2"
+              >
+                <Table className="h-4 w-4" />
+                Table
+              </Button>
             </div>
           </div>
 
@@ -593,7 +697,7 @@ const CompanyDetail = () => {
                 </Button>
               </CardContent>
             </Card>
-          ) : (
+          ) : jobsViewMode === "grid" ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {jobs.map((job, index) => (
                 <Card
@@ -678,6 +782,97 @@ const CompanyDetail = () => {
                 </Card>
               ))}
             </div>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed">
+                    <colgroup>
+                      <col className="w-[32%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[13%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[15%]" />
+                      <col className="w-[8%]" />
+                    </colgroup>
+                    <thead className="border-b bg-muted/50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-semibold">Job</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold">Location</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold">Type</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold">Salary</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold">Posted</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {jobs.map((job, index) => (
+                        <tr
+                          key={job.id}
+                          className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                          onClick={() => navigate(`/jobs/${job.id}`)}
+                        >
+                          <td className="px-3 py-3">
+                            <div className="font-medium line-clamp-2 min-w-0 text-sm">{job.title}</div>
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {getSkillTags(job).slice(0, 3).map((tag, i) => (
+                                <Badge key={i} variant="outline" className="text-xs py-0">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{job.isRemote ? "Remote" : job.location || "Not specified"}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-col gap-1">
+                              <Badge variant="outline" className="text-xs w-fit py-0">
+                                {getEmploymentTypeLabel(job.type)}
+                              </Badge>
+                              {job.isRemote && (
+                                <Badge variant="outline" className="text-xs gap-1 w-fit py-0">
+                                  <Globe className="h-3 w-3" />
+                                  Remote
+                                </Badge>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-xs font-medium min-w-0">
+                            <div className="truncate">{formatSalary(job)}</div>
+                          </td>
+                          <td className="px-3 py-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{postedAgo(job.createdAt)}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/jobs/${job.id}`);
+                                }}
+                              >
+                                View
+                                <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
 
@@ -924,77 +1119,130 @@ const CompanyDetail = () => {
 
           {/* Reviews List */}
           {reviews.length > 0 ? (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <Card key={review.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-4">
-                      {/* Avatar */}
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
-                        {review.candidate?.user.firstName?.[0]}
-                        {review.candidate?.user.lastName?.[0]}
-                      </div>
+            <>
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <Card key={review.id}>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-4">
+                        {/* Avatar */}
+                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
+                          {review.candidate?.user.firstName?.[0]}
+                          {review.candidate?.user.lastName?.[0]}
+                        </div>
 
-                      <div className="flex-1 space-y-3">
-                        {/* Header */}
-                        <div>
-                          <div className="flex items-center justify-between">
+                        <div className="flex-1 space-y-3">
+                          {/* Header */}
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-semibold">
+                                  {review.candidate?.user.firstName}{" "}
+                                  {review.candidate?.user.lastName}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(review.createdAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                              {renderStars(review.rating)}
+                            </div>
+                            {review.title && (
+                              <h4 className="font-semibold mt-2">{review.title}</h4>
+                            )}
+                          </div>
+
+                          {/* Content */}
+                          {review.review && (
+                            <p className="text-sm text-muted-foreground">{review.review}</p>
+                          )}
+
+                          {review.pros && (
                             <div>
-                              <div className="font-semibold">
-                                {review.candidate?.user.firstName}{" "}
-                                {review.candidate?.user.lastName}
+                              <div className="text-sm font-semibold text-green-600 mb-1">
+                                Pros
                               </div>
-                              <div className="text-xs text-muted-foreground">
-                                {new Date(review.createdAt).toLocaleDateString()}
+                              <p className="text-sm text-muted-foreground">{review.pros}</p>
+                            </div>
+                          )}
+
+                          {review.cons && (
+                            <div>
+                              <div className="text-sm font-semibold text-red-600 mb-1">
+                                Cons
                               </div>
+                              <p className="text-sm text-muted-foreground">{review.cons}</p>
                             </div>
-                            {renderStars(review.rating)}
-                          </div>
-                          {review.title && (
-                            <h4 className="font-semibold mt-2">{review.title}</h4>
                           )}
-                        </div>
 
-                        {/* Content */}
-                        {review.review && (
-                          <p className="text-sm text-muted-foreground">{review.review}</p>
-                        )}
-
-                        {review.pros && (
-                          <div>
-                            <div className="text-sm font-semibold text-green-600 mb-1">
-                              Pros
-                            </div>
-                            <p className="text-sm text-muted-foreground">{review.pros}</p>
+                          {/* Tags */}
+                          <div className="flex items-center gap-2 text-sm">
+                            {review.isCurrentEmployee && (
+                              <Badge variant="outline">Current Employee</Badge>
+                            )}
+                            {review.wouldRecommend && (
+                              <Badge variant="outline" className="bg-green-500/10">
+                                Recommends
+                              </Badge>
+                            )}
                           </div>
-                        )}
-
-                        {review.cons && (
-                          <div>
-                            <div className="text-sm font-semibold text-red-600 mb-1">
-                              Cons
-                            </div>
-                            <p className="text-sm text-muted-foreground">{review.cons}</p>
-                          </div>
-                        )}
-
-                        {/* Tags */}
-                        <div className="flex items-center gap-2 text-sm">
-                          {review.isCurrentEmployee && (
-                            <Badge variant="outline">Current Employee</Badge>
-                          )}
-                          {review.wouldRecommend && (
-                            <Badge variant="outline" className="bg-green-500/10">
-                              Recommends
-                            </Badge>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {reviewsTotalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setReviewsPage((p) => Math.max(1, p - 1))}
+                    disabled={reviewsPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, reviewsTotalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (reviewsTotalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (reviewsPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (reviewsPage >= reviewsTotalPages - 2) {
+                        pageNum = reviewsTotalPages - 4 + i;
+                      } else {
+                        pageNum = reviewsPage - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={reviewsPage === pageNum ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setReviewsPage(pageNum)}
+                          className="w-9"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                    {reviewsTotalPages > 5 && <span className="text-muted-foreground px-2">...</span>}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setReviewsPage((p) => Math.min(reviewsTotalPages, p + 1))}
+                    disabled={reviewsPage === reviewsTotalPages}
+                  >
+                    Next
+                  </Button>
+                  <div className="text-xs text-muted-foreground ml-4">
+                    Page {reviewsPage} of {reviewsTotalPages} ({reviewsTotal} reviews)
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             !isSignedIn && (
               <Card>
