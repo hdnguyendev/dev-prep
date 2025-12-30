@@ -1001,7 +1001,7 @@ const RecruiterJobApplications = () => {
                                   <div className="mt-2">
                                     <div className="text-xs font-medium mb-1">Overall Score:</div>
                                     <div className="text-lg font-bold text-green-700 dark:text-green-300">
-                                      {interview.overallScore.toFixed(1)} / 10
+                                      {interview.overallScore?.toFixed(1)} / 10
                                     </div>
                                   </div>
                                 )}
@@ -1148,7 +1148,6 @@ const RecruiterJobApplications = () => {
                         const isAccepted = offer.status === "ACCEPTED";
                         const isRejected = offer.status === "REJECTED";
                         const isExpired = new Date(offer.expirationDate) < new Date() && isPending;
-                        const isWithdrawn = offer.status === "WITHDRAWN";
 
                         return (
                           <div
@@ -1189,7 +1188,7 @@ const RecruiterJobApplications = () => {
                                   <div className="mt-2">
                                     <div className="text-xs font-medium mb-1">Salary:</div>
                                     <div className="text-sm font-semibold">
-                                      {offer.salaryCurrency} {offer.salaryMin.toLocaleString()} - {offer.salaryMax.toLocaleString()}
+                                      {offer.salaryCurrency} {offer.salaryMin?.toLocaleString()} - {offer.salaryMax?.toLocaleString()}
                                     </div>
                                   </div>
                                 )}

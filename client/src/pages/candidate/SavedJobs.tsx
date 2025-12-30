@@ -237,30 +237,6 @@ const SavedJobs = ({ embedded }: { embedded?: boolean }) => {
     REMOTE: "Remote",
   };
 
-  // Get unique companies and locations for filter dropdowns
-  const uniqueCompanies = useMemo(() => {
-    const companies = new Set<string>();
-    savedJobs.forEach((job) => {
-      if (job.company?.name) {
-        companies.add(job.company.name);
-      }
-    });
-    return Array.from(companies).sort();
-  }, [savedJobs]);
-
-  const uniqueLocations = useMemo(() => {
-    const locations = new Set<string>();
-    savedJobs.forEach((job) => {
-      if (job.location) {
-        locations.add(job.location);
-      }
-      if (job.isRemote) {
-        locations.add("Remote");
-      }
-    });
-    return Array.from(locations).sort();
-  }, [savedJobs]);
-
   if (!isSignedIn && !embedded) {
     return null;
   }

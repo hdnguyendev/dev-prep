@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { apiClient } from "@/lib/api";
@@ -85,9 +86,9 @@ export default function RecruiterMembership() {
           const res = await apiClient.getPaymentStatus(currentOrderCode, currentUser?.id);
 
           if (res.success && res.data) {
-            const transaction = res.data.transaction;
+            const transaction = (res.data as any).transaction;
             
-            if (transaction.status === "COMPLETED") {
+            if ((transaction as any).status === "COMPLETED") {
               // Payment completed!
               setSuccess("Payment successful! Your VIP membership has been activated.");
               setCurrentOrderCode(null);
@@ -109,7 +110,8 @@ export default function RecruiterMembership() {
             }
             // PENDING - continue polling
           }
-        } catch {
+        } catch (err: any) {
+          console.error(err);
         }
       }, 3000); // Poll every 3 seconds
     }
@@ -131,13 +133,13 @@ export default function RecruiterMembership() {
       // Load plans for RECRUITER role
       const plansRes = await apiClient.getMembershipPlans("RECRUITER");
       if (plansRes.success && plansRes.data) {
-        setPlans(plansRes.data);
+        setPlans(plansRes.data as any);
       }
 
       // Load status
       const statusRes = await apiClient.getMembershipStatus(currentUser?.id);
       if (statusRes.success && statusRes.data) {
-        setStatus(statusRes.data);
+        setStatus(statusRes.data as any);
       }
     } catch {
       setError("Failed to load membership information");
@@ -151,14 +153,16 @@ export default function RecruiterMembership() {
       const res = await apiClient.getPaymentStatus(orderCode, currentUser?.id);
 
       if (res.success && res.data) {
-        if (res.data.status === "COMPLETED") {
+        if ((res.data as any).status === "COMPLETED") {
           setSuccess("Payment successful! Your VIP membership has been activated.");
           await loadData(); // Reload to show updated status
-        } else if (res.data.status === "FAILED") {
+        } else if ((res.data as any).status === "FAILED") {
           setError("Payment failed. Please try again.");
         }
       }
-    } catch {
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || "Failed to check payment status. Please try again.";
+      setError(errorMessage);
     }
   };
 
@@ -173,10 +177,10 @@ export default function RecruiterMembership() {
       const cancelUrl = "";
 
       const res = await apiClient.purchaseMembership(planId, returnUrl, cancelUrl, currentUser?.id);
-
+      
       if (res.success && res.data) {
-        const url = res.data.paymentLinkUrl || res.data.paymentUrl;
-        const orderCode = res.data.orderCode;
+        const url = (res.data as any)?.paymentLinkUrl || (res.data as any)?.paymentUrl;
+        const orderCode = (res.data as any)?.orderCode;
         if (url && orderCode) {
           // Open payment in new tab and start polling
           setCurrentOrderCode(orderCode);
@@ -187,7 +191,7 @@ export default function RecruiterMembership() {
       } else {
         throw new Error(res.message || "Failed to create payment link");
       }
-    } catch {
+    } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Failed to initiate payment. Please try again.";
       setError(errorMessage);
       setPurchasing(null);

@@ -53,7 +53,7 @@ export default function Subscription() {
         setLoading(true);
         const res = await apiClient.getMembershipPlans("CANDIDATE");
         if (res.success && res.data) {
-          setPlans(res.data);
+          setPlans(res.data as any);
         }
       } catch {
       } finally {

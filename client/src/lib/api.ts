@@ -11,6 +11,8 @@ export type ApplicationStatus =
   | "INTERVIEW_SCHEDULED"
   | "INTERVIEWED"
   | "OFFER_SENT"
+  | "OFFER_ACCEPTED"
+  | "OFFER_REJECTED"
   | "HIRED"
   | "REJECTED"
   | "WITHDRAWN";
@@ -195,6 +197,9 @@ export type InterviewFeedback = {
 };
 
 export interface ApiResponse<T> {
+  requiresVIP: any;
+  teaserData: null;
+  isVIP: boolean;
   success: boolean;
   data: T;
   message?: string;
@@ -325,7 +330,7 @@ class ApiClient {
         // 1. { success, data } - wrapped format
         // 2. { success, ...fields } - direct format (like /auth/me)
         // 3. { ok, data } - alternative wrapped format
-        const normalized: ApiResponse<T> =
+        const normalized =
           raw && typeof raw === "object" && "ok" in raw
             ? {
                 success: Boolean((raw as unknown as { ok: boolean }).ok),
@@ -351,7 +356,7 @@ class ApiClient {
               }
             : (raw as ApiResponse<T>);
         return normalized;
-      } catch {
+      } catch (error) {
         // Remove from cache on error so retry can happen
         if (cacheKey) {
           requestCache.delete(cacheKey);
@@ -374,7 +379,7 @@ class ApiClient {
       requestCache.set(cacheKey, requestPromise);
     }
 
-    return requestPromise;
+    return requestPromise as Promise<ApiResponse<T>>;
   }
 
   listJobs(params?: ListParams, token?: string) {
@@ -619,7 +624,7 @@ class ApiClient {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-    }).catch((err) => {
+    }).catch(() => {
       // Silently fail - tracking should not break the UI
     });
   }
@@ -638,7 +643,7 @@ class ApiClient {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-    }).catch((err) => {
+    }).catch(() => {
       // Silently fail - tracking should not break the UI
     });
   }
@@ -795,6 +800,7 @@ class ApiClient {
    */
   getMembershipStatus(token?: string) {
     return this.request<{
+      usage: any;
       success: boolean;
       data: {
         membership: {
@@ -874,8 +880,21 @@ class ApiClient {
           status: "PENDING" | "COMPLETED" | "FAILED" | "EXPIRED" | "CANCELED";
           paidAt: string | null;
         };
-        plan: MembershipPlan;
-        membership: UserMembership | null;
+        plan: {
+          id: string;
+          name: string;
+          planType: "FREE" | "VIP";
+          features: string[];
+        };
+        membership: {
+          id: string;
+          plan: {
+            id: string;
+            name: string;
+            planType: "FREE" | "VIP";
+            features: string[];
+          };
+        };
       };
     }>(`/membership/payment/${orderCode}/status`, { method: "GET" }, token);
   }

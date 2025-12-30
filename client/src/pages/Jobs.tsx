@@ -105,13 +105,8 @@ const Jobs = () => {
         } else {
           setError(response.message || "Failed to fetch jobs");
         }
-      } catch {
-        if (currentRequestId !== requestId || !isMounted || abortController.signal.aborted) {
-          return;
-        }
-        if (err instanceof Error && err.name !== 'AbortError') {
-          setError("An error occurred");
-        }
+      } catch (err: any) {
+        console.error(err);
       } finally {
         if (currentRequestId === requestId && isMounted && !abortController.signal.aborted) {
           setLoading(false);
@@ -153,11 +148,13 @@ const Jobs = () => {
           const savedJobIds = new Set(savedJobsResponse.data.map(job => job.id));
           setSavedJobs(savedJobIds);
         }
-      } catch {
+      } catch (err: any) {
+        console.error(err);
         if (!isMounted || abortController.signal.aborted) {
           return;
         }
         if (err instanceof Error && err.name !== 'AbortError') {
+          setError("An error occurred");
         }
       }
     };

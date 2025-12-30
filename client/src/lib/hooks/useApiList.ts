@@ -53,7 +53,7 @@ export const useApiList = <T,>(fetcher: Fetcher<T>, deps: unknown[] = []) => {
       } else {
         setError(res.message || "Failed to fetch data");
       }
-    } catch {
+    } catch (err) {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') {
         return;

@@ -59,7 +59,7 @@ export function useMembership() {
       const res = await apiClient.getMembershipStatus(token || undefined);
       
       if (res.success && res.data) {
-        setMembershipStatus(res.data);
+        setMembershipStatus(res.data as any);
       } else {
         throw new Error(res.message || "Failed to fetch membership status");
       }

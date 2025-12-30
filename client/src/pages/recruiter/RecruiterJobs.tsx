@@ -203,12 +203,14 @@ const RecruiterJobs = () => {
                 planType: statusRes.data.usage.planType,
               });
             }
-          } catch {
+          } catch (err: any) {
+            console.error(err);
           }
         } else {
           setError(data.message || "Failed to fetch jobs");
         }
-      } catch {
+      } catch (err: any) {
+        console.error(err);
         setError("Network error");
       } finally {
         setLoading(false);

@@ -220,9 +220,8 @@ const JobDetail = () => {
           if (isRecruiterOrAdmin && token) {
             try {
               const meResponse = await apiClient.getMe(token);
-              if (meResponse.success && meResponse.data?.recruiterProfile?.id) {
-                const recruiterProfileId = meResponse.data.recruiterProfile.id;
-                setCurrentUserRecruiterProfileId(recruiterProfileId);
+              if (meResponse.success && (meResponse.data as any)?.recruiterProfile?.id) {
+                const recruiterProfileId = (meResponse.data as any).recruiterProfile.id;
                 // Check if this recruiter owns the job
                 if (jobResponse.data?.recruiterId === recruiterProfileId) {
                   setIsJobOwner(true);
@@ -273,7 +272,7 @@ const JobDetail = () => {
         } else {
           setError(jobResponse.message || "Job not found");
         }
-      } catch {
+      } catch (err: any) {
         if (!isMounted || abortController.signal.aborted) {
           return;
         }

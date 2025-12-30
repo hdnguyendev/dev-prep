@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { apiClient } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
-import { Loader2, User, Crown, Sparkles, Mail } from "lucide-react";
+import { Crown, Loader2, Mail, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 
 interface MatchingCandidate {
   candidateId?: string;
@@ -112,20 +112,6 @@ const RecruiterMatchingCandidates = () => {
     fetchCandidates();
   }, [userId]);
 
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600 dark:text-green-400";
-    if (score >= 60) return "text-blue-600 dark:text-blue-400";
-    if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
-    return "text-red-600 dark:text-red-400";
-  };
-
-  const getScoreVariant = (score: number): "default" | "secondary" | "destructive" | "outline" => {
-    if (score >= 80) return "default";
-    if (score >= 60) return "secondary";
-    if (score >= 40) return "outline";
-    return "destructive";
-  };
 
   if (loading) {
     return (
@@ -436,7 +422,7 @@ const RecruiterMatchingCandidates = () => {
                                 <a
                                   href={`mailto:${candidate.candidateNotificationEmail || candidate.candidateEmail}?subject=Job Opportunity&body=Hi ${candidate.candidateName},%0A%0AI found your profile and think you'd be a great fit for our position.%0A%0ABest regards,%0ARecruiter`}
                                   className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium truncate max-w-24"
-                                  title={candidate.candidateNotificationEmail || candidate.candidateEmail}
+                                  title={candidate.candidateNotificationEmail || candidate.candidateEmail || "Contact Email"}
                                 >
                                   {candidate.candidateNotificationEmail || candidate.candidateEmail}
                                 </a>
@@ -599,7 +585,7 @@ const RecruiterMatchingCandidates = () => {
             )}
 
             {/* FREE User Upgrade Prompt - Enhanced */}
-            {!isVIP && teaserData?.totalMatches && teaserData.totalMatches > 0 && (
+            {!isVIP && teaserData?.matchCount && teaserData.matchCount > 0 && (
               <div className="relative overflow-hidden bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 dark:from-yellow-950/20 dark:via-orange-950/20 dark:border-orange-800/50 border-2 border-yellow-300 rounded-xl p-6 shadow-lg">
                 {/* Animated background pattern */}
                 <div className="absolute inset-0 opacity-30" style={{

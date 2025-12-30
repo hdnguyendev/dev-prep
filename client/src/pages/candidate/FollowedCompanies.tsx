@@ -244,29 +244,6 @@ const FollowedCompanies = ({ embedded }: { embedded?: boolean }) => {
     REMOTE: "Remote",
   };
 
-  // Get unique companies and locations for filter dropdowns
-  const uniqueCompanies = useMemo(() => {
-    const companySet = new Set<string>();
-    jobs.forEach((job) => {
-      if (job.company?.name) {
-        companySet.add(job.company.name);
-      }
-    });
-    return Array.from(companySet).sort();
-  }, [jobs]);
-
-  const uniqueLocations = useMemo(() => {
-    const locations = new Set<string>();
-    jobs.forEach((job) => {
-      if (job.location) {
-        locations.add(job.location);
-      }
-      if (job.isRemote) {
-        locations.add("Remote");
-      }
-    });
-    return Array.from(locations).sort();
-  }, [jobs]);
 
   if (!isSignedIn && !embedded) {
     return null;

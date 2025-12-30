@@ -332,7 +332,7 @@ const AdminDetail = () => {
           setFormData(payload);
         }
       }
-    } catch {
+    } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Update failed";
       setError(errorMessage);
       // Show more detailed error if available
@@ -357,7 +357,7 @@ const AdminDetail = () => {
       await adminClient.remove(resource.path, resource.primaryKeys, row, token ?? undefined);
       setDeleteConfirmOpen(false);
       navigate(-1);
-    } catch {
+    } catch (err) {
       setError("Failed to delete");
     } finally {
       setDeleting(false);

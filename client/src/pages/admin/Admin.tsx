@@ -139,6 +139,7 @@ const AdminDashboard = ({
         setApplications(applicationsRes.data || []);
         setInterviews(interviewsRes.data || []);
       } catch {
+        // Silently fail
       } finally {
         setLoading(false);
       }
@@ -811,6 +812,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
           return next;
         });
       } catch {
+        // Silently fail
       }
     },
     [getToken, relationOptions, relationMap]
@@ -917,10 +919,10 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
               }
             });
           }
-        } catch {
+        } catch (err) {
         }
       }
-    } catch {
+    } catch (err) {
       setState({ loading: false, error: err instanceof Error ? err.message : "Unexpected error", data: [] });
     }
   }, [getToken, page, pageSize, resource.path, search, filterField, filterValue, resource.key, companyTab]);
@@ -1288,7 +1290,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
           existingForJob
             .filter((js) => !uniqueSkills.includes(String(js.skillId)))
             .map((js) => adminClient.remove("job-skills", ["jobId", "skillId"], js, token ?? undefined))
-            .map((p) => p.catch((err) => {
+            .map((p) => p.catch(() => {
               return null;
             }))
         );
@@ -1317,7 +1319,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
           existingCatForJob
             .filter((jc) => !uniqueCategories.includes(String(jc.categoryId)))
             .map((jc) => adminClient.remove("job-categories", ["jobId", "categoryId"], jc, token ?? undefined))
-            .map((p) => p.catch((err) => {
+            .map((p) => p.catch(() => {
               return null;
             }))
         );
@@ -1340,7 +1342,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
 
       closeModal();
       await load();
-    } catch {
+    } catch (err) {
       alert(err instanceof Error ? err.message : "Request failed");
     }
   };

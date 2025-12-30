@@ -91,7 +91,7 @@ export default function CandidateMembership() {
           const res = await apiClient.getPaymentStatus(currentOrderCode, token || undefined);
 
           if (res.success && res.data) {
-            const transaction = res.data.transaction;
+            const transaction = (res.data as any).transaction;
             
             if (transaction.status === "COMPLETED") {
               // Payment completed!
@@ -189,11 +189,11 @@ export default function CandidateMembership() {
       ]);
 
       if (plansRes.success && plansRes.data) {
-        setPlans(plansRes.data);
+        setPlans(plansRes.data as any);
       }
 
       if (statusRes.success && statusRes.data) {
-        setStatus(statusRes.data);
+        setStatus(statusRes.data as any);
       }
     } catch {
       setError("Failed to load membership information");
@@ -208,10 +208,10 @@ export default function CandidateMembership() {
       const res = await apiClient.getPaymentStatus(orderCode, token || undefined);
 
       if (res.success && res.data) {
-        if (res.data.status === "COMPLETED") {
+        if ((res.data as any).status === "COMPLETED") {
           setSuccess("Payment successful! Your VIP membership has been activated.");
           await loadData(); // Reload to show updated status
-        } else if (res.data.status === "FAILED") {
+        } else if ((res.data as any).status === "FAILED") {
           setError("Payment failed. Please try again.");
         }
       }
@@ -234,8 +234,8 @@ export default function CandidateMembership() {
       const res = await apiClient.purchaseMembership(planId, returnUrl, cancelUrl, token || undefined);
 
       if (res.success && res.data) {
-        const url = res.data.paymentLinkUrl || res.data.paymentUrl;
-        const orderCode = res.data.orderCode;
+        const url = (res.data as any).paymentLinkUrl || (res.data as any).paymentUrl;
+        const orderCode = (res.data as any).orderCode;
         if (url && orderCode) {
           // Open payment in new tab and start polling
           setCurrentOrderCode(orderCode);
@@ -249,7 +249,7 @@ export default function CandidateMembership() {
       } else {
         throw new Error(res.message || "Failed to create payment link");
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       // Extract error message from response if available
       const errorMessage = err.response?.data?.message || err.message || "Failed to initiate payment. Please try again.";
       setError(errorMessage);
@@ -530,11 +530,9 @@ export default function CandidateMembership() {
             </CardContent>
             <CardFooter>
               <Button
-                className={`w-full ${currentPlan === "VIP" 
-                  ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 font-bold shadow-lg" 
-                  : currentPlan !== "VIP" 
-                  ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 shadow-md hover:shadow-lg" 
-                  : ""}`}
+                className={`w-full ${currentPlan === "VIP"
+                  ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 font-bold shadow-lg"
+                  : "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0 shadow-md hover:shadow-lg"}`}
                 onClick={() => handlePurchase(vipPlan.id)}
                 disabled={currentPlan === "VIP" || purchasing === vipPlan.id}
               >

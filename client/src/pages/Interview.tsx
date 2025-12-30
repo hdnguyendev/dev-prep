@@ -1,14 +1,15 @@
 import Agent from "@/components/Agent.tsx";
-import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from "@clerk/clerk-react";
-import { useLocation, useSearchParams } from "react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMembership } from "@/hooks/useMembership";
-import { Badge } from "@/components/ui/badge";
+import { RedirectToSignIn, SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { AlertCircle, CheckCircle2, Crown, Key, Loader2, Mail, PlayCircle, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useSearchParams } from "react-router";
 
 /**
  * Interview Prep page - CANDIDATE ONLY
@@ -70,7 +71,8 @@ const Interview = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-      } catch {
+      } catch (err: any) {
+        console.error(err);
       }
     };
     syncCandidate();

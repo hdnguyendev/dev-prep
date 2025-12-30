@@ -32,7 +32,6 @@ export default function CandidateRecommendedJobs() {
   const [error, setError] = useState<string | React.ReactNode | null>(null);
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [missingProfileItems, setMissingProfileItems] = useState<string[]>([]);
-  const [freeLimit, setFreeLimit] = useState<number | undefined>(undefined);
   
   // View mode and filters
   const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
@@ -185,10 +184,10 @@ export default function CandidateRecommendedJobs() {
           // Check what's missing in the profile for better recommendations
           const missingItems: string[] = [];
           
-          if (!candidateProfile.skills || candidateProfile.skills.length === 0) {
+          if (!(candidateProfile as any).skills || (candidateProfile as any).skills.length === 0) {
             missingItems.push("Skills");
           }
-          if (!candidateProfile.experiences || candidateProfile.experiences.length === 0) {
+          if (!(candidateProfile as any).experiences || (candidateProfile as any).experiences.length === 0) {
             missingItems.push("Work Experience");
           }
           if (!candidateProfile.headline) {
@@ -211,9 +210,7 @@ export default function CandidateRecommendedJobs() {
         
         // Check membership status from API response
         if (matchResponse.success) {
-          const apiResponse = matchResponse as any;
-          setFreeLimit(apiResponse.freeLimit);
-
+          // Membership status handled elsewhere
         }
         
         if (!matchResponse.success) {
@@ -229,10 +226,10 @@ export default function CandidateRecommendedJobs() {
             if (profile) {
               const missingItems: string[] = [];
               
-              if (!profile.skills || profile.skills.length === 0) {
+              if (!(profile as any).skills || (profile as any).skills.length === 0) {
                 missingItems.push("Skills");
               }
-              if (!profile.experiences || profile.experiences.length === 0) {
+              if (!(profile as any).experiences || (profile as any).experiences.length === 0) {
                 missingItems.push("Work Experience");
               }
               if (!profile.headline) {

@@ -812,7 +812,6 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
     if (!recruiterUserId) return;
     
     try {
-      setLoadingApplicationDetail(true);
       const apiBase = import.meta.env.VITE_API_URL || "http://localhost:9999";
       const headers: Record<string, string> = {
         "Authorization": `Bearer ${recruiterUserId}`,
@@ -834,9 +833,8 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
           }
         }
       }
-    } catch {
-    } finally {
-      setLoadingApplicationDetail(false);
+    } catch (err: any) {
+      console.error(err);
     }
   };
 
@@ -872,7 +870,8 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
       };
       upsertSelectedApplication(next);
       setNoteDraft("");
-    } catch {
+    } catch (err: any) {
+      console.error(err);
     } finally {
       setSavingNote(false);
     }
@@ -911,7 +910,8 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
       upsertSelectedApplication(next);
       setEditingNoteId(null);
       setEditingNoteText("");
-    } catch {
+    } catch (err: any) {
+      console.error(err);
     } finally {
       setSavingNote(false);
     }
@@ -938,7 +938,8 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
         notes: (selectedApplication.notes || []).filter((n) => n.id !== noteId),
       };
       upsertSelectedApplication(next);
-    } catch {
+    } catch (err: any) {
+      console.error(err);
     } finally {
       setSavingNote(false);
     }
