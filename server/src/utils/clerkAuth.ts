@@ -10,7 +10,14 @@ import prisma from "../app/db/prisma";
 export async function getOrCreateClerkUser(c: Context) {
   const auth = getAuth(c);
   
+  console.log("🔍 Clerk auth check:", {
+    hasAuth: !!auth,
+    userId: auth?.userId,
+    sessionId: auth?.sessionId,
+  });
+  
   if (!auth?.userId) {
+    console.error("❌ No Clerk userId found in auth object");
     return { success: false, error: "Not authenticated with Clerk", user: null };
   }
 

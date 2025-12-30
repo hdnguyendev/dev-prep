@@ -27,6 +27,11 @@ const InterviewFeedbackPage = () => {
 
   const title = useMemo(() => {
     if (!data) return "Interview feedback";
+    const candidateName = (data as any).candidate?.name;
+    const jobTitle = (data as any).job?.title;
+    if (candidateName && jobTitle) {
+      return `Interview: ${candidateName} - ${jobTitle}`;
+    }
     return `Interview feedback • ${String(data.id).slice(0, 6)}`;
   }, [data]);
 
@@ -57,8 +62,7 @@ const InterviewFeedbackPage = () => {
       }
 
       setData(res.data);
-    } catch (e) {
-      console.error(e);
+    } catch {
       if (!opts?.silent) setError("Network error");
     } finally {
       if (!opts?.silent) setLoading(false);
@@ -140,8 +144,7 @@ const InterviewFeedbackPage = () => {
 
       await apiClient.analyzeInterview(id, token);
       await load();
-    } catch (e) {
-      console.error(e);
+    } catch {
       setError("Failed to re-evaluate");
     } finally {
       setReEvaluating(false);
@@ -191,20 +194,20 @@ const InterviewFeedbackPage = () => {
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <CardTitle>{title}</CardTitle>
-            <CardDescription>Đang tạo feedback… trang sẽ tự cập nhật khi xử lý xong.</CardDescription>
+            <CardDescription>Generating feedback… page will auto-update when processing is complete.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
               <div className="text-sm text-muted-foreground">
-                Trạng thái: <span className="font-medium text-foreground">{data.status}</span>
-                {isPolling && !shouldStop && <span className="text-muted-foreground"> • đang cập nhật</span>}
+                Status: <span className="font-medium text-foreground">{data.status}</span>
+                {isPolling && !shouldStop && <span className="text-muted-foreground"> • updating</span>}
               </div>
             </div>
 
             {shouldStop && (
               <div className="text-sm text-muted-foreground">
-                Hơi lâu hơn bình thường. Bạn có thể refresh hoặc bấm “Analyze now”.
+                Taking longer than usual. You can refresh or click "Analyze now".
               </div>
             )}
 
@@ -230,6 +233,8 @@ const InterviewFeedbackPage = () => {
   const categoryScores = Array.isArray(ai?.categoryScores) ? (ai.categoryScores as any[]) : [];
   const strengths = Array.isArray(ai?.strengths) ? (ai.strengths as string[]) : [];
   const improvements = Array.isArray(ai?.areasForImprovement) ? (ai.areasForImprovement as string[]) : [];
+  const candidateInfo = (data as any).candidate;
+  const jobInfo = (data as any).job;
 
   return (
     <main className="container mx-auto min-h-dvh px-4 py-8">
@@ -241,7 +246,11 @@ const InterviewFeedbackPage = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            <p className="text-sm text-muted-foreground">Rule-based evaluation results.</p>
+            <p className="text-sm text-muted-foreground">
+              {candidateInfo && jobInfo
+                ? `${candidateInfo.name} • ${jobInfo.title}${jobInfo.company ? ` at ${jobInfo.company}` : ""}`
+                : "Rule-based evaluation results."}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

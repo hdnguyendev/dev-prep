@@ -14,6 +14,8 @@ export type ApplicationStatus =
   | "HIRED"
   | "REJECTED"
   | "WITHDRAWN";
+
+export type ConnectionState = "connecting" | "connected" | "reconnecting" | "disconnected";
 export type InterviewType = "AI_VIDEO" | "AI_VOICE" | "AI_CHAT" | "CODING_TEST";
 export type InterviewStatus = "PENDING" | "IN_PROGRESS" | "PROCESSING" | "COMPLETED" | "FAILED" | "EXPIRED";
 
@@ -203,6 +205,37 @@ export interface ApiResponse<T> {
   };
 }
 
+// Matching System Types
+export interface MatchResult {
+  jobId: string;
+  jobTitle: string;
+  jobIsRemote: boolean;
+  matchScore: number;
+  breakdown: {
+    skillScore: number;
+    experienceScore: number;
+    titleScore: number;
+    locationScore: number;
+    bonusScore: number;
+  };
+  details: {
+    matchedSkills: string[];
+    missingSkills: string[];
+    extraSkills: string[];
+    experienceGap?: string;
+    titleSimilarity: string;
+    locationMatch: string;
+    bonusFactors: string[];
+  };
+  suggestions: string[];
+  // Additional fields for candidate matches (when finding candidates for a job)
+  candidateId?: string;
+  candidateUserId?: string; // User ID for messaging
+  candidateName?: string | null;
+  candidateHeadline?: string | null;
+  candidateAvatar?: string | null;
+}
+
 type ListParams = {
   page?: number;
   pageSize?: number;
@@ -223,7 +256,7 @@ const buildQuery = (params?: Record<string, string | number | undefined>) => {
 };
 
 // Global request cache to prevent duplicate calls
-const requestCache = new Map<string, Promise<any>>();
+const requestCache = new Map<string, Promise<unknown>>();
 
 // Generate cache key from request details
 function getCacheKey(url: string, method: string, body?: string, token?: string): string {
@@ -288,25 +321,37 @@ class ApiClient {
         const raw = await response.json();
         
         // Normalize response format
-        // Backend can return either { success, data } or { ok, data }
+        // Backend can return either:
+        // 1. { success, data } - wrapped format
+        // 2. { success, ...fields } - direct format (like /auth/me)
+        // 3. { ok, data } - alternative wrapped format
         const normalized: ApiResponse<T> =
           raw && typeof raw === "object" && "ok" in raw
             ? {
-                success: Boolean((raw as any).ok),
-                data: (raw as any).data as T,
-                message: (raw as any).message as string | undefined,
-                meta: (raw as any).meta,
+                success: Boolean((raw as unknown as { ok: boolean }).ok),
+                data: (raw as unknown as { data: T }).data,
+                message: (raw as unknown as { message?: string }).message,
+                meta: (raw as unknown as { meta?: unknown }).meta,
               }
             : raw && typeof raw === "object" && "success" in raw
             ? {
-                success: Boolean((raw as any).success),
-                data: (raw as any).data as T,
-                message: (raw as any).message as string | undefined,
-                meta: (raw as any).meta,
+                success: Boolean((raw as unknown as { success: boolean }).success),
+                // If response has 'data' field, use it; otherwise use the whole response (minus success/message/meta)
+                data: (raw as unknown as { data?: T }).data !== undefined
+                  ? (raw as unknown as { data: T }).data
+                  : (() => {
+                      const { success, message, meta, ...rest } = raw as unknown as Record<string, unknown>;
+                      return rest as T;
+                    })(),
+                message: (raw as unknown as { message?: string }).message,
+                meta: (raw as unknown as { meta?: unknown }).meta,
+                ...(raw as unknown as { count?: unknown }).count !== undefined && { count: (raw as unknown as { count: unknown }).count },
+                ...(raw as unknown as { isVIP?: unknown }).isVIP !== undefined && { isVIP: (raw as unknown as { isVIP: unknown }).isVIP },
+                ...(raw as unknown as { requiresVIP?: unknown }).requiresVIP !== undefined && { requiresVIP: (raw as unknown as { requiresVIP: unknown }).requiresVIP },
               }
             : (raw as ApiResponse<T>);
         return normalized;
-      } catch (error) {
+      } catch {
         // Remove from cache on error so retry can happen
         if (cacheKey) {
           requestCache.delete(cacheKey);
@@ -469,13 +514,29 @@ class ApiClient {
       id: string;
       email: string;
       role: string;
-      candidateProfile?: CandidateProfile;
-      recruiterProfile?: any;
+      candidateProfile?: CandidateProfile | null;
+      recruiterProfile?: unknown;
+      firstName?: string;
+      lastName?: string;
+      notificationEmail?: string | null;
+      avatarUrl?: string | null;
     }>(`/auth/me`, {}, token);
   }
 
   syncCandidate(token?: string) {
-    return this.request<{ success: boolean; message?: string }>(`/auth/sync-candidate`, { method: "POST" }, token);
+    return this.request<{
+      success: boolean;
+      user?: {
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        role: string;
+        candidateProfile?: {
+          id: string;
+        };
+      };
+    }>(`/auth/sync-candidate`, { method: "POST" }, token);
   }
 
   // Upload endpoints
@@ -544,6 +605,44 @@ class ApiClient {
     return this.getJobWithInclude(jobId, "skills", token);
   }
 
+  /**
+   * Track a view on a job (when candidate views job detail page)
+   * This increments the viewsCount for the job
+   * Fire-and-forget, doesn't block UI
+   * Only tracks for candidates, not recruiters
+   */
+  trackJobView(jobId: string, token?: string) {
+    // Fire-and-forget, don't wait for response
+    fetch(`${this.baseURL}/jobs/${jobId}/view`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }).catch((err) => {
+      // Silently fail - tracking should not break the UI
+    });
+  }
+
+  /**
+   * Track a click on a job (when candidate clicks on a job card/listing)
+   * This increments the clicksCount for the job
+   * Fire-and-forget, doesn't block UI
+   * Only tracks for candidates, not recruiters
+   */
+  trackJobClick(jobId: string, token?: string) {
+    // Fire-and-forget, don't wait for response
+    fetch(`${this.baseURL}/jobs/${jobId}/click`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }).catch((err) => {
+      // Silently fail - tracking should not break the UI
+    });
+  }
+
   // Education endpoints
   createEducation(data: {
     institution: string;
@@ -553,7 +652,7 @@ class ApiClient {
     endDate?: string;
     grade?: string;
   }, token?: string) {
-    return this.request<{ id: string; [key: string]: any }>(`/auth/education`, {
+    return this.request<{ id: string; [key: string]: unknown }>(`/auth/education`, {
       method: "POST",
       body: JSON.stringify(data),
     }, token);
@@ -567,7 +666,7 @@ class ApiClient {
     endDate?: string;
     grade?: string;
   }, token?: string) {
-    return this.request<{ id: string; [key: string]: any }>(`/auth/education/${educationId}`, {
+    return this.request<{ id: string; [key: string]: unknown }>(`/auth/education/${educationId}`, {
       method: "PUT",
       body: JSON.stringify(data),
     }, token);
@@ -589,7 +688,7 @@ class ApiClient {
     isCurrent?: boolean;
     technologies?: string[];
   }, token?: string) {
-    return this.request<{ id: string; [key: string]: any }>(`/auth/project`, {
+    return this.request<{ id: string; [key: string]: unknown }>(`/auth/project`, {
       method: "POST",
       body: JSON.stringify(data),
     }, token);
@@ -604,7 +703,7 @@ class ApiClient {
     isCurrent?: boolean;
     technologies?: string[];
   }, token?: string) {
-    return this.request<{ id: string; [key: string]: any }>(`/auth/project/${projectId}`, {
+    return this.request<{ id: string; [key: string]: unknown }>(`/auth/project/${projectId}`, {
       method: "PUT",
       body: JSON.stringify(data),
     }, token);
@@ -615,6 +714,175 @@ class ApiClient {
       method: "DELETE",
     }, token);
   }
+
+  // Matching System APIs
+  /**
+   * Get matching jobs for a candidate
+   * @param candidateId - Candidate profile ID
+   * @param limit - Maximum number of results (default: 10, max: 50)
+   * @param token - Authentication token
+   */
+  getMatchingJobs(candidateId: string, limit: number = 10, token?: string) {
+    return this.request<MatchResult[]>(
+      `/matching/candidate/${candidateId}/jobs?limit=${limit}`,
+      { method: "GET" },
+      token
+    );
+  }
+
+  /**
+   * Calculate match score for a specific candidate-job pair
+   * @param candidateId - Candidate profile ID
+   * @param jobId - Job ID
+   * @param token - Authentication token
+   */
+  getCandidateJobMatch(candidateId: string, jobId: string, token?: string) {
+    return this.request<MatchResult>(
+      `/matching/candidate/${candidateId}/job/${jobId}`,
+      { method: "GET" },
+      token
+    );
+  }
+
+  /**
+   * Get matching candidates for a job (VIP recruiters only)
+   * @param jobId - Job ID
+   * @param limit - Maximum number of results (default: 10, max: 50)
+   * @param token - Authentication token
+   */
+  getMatchingCandidates(jobId: string, limit: number = 10, token?: string) {
+    return this.request<{
+      success: boolean;
+      data: MatchResult[];
+      count: number;
+      isVIP: boolean;
+    }>(
+      `/matching/job/${jobId}/candidates?limit=${limit}`,
+      { method: "GET" },
+      token
+    );
+  }
+
+  // Membership APIs
+  /**
+   * Get available membership plans for a role
+   * @param role - User role (CANDIDATE or RECRUITER)
+   */
+  getMembershipPlans(role: "CANDIDATE" | "RECRUITER") {
+    return this.request<{
+      success: boolean;
+      data: Array<{
+        id: string;
+        name: string;
+        planType: "FREE" | "VIP";
+        role: string;
+        price: number;
+        currency: Currency;
+        duration: number;
+        maxInterviews?: number | null;
+        maxMatchingViews?: number | null;
+        unlimitedInterviews: boolean;
+        fullMatchingInsights: boolean;
+        features: string[];
+        description?: string | null;
+      }>;
+    }>(`/membership/plans?role=${role}`, { method: "GET" });
+  }
+
+  /**
+   * Get current user's membership status
+   * @param token - Authentication token
+   */
+  getMembershipStatus(token?: string) {
+    return this.request<{
+      success: boolean;
+      data: {
+        membership: {
+          id: string;
+          plan: {
+            id: string;
+            name: string;
+            planType: "FREE" | "VIP";
+            features: string[];
+          };
+          startDate: string;
+          endDate: string | null;
+          status: string;
+        } | null;
+        usage: {
+          planType: "FREE" | "VIP";
+          planName: string;
+          interviewsUsed?: number;
+          interviewsLimit?: number | null;
+          interviewsRemaining?: number | null;
+        };
+      };
+    }>("/membership/status", { method: "GET" }, token);
+  }
+
+
+  /**
+   * Purchase a membership plan
+   * @param planId - Membership plan ID
+   * @param returnUrl - URL to redirect after payment
+   * @param cancelUrl - URL to redirect if payment is canceled
+   * @param token - Authentication token
+   */
+  purchaseMembership(
+    planId: string,
+    returnUrl: string,
+    cancelUrl: string,
+    token?: string
+  ) {
+    return this.request<{
+      success: boolean;
+      message?: string;
+      data?: {
+        transactionId?: string;
+        paymentLinkUrl?: string;
+        paymentUrl?: string; // Alias for backward compatibility
+        orderCode: string;
+      };
+    }>(
+      "/membership/purchase",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          planId,
+          returnUrl,
+          cancelUrl,
+        }),
+      },
+      token
+    );
+  }
+
+  /**
+   * Check payment status
+   * @param orderCode - Payment order code
+   * @param token - Authentication token
+   */
+  getPaymentStatus(orderCode: string, token?: string) {
+    return this.request<{
+      success: boolean;
+      data: {
+        transaction: {
+          id: string;
+          orderCode: string;
+          amount: number;
+          currency: string;
+          status: "PENDING" | "COMPLETED" | "FAILED" | "EXPIRED" | "CANCELED";
+          paidAt: string | null;
+        };
+        plan: MembershipPlan;
+        membership: UserMembership | null;
+      };
+    }>(`/membership/payment/${orderCode}/status`, { method: "GET" }, token);
+  }
+
+
+
+
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

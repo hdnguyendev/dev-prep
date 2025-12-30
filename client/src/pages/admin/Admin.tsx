@@ -15,12 +15,10 @@ import {
   AlertTriangle,
   Ban,
   Blocks,
-  BriefcaseBusiness,
   Building2,
   CheckCircle2,
   ChevronRight,
   Circle,
-  ClipboardList,
   GraduationCap,
   LayoutPanelLeft,
   MessageSquare,
@@ -140,8 +138,7 @@ const AdminDashboard = ({
         setJobs(jobsRes.data || []);
         setApplications(applicationsRes.data || []);
         setInterviews(interviewsRes.data || []);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -242,7 +239,6 @@ const AdminDashboard = ({
         <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/30 via-background to-background dark:from-purple-950/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-400">Total Jobs</CardTitle>
-            <BriefcaseBusiness className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalJobs}</div>
@@ -253,7 +249,6 @@ const AdminDashboard = ({
         <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Total Applications</CardTitle>
-            <ClipboardList className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalApplications}</div>
@@ -304,7 +299,6 @@ const AdminDashboard = ({
               className="h-auto flex-col gap-2 py-4 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
               onClick={() => handleQuickAccess("jobs")}
             >
-              <BriefcaseBusiness className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               <span className="text-sm font-medium">Review Jobs</span>
             </Button>
             <Button 
@@ -312,7 +306,6 @@ const AdminDashboard = ({
               className="h-auto flex-col gap-2 py-4 hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
               onClick={() => handleQuickAccess("applications")}
             >
-              <ClipboardList className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               <span className="text-sm font-medium">View Applications</span>
             </Button>
           </div>
@@ -600,8 +593,6 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
   const resourceIcons: Record<string, React.ReactNode> = {
     users: <UserRound className="h-4 w-4" />,
     companies: <Building2 className="h-4 w-4" />,
-    jobs: <BriefcaseBusiness className="h-4 w-4" />,
-    applications: <ClipboardList className="h-4 w-4" />,
     interviews: <Sparkles className="h-4 w-4" />,
     skills: <Blocks className="h-4 w-4" />,
     categories: <Blocks className="h-4 w-4" />,
@@ -819,8 +810,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
           results.forEach(([k, v]) => (next[k] = v));
           return next;
         });
-      } catch (err) {
-        console.error("Load relation options failed", err);
+      } catch {
       }
     },
     [getToken, relationOptions, relationMap]
@@ -836,8 +826,8 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
       }
       await adminClient.update("companies", ["id"], row, { isVerified: !currentVerified }, token ?? undefined);
       await load(); // Reload to refresh counts
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to verify/unverify company");
+    } catch {
+      alert("Failed to verify/unverify company");
     }
   };
 
@@ -851,8 +841,8 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
       }
       await adminClient.update("jobs", ["id"], row, { status: "PUBLISHED" }, token ?? undefined);
       await load();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to approve job");
+    } catch {
+      alert("Failed to approve job");
     }
   };
 
@@ -866,8 +856,8 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
       }
       await adminClient.update("jobs", ["id"], row, { status: "ARCHIVED" }, token ?? undefined);
       await load();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to reject job");
+    } catch {
+      alert("Failed to reject job");
     }
   };
 
@@ -927,11 +917,10 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
               }
             });
           }
-        } catch (err) {
-          console.error("Failed to fetch company counts:", err);
+        } catch {
         }
       }
-    } catch (err) {
+    } catch {
       setState({ loading: false, error: err instanceof Error ? err.message : "Unexpected error", data: [] });
     }
   }, [getToken, page, pageSize, resource.path, search, filterField, filterValue, resource.key, companyTab]);
@@ -1300,7 +1289,6 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
             .filter((js) => !uniqueSkills.includes(String(js.skillId)))
             .map((js) => adminClient.remove("job-skills", ["jobId", "skillId"], js, token ?? undefined))
             .map((p) => p.catch((err) => {
-              console.warn("Failed to remove job-skill:", err);
               return null;
             }))
         );
@@ -1314,7 +1302,6 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                 .catch((err) => {
                   // Ignore unique constraint errors (already exists)
                   if (err?.message?.includes("Unique constraint") || err?.message?.includes("already exists")) {
-                    console.warn(`Job-skill ${jobId}-${sid} already exists, skipping`);
                     return null;
                   }
                   throw err;
@@ -1331,7 +1318,6 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
             .filter((jc) => !uniqueCategories.includes(String(jc.categoryId)))
             .map((jc) => adminClient.remove("job-categories", ["jobId", "categoryId"], jc, token ?? undefined))
             .map((p) => p.catch((err) => {
-              console.warn("Failed to remove job-category:", err);
               return null;
             }))
         );
@@ -1344,7 +1330,6 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                 .catch((err) => {
                   // Ignore unique constraint errors (already exists)
                   if (err?.message?.includes("Unique constraint") || err?.message?.includes("already exists")) {
-                    console.warn(`Job-category ${jobId}-${cid} already exists, skipping`);
                     return null;
                   }
                   throw err;
@@ -1355,7 +1340,7 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
 
       closeModal();
       await load();
-    } catch (err) {
+    } catch {
       alert(err instanceof Error ? err.message : "Request failed");
     }
   };

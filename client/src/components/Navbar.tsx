@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  Crown,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -20,6 +21,7 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { VIPBadge } from "./VIPBadge";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
@@ -126,8 +128,7 @@ const Navbar = () => {
           }
         }
         sessionStorage.setItem(syncedKey, "1");
-      } catch (err) {
-        console.error("Failed to sync candidate", err);
+      } catch { // Ignore errors
       }
     };
     syncClerkCandidate();
@@ -153,8 +154,7 @@ const Navbar = () => {
           const ln = meJson?.lastName as string | null | undefined;
           setCandidateNameFromDB({ firstName: fn, lastName: ln });
         }
-      } catch (err) {
-        console.error("Failed to fetch candidate name", err);
+      } catch { // Ignore errors
       }
     };
     fetchCandidateName();
@@ -187,8 +187,7 @@ const Navbar = () => {
       setCandidateLastName(lastName);
       setCandidateNameFromDB({ firstName, lastName });
       setNeedCandidateName(false);
-    } catch (e) {
-      console.error(e);
+    } catch { // Ignore errors
       setCandidateNameError("Failed to save name.");
     } finally {
       setSavingCandidateName(false);
@@ -207,7 +206,7 @@ const Navbar = () => {
           setNotifications(res.data);
           setUnreadCount(res.data.filter((n) => !n.isRead).length);
         }
-      } catch {
+      } catch { // Ignore errors
         // ignore
       }
     };
@@ -235,7 +234,7 @@ const Navbar = () => {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         setUnreadCount(0);
       }
-    } catch {
+    } catch { // Ignore errors
       // ignore
     }
   };
@@ -247,7 +246,7 @@ const Navbar = () => {
         if (token) {
           await apiClient.markNotificationRead(notification.id, token);
         }
-      } catch {
+      } catch { // Ignore errors
         // ignore
       }
       setNotifications((prev) =>
@@ -320,6 +319,16 @@ const Navbar = () => {
           <span className={mobile ? "" : "hidden md:inline"}>Companies</span>
         </Button>
       </Link>
+
+      {/* Pricing link - only show for guests (not signed in) */}
+      {!isSignedIn && !isStaffLoggedIn && (
+        <Link to="/subscription" onClick={onLinkClick}>
+          <Button variant="ghost" size={mobile ? "default" : "sm"} className={`gap-2 ${mobile ? "w-full justify-start" : ""}`}>
+            <Crown className="h-4 w-4" />
+            <span className={mobile ? "" : "hidden md:inline"}>Pricing</span>
+          </Button>
+        </Link>
+      )}
     </>
   );
 
@@ -442,7 +451,7 @@ const Navbar = () => {
       </Dialog>
 
       <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4">
         {/* Logo */}
         <button
           type="button"
@@ -461,7 +470,7 @@ const Navbar = () => {
         </div>
 
         {/* Auth Section - Desktop */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-2 md:gap-3">
           {/* Clerk User (Candidate) */}
           <SignedIn>
             <div className="relative flex items-center gap-2">
@@ -469,25 +478,28 @@ const Navbar = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/interview")}
-                className="gap-2"
+                className="gap-1 sm:gap-2 px-2 sm:px-3"
               >
                 <FileText className="h-4 w-4" />
-                <span className="hidden lg:inline">Prep</span>
+                <span className="hidden xl:inline">Prep</span>
               </Button>
               {dashboardPath ? (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => navigate(dashboardPath)}
-                  className="gap-2"
+                  className="gap-1 sm:gap-2 px-2 sm:px-3"
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  <span className="hidden lg:inline">Dashboard</span>
+                  <span className="hidden xl:inline">Dashboard</span>
                 </Button>
               ) : null}
-              <span className="text-sm font-medium hidden lg:inline">
-                Hi, <span className="text-primary">{candidateDisplayName}</span>
-              </span>
+              <div className="hidden xl:flex items-center gap-2">
+                <span className="text-sm font-medium">
+                  Hi, <span className="text-primary">{candidateDisplayName}</span>
+                </span>
+                <VIPBadge onlyIfVIP={true} />
+              </div>
               <ThemeToggle />
               <button
                 type="button"
@@ -593,25 +605,18 @@ const Navbar = () => {
                   <span className="hidden lg:inline">Dashboard</span>
                 </Button>
               ) : null}
-              <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 bg-primary/5">
-                <div className="flex flex-col items-end hidden lg:flex">
-                  <span className="text-xs font-medium">{customUser.firstName} {customUser.lastName}</span>
-                  <span className="text-xs text-muted-foreground">{customUser.role}</span>
-                </div>
-                {customUser.avatarUrl ? (
-                  <img 
-                    src={customUser.avatarUrl} 
-                    alt="Avatar" 
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-xs font-semibold">
-                      {customUser.firstName?.[0]}{customUser.lastName?.[0]}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <span className="text-sm font-medium">
+                Hi, <span className="text-primary">{customUser.firstName} {customUser.lastName}</span>
+              </span>
+              {customUser?.role === "RECRUITER" && (
+                <VIPBadge
+                  userId={customUser?.id}
+                  userRole="RECRUITER"
+                  onlyIfVIP={true}
+                  iconOnly={false}
+                  size="sm"
+                />
+              )}
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -661,11 +666,9 @@ const Navbar = () => {
                   <LayoutDashboard className="h-5 w-5" />
                 </Button>
               ) : null}
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-xs font-semibold">
-                {customUser.firstName?.[0]}{customUser.lastName?.[0]}
-              </span>
-            </div>
+            <span className="text-xs font-medium">
+              Hi, <span className="text-primary">{customUser.firstName} {customUser.lastName}</span>
+            </span>
             <ThemeToggle />
             </>
           )}

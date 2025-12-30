@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import prisma from "../app/db/prisma"; 
+import prisma from "../app/db/prisma";
+import { getActiveMembership, getMembershipUsage } from "../app/services/membership"; 
 import { getOrCreateClerkUser } from "../utils/clerkAuth";
 
 const authRoutes = new Hono();
@@ -285,9 +286,11 @@ authRoutes.get("/me", async (c) => {
 
     // If not found by ID, try Clerk authentication
     if (!user) {
+      console.log("🔍 User not found by ID, trying Clerk authentication...");
       // Import here to avoid circular dependency
       const { getOrCreateClerkUser } = await import("../utils/clerkAuth");
       const result = await getOrCreateClerkUser(c);
+      console.log("🔍 Clerk auth result:", { success: result.success, error: result.error, hasUser: !!result.user });
       if (result.success && result.user) {
         // Always re-fetch with all includes to ensure type consistency
         try {
@@ -339,6 +342,13 @@ authRoutes.get("/me", async (c) => {
             }
           }
         }
+      } else {
+        // If Clerk auth failed, return error
+        console.error("❌ Clerk authentication failed:", result.error);
+        return c.json(
+          { success: false, message: result.error || "Authentication failed" },
+          401
+        );
       }
     }
 
@@ -415,6 +425,18 @@ authRoutes.get("/me", async (c) => {
       return c.json({ success: false, message: "User not found" }, 404);
     }
 
+    // Get membership status
+    let membership = null;
+    let membershipUsage = null;
+    try {
+      const role: "CANDIDATE" | "RECRUITER" = user.recruiterProfile ? "RECRUITER" : "CANDIDATE";
+      membership = await getActiveMembership(user.id, role);
+      membershipUsage = await getMembershipUsage(user.id, role);
+    } catch (membershipError) {
+      console.error("Failed to fetch membership:", membershipError);
+      // Don't fail the request if membership fetch fails
+    }
+
     // Final check for CANDIDATE users - ensure candidateProfile exists
     if (user.role === "CANDIDATE" && !user.candidateProfile) {
       console.error("⚠️ CANDIDATE user without candidateProfile after all attempts:", user.id);
@@ -473,6 +495,27 @@ authRoutes.get("/me", async (c) => {
       avatarUrl: user.avatarUrl,
       recruiterProfile: user.recruiterProfile,
       candidateProfile: user.candidateProfile,
+      membership: membership ? {
+        id: membership.id,
+        plan: {
+          id: membership.plan.id,
+          name: membership.plan.name,
+          planType: membership.plan.planType,
+          features: membership.plan.features,
+        },
+        startDate: membership.startDate,
+        endDate: membership.endDate,
+        status: membership.status,
+      } : {
+        plan: {
+          planType: "FREE" as const,
+          name: (user.recruiterProfile ? "Free Recruiter Plan" : "Free Candidate Plan"),
+        },
+        startDate: new Date(),
+        endDate: null,
+        status: "ACTIVE" as const,
+      },
+      membershipUsage: membershipUsage || null,
     });
   } catch (error: any) {
     console.error("❌ Auth check error:", error);

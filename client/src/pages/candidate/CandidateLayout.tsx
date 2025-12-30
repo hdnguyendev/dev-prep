@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import DashboardTopbar from "@/components/DashboardTopbar";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
-import { Calendar, ClipboardList, FileText, Heart, LayoutDashboard, UserRound, Menu, X, Building2 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { useState } from "react";
+import { Menu, X, LayoutDashboard, Sparkles, Calendar, UserRound, Heart, Building2, Crown, FileText, ClipboardList } from "lucide-react";
 
 const NavItem = ({
   to,
@@ -97,12 +97,17 @@ export default function CandidateLayout() {
                   mobileMenuOpen={mobileMenuOpen}
                   />
                   <NavItem
-                    to="/candidate/applications"
-                    label="Applications"
-                  icon={<ClipboardList className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
+                    to="/candidate/recommended-jobs"
+                    label="Recommended Jobs"
+                  icon={<Sparkles className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
                   onNavigate={() => setMobileMenuOpen(false)}
                   mobileMenuOpen={mobileMenuOpen}
                   />
+                  <NavItem
+                    to="/candidate/applications"
+                    label="Applications"
+                    onNavigate={() => setMobileMenuOpen(false)}
+                    mobileMenuOpen={mobileMenuOpen} icon={<ClipboardList className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}                  />
                   <NavItem
                     to="/candidate/interviews"
                     label="Interviews"
@@ -114,6 +119,27 @@ export default function CandidateLayout() {
                     to="/candidate/profile"
                     label="Profile"
                   icon={<UserRound className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
+                  onNavigate={() => setMobileMenuOpen(false)}
+                  mobileMenuOpen={mobileMenuOpen}
+                  />
+                  <NavItem
+                    to="/candidate/saved-jobs"
+                    label="Saved Jobs"
+                  icon={<Heart className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
+                  onNavigate={() => setMobileMenuOpen(false)}
+                  mobileMenuOpen={mobileMenuOpen}
+                  />
+                  <NavItem
+                    to="/candidate/followed-companies"
+                    label="Followed Companies"
+                  icon={<Building2 className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
+                  onNavigate={() => setMobileMenuOpen(false)}
+                  mobileMenuOpen={mobileMenuOpen}
+                  />
+                  <NavItem
+                    to="/candidate/membership"
+                    label="Membership"
+                  icon={<Crown className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}
                   onNavigate={() => setMobileMenuOpen(false)}
                   mobileMenuOpen={mobileMenuOpen}
                   />
@@ -132,30 +158,6 @@ export default function CandidateLayout() {
                 >
                   <FileText className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />
                       Prep
-                    </Button>
-                <Button 
-                  variant="outline" 
-                  size={mobileMenuOpen ? "lg" : "sm"} 
-                  className={`w-full justify-start gap-3 ${mobileMenuOpen ? "h-14 text-base" : ""}`} 
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate("/candidate/saved-jobs");
-                  }}
-                >
-                  <Heart className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />
-                      Saved jobs
-                    </Button>
-                <Button 
-                  variant="outline" 
-                  size={mobileMenuOpen ? "lg" : "sm"} 
-                  className={`w-full justify-start gap-3 ${mobileMenuOpen ? "h-14 text-base" : ""}`} 
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate("/candidate/followed-companies");
-                  }}
-                >
-                  <Building2 className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />
-                      Followed companies
                     </Button>
                 </Card>
               </aside>

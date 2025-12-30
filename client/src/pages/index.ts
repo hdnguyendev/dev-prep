@@ -13,6 +13,7 @@ export { default as NotFound } from "./NotFound";
 
 // Public candidate profile
 export { default as CandidatePublicProfile } from "./public/CandidatePublicProfile";
+export { default as Subscription } from "./public/Subscription";
 
 // Shared/Common pages
 export { default as CandidatesDirectory } from "./shared/CandidatesDirectory";

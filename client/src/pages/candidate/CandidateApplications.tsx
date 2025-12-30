@@ -1,10 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { APPLICATION_STATUS_META } from "@/constants/applications";
 import { useAuth } from "@clerk/clerk-react";
-import { Briefcase, Building2, Calendar, CheckCircle2, ClipboardList, Clock, ExternalLink, Eye, Loader2, MapPin, Search, TrendingUp } from "lucide-react";
+import { Briefcase, Building2, Calendar, Check, CheckCircle2, Clock, ExternalLink, Eye, Gift, Loader2, MapPin, Search, TrendingUp, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -36,11 +45,31 @@ type ApplicationRow = {
       slug?: string | null;
     } | null;
   } | null;
+  offers?: Array<{
+    id: string;
+    title: string;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    salaryCurrency: string;
+    employmentType?: string | null;
+    startDate?: string | null;
+    expirationDate: string;
+    location?: string | null;
+    isRemote: boolean;
+    description?: string | null;
+    benefits?: string | null;
+    terms?: string | null;
+    status: string;
+    responseNote?: string | null;
+    respondedAt?: string | null;
+    sentAt: string;
+    createdAt: string;
+  }>;
 };
 
 const statusVariant = (status: string): "default" | "outline" | "success" => {
-  if (status === "HIRED" || status === "OFFER_SENT" || status === "SHORTLISTED") return "success";
-  if (status === "REJECTED" || status === "WITHDRAWN") return "outline";
+  if (status === "HIRED" || status === "OFFER_ACCEPTED" || status === "OFFER_SENT" || status === "SHORTLISTED") return "success";
+  if (status === "REJECTED" || status === "OFFER_REJECTED" || status === "WITHDRAWN") return "outline";
   if (status === "APPLIED" || status === "REVIEWING") return "outline";
   return "default";
 };
@@ -80,6 +109,8 @@ const statusColors: Record<string, string> = {
   INTERVIEW_SCHEDULED: "#06b6d4",
   INTERVIEWED: "#0ea5e9",
   OFFER_SENT: "#22c55e",
+  OFFER_ACCEPTED: "#10b981",
+  OFFER_REJECTED: "#f97316",
   HIRED: "#16a34a",
   REJECTED: "#ef4444",
   WITHDRAWN: "#94a3b8",
@@ -88,7 +119,7 @@ const statusColors: Record<string, string> = {
 const countBy = (rows: ApplicationRow[], field: string) => {
   const counts: Record<string, number> = {};
   rows.forEach((r) => {
-    const key = String((r as any)?.[field] ?? "Unknown");
+    const key = String((r as Record<string, unknown>)?.[field] ?? "Unknown");
     counts[key] = (counts[key] ?? 0) + 1;
   });
   return Object.entries(counts).map(([name, value]) => ({ name, value }));
@@ -121,6 +152,12 @@ export default function CandidateApplications() {
   const [rows, setRows] = useState<ApplicationRow[]>([]);
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
+  type OfferType = NonNullable<ApplicationRow["offers"]>[number];
+  const [selectedOffer, setSelectedOffer] = useState<OfferType | null>(null);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [respondingToOffer, setRespondingToOffer] = useState(false);
+  const [responseNote, setResponseNote] = useState("");
+  const [responseAction, setResponseAction] = useState<"accept" | "reject" | null>(null);
 
   const handleSearch = () => {
     setQ(qInput);
@@ -153,9 +190,8 @@ export default function CandidateApplications() {
           return;
         }
         setRows((response.data || []) as ApplicationRow[]);
-      } catch (e) {
+      } catch {
         if (abort) return;
-        console.error(e);
         setError("Network error");
       } finally {
         if (!abort) setLoading(false);
@@ -179,9 +215,9 @@ export default function CandidateApplications() {
 
   // Application outcome data for pie chart
   const appsByOutcome = useMemo(() => {
-    const successful = rows.filter((r) => r.status === "HIRED" || r.status === "OFFER_SENT").length;
+    const successful = rows.filter((r) => r.status === "HIRED" || r.status === "OFFER_ACCEPTED" || r.status === "OFFER_SENT").length;
     const inProgress = rows.filter((r) => 
-      r.status !== "HIRED" && r.status !== "OFFER_SENT" && r.status !== "REJECTED" && r.status !== "WITHDRAWN"
+      r.status !== "HIRED" && r.status !== "OFFER_ACCEPTED" && r.status !== "OFFER_SENT" && r.status !== "REJECTED" && r.status !== "WITHDRAWN"
     ).length;
     const rejected = rows.filter((r) => r.status === "REJECTED" || r.status === "WITHDRAWN").length;
     return [
@@ -222,7 +258,7 @@ export default function CandidateApplications() {
     const inProgress = rows.filter((r) => 
       r.status === "SHORTLISTED" || r.status === "INTERVIEW_SCHEDULED" || r.status === "INTERVIEWED"
     ).length;
-    const successful = rows.filter((r) => r.status === "HIRED" || r.status === "OFFER_SENT").length;
+    const successful = rows.filter((r) => r.status === "HIRED" || r.status === "OFFER_ACCEPTED" || r.status === "OFFER_SENT").length;
     const rejected = rows.filter((r) => r.status === "REJECTED" || r.status === "WITHDRAWN").length;
     const successRate = total > 0 ? ((successful / total) * 100).toFixed(1) : "0";
     
@@ -355,7 +391,6 @@ export default function CandidateApplications() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400 flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <ClipboardList className="h-4 w-4" />
               Total
             </CardTitle>
           </CardHeader>
@@ -464,6 +499,24 @@ export default function CandidateApplications() {
                         <Icon className="h-3 w-3" />
                         <span>{meta.label}</span>
                       </Badge>
+                      {app.status === "OFFER_SENT" && app.offers && app.offers.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const pendingOffer = app.offers?.find(o => o.status === "PENDING");
+                            if (pendingOffer) {
+                              setSelectedOffer(pendingOffer);
+                              setShowOfferModal(true);
+                            }
+                          }}
+                        >
+                          <Gift className="h-4 w-4 mr-2" />
+                          View Offer
+                        </Button>
+                      )}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         {new Date(app.appliedAt).toLocaleDateString()}
@@ -700,7 +753,6 @@ export default function CandidateApplications() {
                   </th>
                   <th className="px-4 py-3 font-semibold text-foreground">
                     <div className="flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4 text-primary" />
                       Status
                     </div>
                   </th>
@@ -847,7 +899,6 @@ export default function CandidateApplications() {
                   <tr>
                     <td colSpan={5} className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center gap-3">
-                        <ClipboardList className="h-12 w-12 text-muted-foreground/50" />
                         <div className="text-muted-foreground font-medium">No applications found</div>
                         <div className="text-sm text-muted-foreground/70">Try adjusting your search or filters</div>
                       </div>
@@ -859,6 +910,226 @@ export default function CandidateApplications() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Offer Detail Modal */}
+      <Dialog open={showOfferModal} onOpenChange={setShowOfferModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-green-600" />
+              Job Offer
+            </DialogTitle>
+            <DialogDescription>
+              Review the offer details and respond by the expiration date
+            </DialogDescription>
+          </DialogHeader>
+          {selectedOffer && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Offer Title</div>
+                  <div className="text-lg font-semibold">{selectedOffer.title}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Status</div>
+                  <Badge
+                    variant={selectedOffer.status === "PENDING" ? "default" : selectedOffer.status === "ACCEPTED" ? "success" : "outline"}
+                  >
+                    {selectedOffer.status}
+                  </Badge>
+                </div>
+              </div>
+
+              {selectedOffer.salaryMin !== null && selectedOffer.salaryMin !== undefined && selectedOffer.salaryMax !== null && selectedOffer.salaryMax !== undefined && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Salary</div>
+                  <div className="text-xl font-bold text-green-600">
+                    {selectedOffer.salaryCurrency} {selectedOffer.salaryMin.toLocaleString()} - {selectedOffer.salaryMax.toLocaleString()}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                {selectedOffer.employmentType && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Employment Type</div>
+                    <div>{selectedOffer.employmentType}</div>
+                  </div>
+                )}
+                {selectedOffer.startDate && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Start Date</div>
+                    <div>{new Date(selectedOffer.startDate).toLocaleDateString()}</div>
+                  </div>
+                )}
+                {selectedOffer.location && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Location</div>
+                    <div>{selectedOffer.location}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Remote</div>
+                  <div>{selectedOffer.isRemote ? "Yes" : "No"}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Expiration Date</div>
+                <div className={`text-lg font-semibold ${new Date(selectedOffer.expirationDate) < new Date() ? "text-red-600" : ""}`}>
+                  {new Date(selectedOffer.expirationDate).toLocaleDateString()}
+                  {new Date(selectedOffer.expirationDate) < new Date() && (
+                    <span className="ml-2 text-sm text-red-600">(Expired)</span>
+                  )}
+                </div>
+              </div>
+
+              {selectedOffer.description && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Description</div>
+                  <div className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
+                    {selectedOffer.description}
+                  </div>
+                </div>
+              )}
+
+              {selectedOffer.benefits && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Benefits</div>
+                  <div className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
+                    {selectedOffer.benefits}
+                  </div>
+                </div>
+              )}
+
+              {selectedOffer.terms && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Terms & Conditions</div>
+                  <div className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">
+                    {selectedOffer.terms}
+                  </div>
+                </div>
+              )}
+
+              {selectedOffer.status === "PENDING" && new Date(selectedOffer.expirationDate) >= new Date() && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div>
+                    <div className="text-sm font-medium mb-2">Response Note (Optional)</div>
+                    <Textarea
+                      value={responseNote}
+                      onChange={(e) => setResponseNote(e.target.value)}
+                      placeholder="Add any comments or questions about this offer..."
+                      rows={3}
+                    />
+                  </div>
+                  <DialogFooter className="gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowOfferModal(false);
+                        setResponseNote("");
+                        setResponseAction(null);
+                      }}
+                      disabled={respondingToOffer}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        if (!selectedOffer || !getToken) return;
+                        try {
+                          setRespondingToOffer(true);
+                          setResponseAction("reject");
+                          const token = await getToken();
+                          if (!token) return;
+                          const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+                          const response = await fetch(`${API_BASE}/offers/${selectedOffer.id}/reject`, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({ responseNote: responseNote || null }),
+                          });
+                          const data = await response.json();
+                          if (data.success) {
+                            setShowOfferModal(false);
+                            window.location.reload();
+                          } else {
+                            alert(data.message || "Failed to reject offer");
+                          }
+                        } catch {
+                          alert("Failed to reject offer");
+                        } finally {
+                          setRespondingToOffer(false);
+                          setResponseAction(null);
+                        }
+                      }}
+                      disabled={respondingToOffer}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      {respondingToOffer && responseAction === "reject" ? "Rejecting..." : "Reject Offer"}
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        if (!selectedOffer || !getToken) return;
+                        try {
+                          setRespondingToOffer(true);
+                          setResponseAction("accept");
+                          const token = await getToken();
+                          if (!token) return;
+                          const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+                          const response = await fetch(`${API_BASE}/offers/${selectedOffer.id}/accept`, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({ responseNote: responseNote || null }),
+                          });
+                          const data = await response.json();
+                          if (data.success) {
+                            setShowOfferModal(false);
+                            window.location.reload();
+                          } else {
+                            alert(data.message || "Failed to accept offer");
+                          }
+                        } catch {
+                          alert("Failed to accept offer");
+                        } finally {
+                          setRespondingToOffer(false);
+                          setResponseAction(null);
+                        }
+                      }}
+                      disabled={respondingToOffer}
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      {respondingToOffer && responseAction === "accept" ? "Accepting..." : "Accept Offer"}
+                    </Button>
+                  </DialogFooter>
+                </div>
+              )}
+
+              {selectedOffer.status !== "PENDING" && (
+                <div className="pt-4 border-t">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Response</div>
+                  {selectedOffer.responseNote && (
+                    <div className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md mb-2">
+                      {selectedOffer.responseNote}
+                    </div>
+                  )}
+                  {selectedOffer.respondedAt && (
+                    <div className="text-xs text-muted-foreground">
+                      Responded on: {new Date(selectedOffer.respondedAt).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

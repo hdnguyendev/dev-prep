@@ -14,7 +14,6 @@ import {
   Briefcase,
   DollarSign,
   Building2,
-  Users,
   Globe,
   CheckCircle,
   ArrowLeft,
@@ -35,6 +34,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Lock,
+  Clock,
+  Eye,
+  MousePointerClick,
+  AlertCircle,
+  Users,
 } from "lucide-react";
 
 const JobDetail = () => {
@@ -50,6 +54,7 @@ const JobDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
+  const [isJobOwner, setIsJobOwner] = useState(false);
   
   // Application form state
   const [showApplyForm, setShowApplyForm] = useState(false);
@@ -128,8 +133,9 @@ const JobDetail = () => {
   }, [isSignedIn, getToken]);
 
   // Check if user has applied to this job (separate effect for faster check)
+  // This effect depends on job.id (UUID) instead of jobId (which could be slug)
   useEffect(() => {
-    if (!jobId || !isSignedIn) {
+    if (!job?.id || !isSignedIn) {
       setHasApplied(false);
       setApplicationStatus(null);
       return;
@@ -156,7 +162,7 @@ const JobDetail = () => {
 
         if (applicationsResponse.success && Array.isArray(applicationsResponse.data)) {
           const userApplication = applicationsResponse.data.find(
-            (app: Application) => app.jobId === jobId
+            (app: Application) => app.jobId === job.id
           );
           if (userApplication) {
             setHasApplied(true);
@@ -186,7 +192,7 @@ const JobDetail = () => {
       isMounted = false;
       abortController.abort();
     };
-  }, [jobId, isSignedIn, getToken]);
+  }, [job?.id, isSignedIn, getToken]);
 
   // Fetch job details
   useEffect(() => {
@@ -209,6 +215,26 @@ const JobDetail = () => {
         
         if (jobResponse.success) {
           setJob(jobResponse.data);
+          
+          // Check if current user is the recruiter who posted this job
+          if (isRecruiterOrAdmin && token) {
+            try {
+              const meResponse = await apiClient.getMe(token);
+              if (meResponse.success && meResponse.data?.recruiterProfile?.id) {
+                const recruiterProfileId = meResponse.data.recruiterProfile.id;
+                setCurrentUserRecruiterProfileId(recruiterProfileId);
+                // Check if this recruiter owns the job
+                if (jobResponse.data?.recruiterId === recruiterProfileId) {
+                  setIsJobOwner(true);
+                }
+              }
+            } catch {
+              // Ignore errors
+            }
+          } else if (isSignedIn && !isRecruiterOrAdmin && token && jobResponse.data?.status === "PUBLISHED") {
+            // Track view for candidates only (not recruiters)
+            apiClient.trackJobView(jobResponse.data.id, token);
+          }
           
           // Check if job is saved
           if (isSignedIn && jobResponse.data?.id) {
@@ -247,12 +273,11 @@ const JobDetail = () => {
         } else {
           setError(jobResponse.message || "Job not found");
         }
-      } catch (err) {
+      } catch {
         if (!isMounted || abortController.signal.aborted) {
           return;
         }
         if (err instanceof Error && err.name !== 'AbortError') {
-          console.error("Failed to fetch job:", err);
           setError("Failed to load job details");
         }
       } finally {
@@ -298,17 +323,14 @@ const JobDetail = () => {
       const token = await getToken();
       const response = await apiClient.uploadResume(file, token ?? undefined);
 
-      console.log("Upload resume response:", response);
 
       if (response.success && response.data?.url) {
         return response.data.url;
       } else {
-        console.error("Upload failed:", response);
         alert(response.message || "Failed to upload resume");
         return null;
       }
-    } catch (error) {
-      console.error("Upload resume error:", error);
+    } catch {
       alert("Failed to upload resume. Please try again.");
       return null;
     } finally {
@@ -363,8 +385,7 @@ const JobDetail = () => {
       } else {
         alert(applicationResponse.message || "Failed to submit application");
       }
-    } catch (err) {
-      console.error("Application error:", err);
+    } catch {
       alert("Failed to submit application");
     } finally {
       setApplying(false);
@@ -443,8 +464,7 @@ const JobDetail = () => {
           alert("Failed to save job. Please try again.");
         }
       }
-    } catch (err) {
-      console.error("Error saving job:", err);
+    } catch {
       alert("An error occurred. Please try again.");
     } finally {
       setSaving(false);
@@ -454,7 +474,7 @@ const JobDetail = () => {
   if (loading) {
     return (
       <main className="min-h-dvh bg-gradient-to-b from-background via-primary/5 to-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-0">
           <div className="animate-pulse space-y-6">
             <div className="h-8 w-32 bg-muted rounded" />
             <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
@@ -495,7 +515,7 @@ const JobDetail = () => {
   if (error || !job) {
     return (
       <main className="min-h-dvh bg-gradient-to-b from-background via-primary/5 to-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-0">
           <Card className="max-w-md mx-auto border-red-200">
             <CardHeader>
               <CardTitle className="text-center text-red-600">Job Not Found</CardTitle>
@@ -534,7 +554,7 @@ const JobDetail = () => {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8 relative">
+      <div className="container mx-auto px-4 py-0 relative">
         {/* Back Button - Floating */}
         <Button 
           variant="ghost" 
@@ -1019,6 +1039,232 @@ const JobDetail = () => {
           <div className="space-y-6">
             {/* Sticky Container for Apply and Company Info */}
             <div className="sticky top-20 z-10 space-y-6">
+            {/* Job Stats & Deadline Card */}
+            <Card className="border-2 shadow-lg bg-gradient-to-br from-white via-amber-50/30 to-orange-50/30 dark:from-card dark:via-card dark:to-card hover:shadow-xl transition-all duration-300">
+              <CardHeader className="border-b pb-4 bg-gradient-to-r from-amber-100/50 via-orange-100/30 to-yellow-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 dark:bg-primary/10">
+                    <TrendingUp className="h-5 w-5 text-amber-600 dark:text-primary" />
+                  </div>
+                  Job Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
+                {/* Deadline */}
+                {job.deadline && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      Application Deadline
+                    </div>
+                    <div className="pl-6">
+                      <div className="text-base font-semibold">
+                        {new Date(job.deadline).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </div>
+                      {(() => {
+                        const deadlineDate = new Date(job.deadline);
+                        const now = new Date();
+                        const diffTime = deadlineDate.getTime() - now.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays < 0) {
+                          return (
+                            <Badge variant="outline" className="mt-2 gap-1 border-red-500 text-red-700 dark:text-red-400">
+                              <AlertCircle className="h-3 w-3" />
+                              Deadline passed
+                            </Badge>
+                          );
+                        } else if (diffDays === 0) {
+                          return (
+                            <Badge variant="outline" className="mt-2 gap-1 border-orange-500 text-orange-700 dark:text-orange-400">
+                              <Clock className="h-3 w-3" />
+                              Ends today
+                            </Badge>
+                          );
+                        } else if (diffDays <= 3) {
+                          return (
+                            <Badge variant="outline" className="mt-2 gap-1 border-orange-500 text-orange-700 dark:text-orange-400">
+                              <Clock className="h-3 w-3" />
+                              {diffDays} day{diffDays !== 1 ? "s" : ""} left
+                            </Badge>
+                          );
+                        } else if (diffDays <= 7) {
+                          return (
+                            <Badge variant="outline" className="mt-2 gap-1 border-yellow-500 text-yellow-700 dark:text-yellow-400">
+                              <Clock className="h-3 w-3" />
+                              {diffDays} days left
+                            </Badge>
+                          );
+                        } else {
+                          return (
+                            <Badge variant="outline" className="mt-2 gap-1">
+                              <Clock className="h-3 w-3" />
+                              {diffDays} days remaining
+                            </Badge>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Interaction Metrics */}
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Eye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    {isJobOwner || currentUser?.role === "ADMIN" ? "Engagement Metrics" : "Job Popularity"}
+                  </div>
+                  <div className="pl-6 space-y-2">
+                    {/* Show detailed metrics only for job owner or admin */}
+                    {(isJobOwner || currentUser?.role === "ADMIN") ? (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Views</span>
+                          <div className="flex items-center gap-2">
+                            <Eye className="h-4 w-4 text-blue-500" />
+                            <span className="font-semibold text-foreground">
+                              {job.viewsCount.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Clicks</span>
+                          <div className="flex items-center gap-2">
+                            <MousePointerClick className="h-4 w-4 text-green-500" />
+                            <span className="font-semibold text-foreground">
+                              {job.clicksCount.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        {job.viewsCount > 0 && (
+                          <div className="pt-2 border-t">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">Click-through rate</span>
+                              <span className="text-xs font-semibold text-foreground">
+                                {((job.clicksCount / job.viewsCount) * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="mt-1 h-2 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all"
+                                style={{
+                                  width: `${Math.min((job.clicksCount / job.viewsCount) * 100, 100)}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      /* Show general popularity indicator for candidates */
+                      (() => {
+                        const totalEngagement = job.viewsCount + job.clicksCount;
+                        let popularityLevel: "low" | "medium" | "high" | "very-high";
+                        let popularityText: string;
+                        let popularityColor: string;
+                        
+                        if (totalEngagement === 0) {
+                          popularityLevel = "low";
+                          popularityText = "New listing";
+                          popularityColor = "text-muted-foreground";
+                        } else if (totalEngagement < 10) {
+                          popularityLevel = "low";
+                          popularityText = "Getting attention";
+                          popularityColor = "text-blue-600 dark:text-blue-400";
+                        } else if (totalEngagement < 50) {
+                          popularityLevel = "medium";
+                          popularityText = "Popular";
+                          popularityColor = "text-green-600 dark:text-green-400";
+                        } else if (totalEngagement < 200) {
+                          popularityLevel = "high";
+                          popularityText = "Very popular";
+                          popularityColor = "text-orange-600 dark:text-orange-400";
+                        } else {
+                          popularityLevel = "very-high";
+                          popularityText = "Highly sought after";
+                          popularityColor = "text-red-600 dark:text-red-400";
+                        }
+                        
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">Interest level</span>
+                              <Badge 
+                                variant={popularityLevel === "low" ? "outline" : "default"}
+                                className={`gap-1.5 ${popularityColor} ${
+                                  popularityLevel === "high" || popularityLevel === "very-high"
+                                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0"
+                                    : popularityLevel === "medium"
+                                    ? "bg-green-500 text-white border-0"
+                                    : ""
+                                }`}
+                              >
+                                <TrendingUp className="h-3.5 w-3.5" />
+                                {popularityText}
+                              </Badge>
+                            </div>
+                            {totalEngagement > 0 && (
+                              <div className="pt-2 border-t">
+                                <div className="text-xs text-muted-foreground">
+                                  This job is receiving significant interest from candidates
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()
+                    )}
+                  </div>
+                </div>
+
+                {/* Posted Date */}
+                {job.publishedAt && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        Posted
+                      </div>
+                      <div className="pl-6 text-sm text-muted-foreground">
+                        {new Date(job.publishedAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                        {(() => {
+                          const postedDate = new Date(job.publishedAt);
+                          const now = new Date();
+                          const diffTime = now.getTime() - postedDate.getTime();
+                          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                          
+                          if (diffDays === 0) {
+                            return " (Today)";
+                          } else if (diffDays === 1) {
+                            return " (Yesterday)";
+                          } else if (diffDays < 7) {
+                            return ` (${diffDays} days ago)`;
+                          } else if (diffDays < 30) {
+                            const weeks = Math.floor(diffDays / 7);
+                            return ` (${weeks} week${weeks !== 1 ? "s" : ""} ago)`;
+                          } else {
+                            const months = Math.floor(diffDays / 30);
+                            return ` (${months} month${months !== 1 ? "s" : ""} ago)`;
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Apply Card - Only show for candidates */}
             {!isRecruiterOrAdmin && (
             <Card className="border-2 shadow-lg bg-gradient-to-br from-white via-green-50/30 to-emerald-50/30 dark:from-card dark:via-card dark:to-card hover:shadow-xl transition-all duration-300">

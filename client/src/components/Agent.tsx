@@ -100,7 +100,7 @@ function buildFullTranscript(messages: SavedMessage[]): string {
 
 //   try {
 //     return JSON.parse(jsonText) as FeedbackJson;
-//   } catch {
+//   } catch { // Ignore errors
 //     return null;
 //   }
 // }
@@ -279,6 +279,7 @@ interface AgentProps {
   applicationId?: string;
   jobId?: string;
   initialTechstack?: string;
+  interviewId?: string; // Existing interview ID (when joining via access code)
 }
 
 function Agent({
@@ -287,6 +288,7 @@ function Agent({
   applicationId,
   jobId,
   initialTechstack,
+  interviewId, // Interview ID if joining via access code
 }: AgentProps) {
   const navigate = useNavigate();
   const { user } = useUser();
@@ -418,18 +420,38 @@ function Agent({
   /* ----- Vapi event binding ----- */
   useEffect(() => {
     const onCallStart = () => {
-      console.log("[Vapi] call-start");
       setIsCalling(true);
       setActiveRole("ai");
       setMessages([]);
       messagesRef.current = [];
       didPersistOnEndRef.current = false;
 
-      // Create Interview record when practice is started from an Application
+      // Update existing interview or create new one when practice is started from an Application
       (async () => {
         try {
           if (!applicationId) return;
           const token = await getToken().catch(() => undefined);
+          
+          // If interviewId exists, update the existing interview instead of creating new one
+          if (interviewId) {
+            try {
+              const now = new Date();
+              const updated = await updatePracticeInterview(
+                {
+                  id: interviewId,
+                  status: "IN_PROGRESS",
+                  startedAt: now.toISOString(),
+                },
+                token ?? undefined
+              );
+              persistedInterviewRef.current = updated;
+              return;
+            } catch { // Ignore errors
+              // Fall through to create new one if update fails
+            }
+          }
+
+          // Create new interview only if no interviewId provided
           let candidateId: string | undefined = undefined;
           try {
             if (token) {
@@ -437,7 +459,7 @@ function Agent({
               const meJson = await meRes.json();
               candidateId = meJson?.candidateProfile?.id ? String(meJson.candidateProfile.id) : undefined;
             }
-          } catch {
+          } catch { // Ignore errors
             // ignore
           }
           const now = new Date();
@@ -461,8 +483,7 @@ function Agent({
           );
 
           persistedInterviewRef.current = created;
-        } catch (err) {
-          console.warn("[Interview] failed to create practice interview:", err);
+        } catch { // Ignore errors
           persistedInterviewRef.current = null;
         }
       })();
@@ -498,15 +519,13 @@ function Agent({
             token ?? undefined
           );
           persistedInterviewRef.current = created;
-        } catch (err) {
-          console.warn("[Interview] failed to create standalone interview:", err);
+        } catch { // Ignore errors
           persistedInterviewRef.current = null;
         }
       })();
     };
 
     const onCallEnd = async () => {
-      console.log("[Vapi] call-end");
       setIsCalling(false);
       setActiveRole(null);
 
@@ -601,14 +620,13 @@ function Agent({
           );
 
           // Trigger analysis (async). It will update Interview + per-question scores.
-          analyzeInterview(persisted.id, token ?? undefined).catch((err) => {
-            console.warn("[Interview] analyze failed:", err);
+          analyzeInterview(persisted.id, token ?? undefined).catch(() => {
           });
 
           // Move user to feedback immediately; the page will show a loading state and auto-refresh.
           navigate(`/interviews/${persisted.id}/feedback`);
-        } catch (err) {
-          console.warn("[Interview] failed to persist transcript/feedback:", err);
+        } catch { // Ignore errors
+          // Ignore errors
         }
       })();
     };
@@ -632,19 +650,16 @@ function Agent({
     };
 
     const onSpeechStart = () => {
-      console.log("[Vapi] speech-start");
       setIsAiSpeaking(true);
       setActiveRole("ai");
     };
 
     const onSpeechEnd = () => {
-      console.log("[Vapi] speech-end");
       setIsAiSpeaking(false);
       setActiveRole("user");
     };
 
-    const onError = (error: Error) => {
-      console.error("[Vapi] error:", error);
+    const onError = () => {
     };
 
     vapi.on("call-start", onCallStart);
@@ -662,7 +677,7 @@ function Agent({
       vapi.off("speech-end", onSpeechEnd);
       vapi.off("error", onError);
     };
-  }, [applicationId, callSeconds, getToken, jobTitle, workflow.role]);
+  }, [applicationId, callSeconds, getToken, jobTitle, workflow.role, interviewId, jobId, navigate]);
 
   /* ----- Call timer ----- */
   useEffect(() => {
@@ -713,8 +728,7 @@ function Agent({
           questions: questionMode === "provided" ? formattedQuestions : "",
         },
       });
-    } catch (err) {
-      console.error("Error starting Vapi call:", err);
+    } catch { // Ignore errors
     }
   };
 
@@ -723,8 +737,7 @@ function Agent({
     setMuted(next);
     try {
       vapi.setMuted(next);
-    } catch (err) {
-      console.error("Error setting mute:", err);
+    } catch { // Ignore errors
     }
   };
 

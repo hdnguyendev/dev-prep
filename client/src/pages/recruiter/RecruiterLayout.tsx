@@ -1,10 +1,10 @@
+import DashboardTopbar from "@/components/DashboardTopbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import DashboardTopbar from "@/components/DashboardTopbar";
 import { isRecruiterLoggedIn, logout } from "@/lib/auth";
-import { LayoutPanelLeft, Briefcase, ClipboardList, Building2, LogOut, Menu, X } from "lucide-react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router";
+import { Briefcase, Building2, ClipboardList, Crown, LayoutPanelLeft, LogOut, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
 const NavItem = ({ to, label, icon, onNavigate, mobileMenuOpen }: { to: string; label: string; icon: React.ReactNode; onNavigate?: () => void; mobileMenuOpen?: boolean }) => {
   const location = useLocation();
@@ -103,16 +103,21 @@ export default function RecruiterLayout() {
                 mobileMenuOpen={mobileMenuOpen}
               />
               <NavItem 
-                to="/recruiter/applications" 
-                label="Applications" 
-                icon={<ClipboardList className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />} 
-                onNavigate={() => setMobileMenuOpen(false)}
-                mobileMenuOpen={mobileMenuOpen}
-              />
+                  to="/recruiter/applications"
+                  label="Applications"
+                  onNavigate={() => setMobileMenuOpen(false)}
+                  mobileMenuOpen={mobileMenuOpen} icon={<ClipboardList className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />}              />
               <NavItem 
                 to="/recruiter/company" 
                 label="Company" 
                 icon={<Building2 className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />} 
+                onNavigate={() => setMobileMenuOpen(false)}
+                mobileMenuOpen={mobileMenuOpen}
+              />
+              <NavItem 
+                to="/recruiter/membership" 
+                label="Membership" 
+                icon={<Crown className={mobileMenuOpen ? "h-5 w-5" : "h-4 w-4"} />} 
                 onNavigate={() => setMobileMenuOpen(false)}
                 mobileMenuOpen={mobileMenuOpen}
               />

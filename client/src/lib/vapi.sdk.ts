@@ -6,9 +6,7 @@ const VAPI_WEB_TOKEN =
   "";
 
 if (!VAPI_WEB_TOKEN) {
-  console.warn(
-    "[vapi.sdk] VAPI web token is empty. Check your .env (VITE_VAPI_WEB_TOKEN or NEXT_PUBLIC_VAPI_WEB_TOKEN)."
-  );
+  // VAPI web token is empty. Check your .env (VITE_VAPI_WEB_TOKEN or NEXT_PUBLIC_VAPI_WEB_TOKEN).
 }
 
 export const vapi = new Vapi(VAPI_WEB_TOKEN);

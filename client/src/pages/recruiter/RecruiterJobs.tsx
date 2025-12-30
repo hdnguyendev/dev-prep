@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
+import { apiClient } from "@/lib/api";
+import { Crown, AlertTriangle, Lock } from "lucide-react";
 import {
-  BriefcaseBusiness,
   Plus,
   Trash2,
   CheckCircle2,
@@ -16,11 +18,12 @@ import {
   Search,
   MapPin,
   Building2,
-  ClipboardList,
   DollarSign,
   Filter,
   X,
   ArrowUpDown,
+  Eye,
+  MousePointerClick,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
@@ -67,6 +70,8 @@ type Job = {
   status: string;
   companyId: string;
   recruiterId: string;
+  viewsCount?: number;
+  clicksCount?: number;
   createdAt: string;
   company?: {
     id: string;
@@ -83,6 +88,13 @@ const RecruiterJobs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [applicationsCounts, setApplicationsCounts] = useState<Record<string, number>>({});
+  const [membershipUsage, setMembershipUsage] = useState<{
+    jobsPosted?: number;
+    jobsLimit?: number | null;
+    jobsRemaining?: number | null;
+    planType?: "FREE" | "VIP";
+  } | null>(null);
+  const [isVIP, setIsVIP] = useState<boolean>(false);
 
   // Delete confirmation state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -113,6 +125,31 @@ const RecruiterJobs = () => {
       navigate("/login");
     }
   }, [navigate]);
+
+  // Fetch membership usage
+  useEffect(() => {
+    const fetchMembershipUsage = async () => {
+      const userId = userIdRef.current;
+      if (!userId) return;
+
+      try {
+        const statusRes = await apiClient.getMembershipStatus(userId);
+        if (statusRes.success && statusRes.data?.usage) {
+          const planType = statusRes.data.usage.planType;
+          setIsVIP(planType === "VIP");
+          setMembershipUsage({
+            jobsPosted: statusRes.data.usage.jobsPosted,
+            jobsLimit: statusRes.data.usage.jobsLimit,
+            jobsRemaining: statusRes.data.usage.jobsRemaining,
+            planType,
+          });
+        }
+      } catch {
+      }
+    };
+
+    fetchMembershipUsage();
+  }, []);
 
   // Fetch jobs with search from server
   useEffect(() => {
@@ -154,11 +191,24 @@ const RecruiterJobs = () => {
             })
           );
           setApplicationsCounts(counts);
+
+          // Refresh membership usage after jobs are loaded
+          try {
+            const statusRes = await apiClient.getMembershipStatus(userId);
+            if (statusRes.success && statusRes.data?.usage) {
+              setMembershipUsage({
+                jobsPosted: statusRes.data.usage.jobsPosted,
+                jobsLimit: statusRes.data.usage.jobsLimit,
+                jobsRemaining: statusRes.data.usage.jobsRemaining,
+                planType: statusRes.data.usage.planType,
+              });
+            }
+          } catch {
+          }
         } else {
           setError(data.message || "Failed to fetch jobs");
         }
-      } catch (err) {
-        console.error("Failed to fetch jobs:", err);
+      } catch {
         setError("Network error");
       } finally {
         setLoading(false);
@@ -276,8 +326,7 @@ const RecruiterJobs = () => {
       } else {
         setError(data.message || "Failed to delete job");
       }
-    } catch (err) {
-      console.error("Failed to delete job:", err);
+    } catch {
       setError("Network error");
     } finally {
       setDeleting(false);
@@ -325,57 +374,60 @@ const RecruiterJobs = () => {
               Create and manage your job postings
             </p>
           </div>
-          <Button onClick={handleCreate} className="gap-2">
+          <Button 
+            onClick={handleCreate} 
+            className="gap-2"
+            disabled={membershipUsage?.jobsRemaining === 0 && membershipUsage?.planType === "FREE"}
+          >
             <Plus className="h-4 w-4" />
             Create Job
           </Button>
         </div>
 
-        {/* Quick Actions */}
-        <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
-          <CardHeader>
-            <CardTitle className="text-amber-700 dark:text-amber-400 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-amber-500" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <Button 
-                variant="outline" 
-                className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors" 
-                onClick={() => navigate("/recruiter/dashboard")}
-              >
-                <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium">Overview</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-auto flex-col gap-2 py-4 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
-                onClick={() => navigate("/recruiter/applications")}
-              >
-                <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                <span className="text-sm font-medium">Review Applications</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-auto flex-col gap-2 py-4 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors" 
-                onClick={() => navigate("/recruiter/company")}
-              >
-                <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm font-medium">Edit Company</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-auto flex-col gap-2 py-4 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
-                onClick={handleCreate}
-              >
-                <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="text-sm font-medium">Create New Job</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Membership Usage Alert */}
+        {membershipUsage && membershipUsage.jobsLimit !== null && membershipUsage.planType === "FREE" && (
+          <Alert className={membershipUsage.jobsRemaining === 0 
+            ? "border-destructive bg-destructive/10" 
+            : membershipUsage.jobsRemaining && membershipUsage.jobsRemaining <= 2
+            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+            : "border-primary/50 bg-primary/5"
+          }>
+            {membershipUsage.jobsRemaining === 0 ? (
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            ) : (
+              <Crown className="h-4 w-4 text-primary" />
+            )}
+            <AlertDescription>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground mb-1">
+                    {membershipUsage.jobsRemaining === 0
+                      ? "You've reached your job posting limit"
+                      : `${membershipUsage.jobsRemaining} job${membershipUsage.jobsRemaining !== 1 ? "s" : ""} remaining`}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {membershipUsage.jobsPosted || 0} / {membershipUsage.jobsLimit} jobs posted
+                    {membershipUsage.jobsRemaining === 0
+                      ? ". Upgrade to VIP for unlimited job postings."
+                      : membershipUsage.jobsRemaining && membershipUsage.jobsRemaining <= 2
+                      ? ". Consider upgrading to VIP for unlimited postings."
+                      : ""}
+                  </p>
+                </div>
+                {membershipUsage.jobsRemaining === 0 && (
+                  <Button
+                    size="sm"
+                    onClick={() => navigate("/recruiter/membership")}
+                    className="gap-2 whitespace-nowrap"
+                  >
+                    <Crown className="h-4 w-4" />
+                    Upgrade to VIP
+                  </Button>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Error */}
         {error && (
@@ -392,7 +444,6 @@ const RecruiterJobs = () => {
         ) : jobs.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <BriefcaseBusiness className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No jobs yet</h3>
               <p className="mb-4 text-sm text-muted-foreground">
                 Create your first job posting to start recruiting
@@ -597,13 +648,14 @@ const RecruiterJobs = () => {
                 <table className="min-w-full text-sm">
                   <thead className="bg-muted/70 text-muted-foreground">
                     <tr className="border-b text-xs font-semibold uppercase tracking-wide">
-                      <th className="px-4 py-3 text-left w-[30%]">Job</th>
-                      <th className="px-4 py-3 text-center w-[10%]">Status</th>
-                      <th className="px-4 py-3 text-left w-[12%]">Type</th>
-                      <th className="px-4 py-3 text-left w-[12%]">Location</th>
-                      <th className="px-4 py-3 text-left w-[12%]">Salary</th>
-                      <th className="px-4 py-3 text-right w-[10%]">Created</th>
-                      <th className="px-4 py-3 text-right w-[14%]">Actions</th>
+                      <th className="px-4 py-3 text-left w-[25%]">Job</th>
+                      <th className="px-4 py-3 text-center w-[8%]">Status</th>
+                      <th className="px-4 py-3 text-left w-[10%]">Type</th>
+                      <th className="px-4 py-3 text-left w-[10%]">Location</th>
+                      <th className="px-4 py-3 text-left w-[10%]">Salary</th>
+                      <th className="px-4 py-3 text-center w-[12%]">Engagement</th>
+                      <th className={`px-4 py-3 text-right ${isVIP ? "w-[10%]" : "w-[15%]"}`}>Created</th>
+                      <th className={`px-4 py-3 text-right ${isVIP ? "w-[15%]" : "w-[20%]"}`}>Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -611,7 +663,7 @@ const RecruiterJobs = () => {
                       <tr
                         key={job.id}
                         className="hover:bg-muted/40 transition cursor-pointer"
-                        onClick={() => navigate(`/recruiter/jobs/${job.id}/edit`)}
+                        onClick={() => navigate(`/recruiter/jobs/${job.id}`)}
                       >
                         <td className="px-4 py-3">
                           <div className="space-y-1.5">
@@ -660,6 +712,38 @@ const RecruiterJobs = () => {
                             <span className="text-xs font-medium">{formatSalary(job)}</span>
                           </div>
                         </td>
+                        <td className="px-4 py-3 text-center">
+                          {isVIP ? (
+                            <div className="flex flex-col items-center gap-1.5">
+                              <div className="flex items-center gap-2 text-xs">
+                                <Eye className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                <span className="font-semibold text-foreground">
+                                  {job.viewsCount?.toLocaleString() || 0}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <MousePointerClick className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                                <span className="font-semibold text-foreground">
+                                  {job.clicksCount?.toLocaleString() || 0}
+                                </span>
+                              </div>
+                              {job.viewsCount && job.viewsCount > 0 ? (
+                                <div className="text-[10px] text-muted-foreground">
+                                  CTR: {((job.clicksCount || 0) / job.viewsCount * 100).toFixed(1)}%
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-muted-foreground/50 italic">
+                                  No data
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1.5">
+                              <Lock className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground">VIP Only</span>
+                            </div>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-right text-muted-foreground whitespace-nowrap text-xs">
                           {new Date(job.createdAt).toLocaleDateString()}
                         </td>
@@ -671,7 +755,6 @@ const RecruiterJobs = () => {
                               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm min-w-[140px] justify-center"
                               onClick={() => handleViewApplications(job)}
                             >
-                              <ClipboardList className="h-4 w-4" />
                               <span>Applications</span>
                               <Badge 
                                 variant="outline" 
@@ -695,7 +778,7 @@ const RecruiterJobs = () => {
                     ))}
                     {pagedJobs.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                        <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
                           No jobs match your filters.
                         </td>
                       </tr>

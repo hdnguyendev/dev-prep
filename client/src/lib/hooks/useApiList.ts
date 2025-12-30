@@ -53,7 +53,7 @@ export const useApiList = <T,>(fetcher: Fetcher<T>, deps: unknown[] = []) => {
       } else {
         setError(res.message || "Failed to fetch data");
       }
-    } catch (err) {
+    } catch {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') {
         return;
@@ -61,7 +61,7 @@ export const useApiList = <T,>(fetcher: Fetcher<T>, deps: unknown[] = []) => {
       
       // Only set error if this is still the latest request
       if (currentRequestId === requestIdRef.current && isMountedRef.current && !abortController.signal.aborted) {
-        setError(err instanceof Error ? err.message : "Unexpected error");
+        setError("Unexpected error");
       }
     } finally {
       // Only update loading state if this is still the latest request

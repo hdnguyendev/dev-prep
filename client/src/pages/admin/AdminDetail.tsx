@@ -156,8 +156,8 @@ const AdminDetail = () => {
             (catsRes.data || []).map((r: AdminRow) => ({ value: String(r.id), label: String(r.name ?? r.id) }))
           );
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load detail");
+      } catch {
+        setError("Failed to load detail");
       } finally {
         setLoading(false);
       }
@@ -332,8 +332,7 @@ const AdminDetail = () => {
           setFormData(payload);
         }
       }
-    } catch (err) {
-      console.error("Save error:", err);
+    } catch {
       const errorMessage = err instanceof Error ? err.message : "Update failed";
       setError(errorMessage);
       // Show more detailed error if available
@@ -358,8 +357,8 @@ const AdminDetail = () => {
       await adminClient.remove(resource.path, resource.primaryKeys, row, token ?? undefined);
       setDeleteConfirmOpen(false);
       navigate(-1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
+    } catch {
+      setError("Failed to delete");
     } finally {
       setDeleting(false);
     }

@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
+import { apiClient } from "@/lib/api";
 import {
   ArrowLeft,
   Save,
@@ -17,6 +19,7 @@ import {
   Clock,
   Plus,
   Search,
+  Crown,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
@@ -136,6 +139,12 @@ export default function RecruiterJobForm() {
   const [showBenefits, setShowBenefits] = useState(false);
   const [skillSearch, setSkillSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
+  const [membershipUsage, setMembershipUsage] = useState<{
+    jobsPosted?: number;
+    jobsLimit?: number | null;
+    jobsRemaining?: number | null;
+    planType?: "FREE" | "VIP";
+  } | null>(null);
 
   // Check auth
   useEffect(() => {
@@ -143,6 +152,28 @@ export default function RecruiterJobForm() {
       navigate("/login");
     }
   }, [navigate]);
+
+  // Fetch membership usage (only for create mode)
+  useEffect(() => {
+    if (!isEditMode && userId) {
+      const fetchMembershipUsage = async () => {
+        try {
+          const statusRes = await apiClient.getMembershipStatus(userId);
+          if (statusRes.success && statusRes.data?.usage) {
+            setMembershipUsage({
+              jobsPosted: statusRes.data.usage.jobsPosted,
+              jobsLimit: statusRes.data.usage.jobsLimit,
+              jobsRemaining: statusRes.data.usage.jobsRemaining,
+              planType: statusRes.data.usage.planType,
+            });
+          }
+        } catch {
+        }
+      };
+
+      fetchMembershipUsage();
+    }
+  }, [isEditMode, userId]);
 
   // Load job data if editing
   useEffect(() => {
@@ -190,8 +221,7 @@ export default function RecruiterJobForm() {
             setSelectedCategoryIds(job.categories.map((c: any) => String(c.categoryId)));
           }
         }
-      } catch (err) {
-        console.error("Failed to load job:", err);
+      } catch {
         setError("Failed to load job data");
       } finally {
         setLoading(false);
@@ -242,8 +272,7 @@ export default function RecruiterJobForm() {
             }))
           );
         }
-      } catch (err) {
-        console.error("Failed to load options:", err);
+      } catch {
       }
     };
 
@@ -308,8 +337,7 @@ export default function RecruiterJobForm() {
         // Revert status on error
         setFormData((prev) => ({ ...prev, status: oldStatus }));
       }
-    } catch (err) {
-      console.error("Failed to update status:", err);
+    } catch {
       setError("Network error");
       // Revert status on error
       setFormData((prev) => ({ ...prev, status: oldStatus }));
@@ -341,6 +369,12 @@ export default function RecruiterJobForm() {
 
   const handleSave = async () => {
     if (!currentUser || !userId) return;
+
+    // Check job limit for new jobs (not editing)
+    if (!isEditMode && membershipUsage?.jobsRemaining === 0 && membershipUsage?.planType === "FREE") {
+      setError("You have reached your job posting limit. Upgrade to VIP for unlimited job postings.");
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -517,8 +551,7 @@ export default function RecruiterJobForm() {
       } else {
         setError(data.message || "Failed to save job");
       }
-    } catch (err) {
-      console.error("Failed to save job:", err);
+    } catch {
       setError("Network error");
     } finally {
       setSaving(false);
@@ -535,6 +568,33 @@ export default function RecruiterJobForm() {
 
   return (
     <div className="space-y-6 pb-24">
+      {/* Job Limit Alert for FREE Recruiters (Create Mode Only) */}
+      {!isEditMode && membershipUsage && membershipUsage.jobsRemaining === 0 && membershipUsage.planType === "FREE" && (
+        <Alert className="border-destructive bg-destructive/10">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertDescription>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex-1">
+                <p className="font-semibold text-foreground mb-1">
+                  You've reached your job posting limit
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {membershipUsage.jobsPosted || 0} / {membershipUsage.jobsLimit} jobs posted. Upgrade to VIP for unlimited job postings.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => navigate("/recruiter/membership")}
+                className="gap-2 whitespace-nowrap"
+              >
+                <Crown className="h-4 w-4" />
+                Upgrade to VIP
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
@@ -1071,7 +1131,14 @@ export default function RecruiterJobForm() {
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving} size="lg">
+            <Button 
+              onClick={handleSave} 
+              disabled={
+                saving || 
+                (!isEditMode && membershipUsage?.jobsRemaining === 0 && membershipUsage?.planType === "FREE")
+              } 
+              size="lg"
+            >
               <Save className="h-4 w-4 mr-2" />
               {saving ? "Saving..." : "Save Job"}
             </Button>

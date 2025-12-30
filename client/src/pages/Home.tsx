@@ -28,7 +28,7 @@ import { useNavigate } from "react-router";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const [featuredJobs, setFeaturedJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [heroQuery, setHeroQuery] = useState("");
@@ -92,8 +92,7 @@ const Home = () => {
         if (response.success) {
           setFeaturedJobs(response.data.slice(0, 3));
         }
-      } catch (err) {
-        console.error("Failed to fetch jobs:", err);
+      } catch {
       } finally {
         setLoadingJobs(false);
       }
@@ -500,7 +499,16 @@ const Home = () => {
                 <Card
                   key={job.id}
                   className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-2xl cursor-pointer h-full flex flex-col"
-                  onClick={() => navigate(`/jobs/${job.id}`)}
+                  onClick={async () => {
+                    // Track click for candidates
+                    if (isSignedIn) {
+                      const token = await getToken();
+                      if (token) {
+                        apiClient.trackJobClick(job.id, token);
+                      }
+                    }
+                    navigate(`/jobs/${job.id}`);
+                  }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                   <CardHeader className="relative">

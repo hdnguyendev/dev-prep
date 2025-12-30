@@ -28,6 +28,8 @@ export const APPLICATION_STATUS_META: Record<
   INTERVIEW_SCHEDULED: { label: "Interview scheduled", Icon: CalendarClock },
   INTERVIEWED: { label: "Interviewed", Icon: MailCheck },
   OFFER_SENT: { label: "Offer sent", Icon: BadgeCheck },
+  OFFER_ACCEPTED: { label: "Offer accepted", Icon: CheckCircle2 },
+  OFFER_REJECTED: { label: "Offer rejected", Icon: XCircle },
   HIRED: { label: "Hired", Icon: CheckCircle2 },
   REJECTED: { label: "Rejected", Icon: XCircle },
   WITHDRAWN: { label: "Withdrawn", Icon: Undo2 },

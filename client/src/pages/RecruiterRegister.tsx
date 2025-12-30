@@ -48,8 +48,7 @@ const RecruiterRegister = () => {
             setCreateNewCompany(true);
           }
         }
-      } catch (err) {
-        console.error("Failed to load companies:", err);
+      } catch {
         setCreateNewCompany(true); // Fallback to create mode
       } finally {
         setLoadingCompanies(false);
@@ -127,8 +126,7 @@ const RecruiterRegister = () => {
       } else {
         setError(data.message || "Registration failed");
       }
-    } catch (err) {
-      console.error("Registration error:", err);
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);

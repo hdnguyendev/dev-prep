@@ -13,6 +13,10 @@ import notificationRoutes from "./notifications";
 import candidateProfilesRoutes from "./candidateProfiles";
 import interviewsRoutes from "./interviews";
 import aiRoutes from "./ai";
+import offerRoutes from "./offers";
+import matchingRoutes from "./matching";
+import jobRoutes from "./jobs";
+import membershipRoutes from "./membership";
 
 const routes = new Hono();
 
@@ -23,11 +27,15 @@ routes.route("/applications", applicationRoutes); // Custom application endpoint
 routes.route("/companies", companyRoutes); // Company endpoints
 routes.route("/reviews", reviewRoutes); // Review endpoints
 routes.route("/saved-jobs", savedJobRoutes); // Saved jobs endpoints
+routes.route("/jobs", jobRoutes); // Job endpoints
 routes.route("/company-follows", companyFollowRoutes); // Company follow endpoints
 routes.route("/notifications", notificationRoutes); // Notification endpoints
 routes.route("/upload", uploadRoutes); // Upload endpoints
 routes.route("/", candidateProfilesRoutes);
 routes.route("/", interviewsRoutes);
+routes.route("/", offerRoutes);
+routes.route("/", matchingRoutes);
+routes.route("/", membershipRoutes);
 routes.route("/", aiRoutes);
 routes.route("/", crudRoutes);
 routes.route("/", swaggerRoutes);

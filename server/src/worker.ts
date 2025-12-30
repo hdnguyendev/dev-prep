@@ -284,4 +284,48 @@ app.notFound((c) => c.json({ ok: false, error: "NOT_FOUND", path: c.req.path }, 
 app.onError(appMiddlewares.errorHandler);
 
 // Export for Cloudflare Workers
-export default app;
+// Export both fetch handler and scheduled handler
+export default {
+  fetch: app.fetch,
+  async scheduled(
+    event: { cron: string; scheduledTime: number },
+    env: Env,
+  ): Promise<void> {
+    console.log("[SCHEDULED] Cron trigger received:", event.cron, event.scheduledTime);
+
+    // Set up environment for Prisma
+    let connectionString: string | undefined;
+    if (env.HYPERDRIVE?.connectionString) {
+      connectionString = env.HYPERDRIVE.connectionString;
+    } else if (env.DATABASE_URL) {
+      connectionString = env.DATABASE_URL;
+    }
+
+    if (connectionString) {
+      // @ts-ignore
+      globalThis.DATABASE_URL = connectionString;
+      if (typeof process !== 'undefined') {
+        process.env.DATABASE_URL = connectionString;
+      }
+    }
+
+    try {
+      // Import job function dynamically to ensure env is set
+      const { cleanupExpiredInterviewsJob } = await import("./app/jobs/cleanupExpiredInterviews.job");
+      
+      const result = await cleanupExpiredInterviewsJob();
+      
+      console.log("[SCHEDULED] Cleanup completed:", {
+        expired: result.expired,
+        deleted: result.deleted,
+        errors: result.errors.length,
+      });
+
+      if (result.errors.length > 0) {
+        console.error("[SCHEDULED] Errors during cleanup:", result.errors);
+      }
+    } catch (error) {
+      console.error("[SCHEDULED] Failed to run cleanup job:", error);
+    }
+  },
+};

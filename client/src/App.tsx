@@ -13,6 +13,7 @@ import {
   Login,
   CandidatesDirectory,
   CandidatePublicProfile,
+  Subscription,
   RecruiterRegister,
 } from "@/pages";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router";
@@ -24,6 +25,8 @@ import CandidateQuickAccess from "@/pages/candidate/CandidateQuickAccess";
 import CandidateProfile from "@/pages/candidate/CandidateProfile";
 import CandidateSavedJobs from "@/pages/candidate/CandidateSavedJobs";
 import CandidateFollowedCompanies from "@/pages/candidate/CandidateFollowedCompanies";
+import CandidateRecommendedJobs from "@/pages/candidate/CandidateRecommendedJobs";
+import CandidateMembership from "@/pages/candidate/CandidateMembership";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import RecruiterLayout from "@/pages/recruiter/RecruiterLayout";
 import RecruiterDashboard from "@/pages/recruiter/RecruiterDashboard";
@@ -32,6 +35,8 @@ import RecruiterApplications from "@/pages/recruiter/RecruiterApplications";
 import RecruiterCompany from "@/pages/recruiter/RecruiterCompany";
 import RecruiterJobApplications from "@/pages/recruiter/RecruiterJobApplications";
 import RecruiterJobForm from "@/pages/recruiter/RecruiterJobForm";
+import RecruiterJobDetail from "@/pages/recruiter/RecruiterJobDetail";
+import RecruiterMembership from "@/pages/recruiter/RecruiterMembership";
 import RecruiterCandidateProfile from "@/pages/recruiter/RecruiterCandidateProfile";
 import NotFound from "@/pages/NotFound";
 
@@ -54,11 +59,13 @@ function AppRoutes() {
         <Route path="/candidate" element={<CandidateLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<CandidateDashboard />} />
+          <Route path="recommended-jobs" element={<CandidateRecommendedJobs />} />
           <Route path="applications" element={<CandidateApplications />} />
           <Route path="interviews" element={<CandidateInterviews />} />
           <Route path="profile" element={<CandidateProfile />} />
           <Route path="saved-jobs" element={<CandidateSavedJobs />} />
           <Route path="followed-companies" element={<CandidateFollowedCompanies />} />
+          <Route path="membership" element={<CandidateMembership />} />
           <Route path="quick-access" element={<CandidateQuickAccess />} />
         </Route>
 
@@ -76,7 +83,9 @@ function AppRoutes() {
           <Route path="jobs" element={<RecruiterJobs />} />
           <Route path="applications" element={<RecruiterApplications />} />
           <Route path="company" element={<RecruiterCompany />} />
+          <Route path="membership" element={<RecruiterMembership />} />
           <Route path="jobs/new" element={<RecruiterJobForm />} />
+          <Route path="jobs/:jobId" element={<RecruiterJobDetail />} />
           <Route path="jobs/:jobId/edit" element={<RecruiterJobForm />} />
           <Route path="jobs/:jobId/applications" element={<RecruiterJobApplications />} />
           <Route path="candidates" element={<CandidatesDirectory />} />
@@ -95,6 +104,8 @@ function AppRoutes() {
 
 				<Route path="/login" element={<Login />} />
 				<Route path="/register" element={<RecruiterRegister />} />
+				<Route path="/subscription" element={<Subscription />} />
+				<Route path="/pricing" element={<Subscription />} />
         
         {/* 404 - Catch all unmatched routes */}
         <Route path="*" element={<NotFound />} />

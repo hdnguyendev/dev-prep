@@ -82,9 +82,8 @@ export default function CandidatesDirectory() {
             name: String(r.name ?? r.id) 
           })));
         }
-      } catch (e) {
+      } catch {
         if (abort) return;
-        console.error(e);
         setError("Failed to load profiles");
       } finally {
         if (!abort) setLoading(false);

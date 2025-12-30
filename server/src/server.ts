@@ -16,6 +16,7 @@ app.use("*", cors({
   allowHeaders: ["Authorization", "Content-Type"],
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 }));
+
 app.use("*", clerkMiddleware());
 app.use("*", logger());
 app.use("*", appMiddlewares.requestLogger());

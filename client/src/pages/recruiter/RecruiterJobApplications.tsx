@@ -8,6 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
   ArrowLeft,
   User,
   Mail,
@@ -19,6 +28,7 @@ import {
   XCircle,
   AlertTriangle,
   Loader2,
+  Send,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
@@ -49,6 +59,40 @@ type Application = {
     }>;
   };
   notes?: Array<{ id: string; authorId: string; content: string; createdAt: string }>;
+  interviews?: Array<{
+    id: string;
+    accessCode: string;
+    sessionUrl?: string | null;
+    status: string;
+    expiresAt: string;
+    title: string;
+    overallScore?: number | null;
+    summary?: string | null;
+    recommendation?: string | null;
+    startedAt?: string | null;
+    endedAt?: string | null;
+    createdAt: string;
+  }>;
+  offers?: Array<{
+    id: string;
+    title: string;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    salaryCurrency: string;
+    employmentType?: string | null;
+    startDate?: string | null;
+    expirationDate: string;
+    location?: string | null;
+    isRemote: boolean;
+    description?: string | null;
+    benefits?: string | null;
+    terms?: string | null;
+    status: string;
+    responseNote?: string | null;
+    respondedAt?: string | null;
+    sentAt: string;
+    createdAt: string;
+  }>;
   job?: {
     id: string;
     title: string;
@@ -125,7 +169,19 @@ const statusConfig: Record<string, { label: string; variant: "default" | "outlin
     label: "Offer Sent",
     variant: "success",
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    color: "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+  },
+  OFFER_ACCEPTED: {
+    label: "Offer Accepted",
+    variant: "success",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
     color: "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+  },
+  OFFER_REJECTED: {
+    label: "Offer Rejected",
+    variant: "outline",
+    icon: <XCircle className="h-3.5 w-3.5" />,
+    color: "bg-orange-100 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800",
   },
   HIRED: {
     label: "Hired",
@@ -172,6 +228,8 @@ const RecruiterJobApplications = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState("");
+  const [showCreateOfferModal, setShowCreateOfferModal] = useState(false);
+  const [creatingOffer, setCreatingOffer] = useState(false);
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -225,13 +283,20 @@ const RecruiterJobApplications = () => {
         const appsData = await appsResponse.json();
         
         if (appsData.success) {
-          if (!abort) setApplications(appsData.data || []);
+          const applications = appsData.data || [];
+          // Debug: Log interviews data to help troubleshoot
+          applications.forEach((app: Application) => {
+            // Process interviews data
+            if (app.interviews && app.interviews.length > 0) {
+              // Map interviews for debugging (removed)
+            }
+          });
+          if (!abort) setApplications(applications);
         } else {
           if (!abort) setError(appsData.message || "Failed to fetch applications");
         }
-      } catch (err) {
+      } catch {
         if (abort) return;
-        console.error("Failed to fetch data:", err);
         setError("Network error");
       } finally {
         if (!abort) setLoading(false);
@@ -295,8 +360,7 @@ const RecruiterJobApplications = () => {
       };
       upsertSelectedApplication(next);
       setNoteDraft("");
-    } catch (err) {
-      console.error("Failed to add note", err);
+    } catch {
       setError("Network error");
     } finally {
       setSavingNote(false);
@@ -335,8 +399,7 @@ const RecruiterJobApplications = () => {
       upsertSelectedApplication(next);
       setEditingNoteId(null);
       setEditingNoteText("");
-    } catch (err) {
-      console.error("Failed to update note", err);
+    } catch {
       setError("Network error");
     } finally {
       setSavingNote(false);
@@ -370,8 +433,7 @@ const RecruiterJobApplications = () => {
       upsertSelectedApplication(next);
       setDeleteConfirmOpen(false);
       setNoteIdToDelete(null);
-    } catch (err) {
-      console.error("Failed to delete note", err);
+    } catch {
       setError("Network error");
     } finally {
       setSavingNote(false);
@@ -415,8 +477,7 @@ const RecruiterJobApplications = () => {
       } else {
         setError(data.message || "Failed to update job status");
       }
-    } catch (err) {
-      console.error("Failed to update job status:", err);
+    } catch {
       setError("Network error");
     } finally {
       setUpdatingJobStatus(false);
@@ -452,8 +513,7 @@ const RecruiterJobApplications = () => {
       } else {
         setError(data.message || "Failed to update status");
       }
-    } catch (err) {
-      console.error("Failed to update status:", err);
+    } catch {
       setError("Network error");
     } finally {
       setUpdating(false);
@@ -877,6 +937,334 @@ const RecruiterJobApplications = () => {
                 </Badge>
               </div>
 
+              {/* Interviews Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    Interviews ({selectedApplication.interviews?.length || 0})
+                  </div>
+                </div>
+                {selectedApplication.interviews && selectedApplication.interviews.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedApplication.interviews
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map((interview) => {
+                        const isPending = interview.status === "PENDING";
+                        const isCompleted = interview.status === "COMPLETED";
+                        const isInProgress = interview.status === "IN_PROGRESS";
+                        const isExpired = new Date(interview.expiresAt) < new Date();
+
+                        return (
+                          <div
+                            key={interview.id}
+                            className={`rounded-lg border p-4 space-y-3 ${
+                              isPending
+                                ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                                : isCompleted
+                                ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                                : "bg-muted/50"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="text-sm font-medium">{interview.title}</div>
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      isPending
+                                        ? "border-blue-500 text-blue-700 dark:text-blue-300"
+                                        : isCompleted
+                                        ? "border-green-500 text-green-700 dark:text-green-300"
+                                        : isInProgress
+                                        ? "border-yellow-500 text-yellow-700 dark:text-yellow-300"
+                                        : ""
+                                    }
+                                  >
+                                    {interview.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Created: {new Date(interview.createdAt).toLocaleString("en-US")}
+                                </div>
+                                {interview.startedAt && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Started: {new Date(interview.startedAt).toLocaleString("en-US")}
+                                  </div>
+                                )}
+                                {interview.endedAt && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Ended: {new Date(interview.endedAt).toLocaleString("en-US")}
+                                  </div>
+                                )}
+                                {isCompleted && interview.overallScore !== null && (
+                                  <div className="mt-2">
+                                    <div className="text-xs font-medium mb-1">Overall Score:</div>
+                                    <div className="text-lg font-bold text-green-700 dark:text-green-300">
+                                      {interview.overallScore.toFixed(1)} / 10
+                                    </div>
+                                  </div>
+                                )}
+                                {isCompleted && interview.recommendation && (
+                                  <div className="mt-2">
+                                    <div className="text-xs font-medium mb-1">Recommendation:</div>
+                                    <Badge
+                                      variant="outline"
+                                      className={
+                                        interview.recommendation === "HIRE"
+                                          ? "border-green-500 text-green-700 dark:text-green-300"
+                                          : interview.recommendation === "CONSIDER"
+                                          ? "border-yellow-500 text-yellow-700 dark:text-yellow-300"
+                                          : "border-red-500 text-red-700 dark:text-red-300"
+                                      }
+                                    >
+                                      {interview.recommendation}
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* PENDING Interview - Show Access Code */}
+                            {isPending && (
+                              <div className="space-y-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                                <div>
+                                  <div className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">
+                                    Access Code:
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <code className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded font-mono text-lg font-bold text-blue-900 dark:text-blue-100">
+                                      {interview.accessCode}
+                                    </code>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(interview.accessCode);
+                                      }}
+                                    >
+                                      Copy
+                                    </Button>
+                                  </div>
+                                </div>
+                                {interview.sessionUrl && (
+                                  <div>
+                                    <div className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">
+                                      Interview Link:
+                                    </div>
+                                    <a
+                                      href={interview.sessionUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-sm text-blue-700 dark:text-blue-300 hover:underline"
+                                    >
+                                      {interview.sessionUrl}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  </div>
+                                )}
+                                <div className="text-xs text-blue-700 dark:text-blue-300">
+                                  Expires: {new Date(interview.expiresAt).toLocaleString("en-US")}
+                                </div>
+                                {isExpired && (
+                                  <div className="text-xs text-red-600 dark:text-red-400 font-medium">
+                                    ⚠️ Expired
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Show Feedback Button for COMPLETED, PROCESSING, or any interview with feedback data */}
+                            {(isCompleted || interview.status === "PROCESSING" || (interview.overallScore !== null || interview.summary || interview.recommendation)) && (
+                              <div className={`pt-2 border-t ${isCompleted ? "border-green-200 dark:border-green-800" : ""}`}>
+                                <Button
+                                  size="sm"
+                                  variant={isCompleted ? "outline" : "outline"}
+                                  onClick={() => navigate(`/interviews/${interview.id}/feedback`)}
+                                  className="w-full"
+                                >
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  {isCompleted 
+                                    ? "View Detailed Feedback" 
+                                    : interview.status === "PROCESSING"
+                                    ? "View Feedback (Processing...)"
+                                    : "View Feedback"}
+                                </Button>
+                                {interview.summary && (
+                                  <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                                    {interview.summary}
+                                  </div>
+                                )}
+                                {!isCompleted && interview.status === "PROCESSING" && (
+                                  <div className="mt-2 text-xs text-muted-foreground">
+                                    AI is analyzing the interview. Feedback will be available shortly.
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* IN_PROGRESS Interview */}
+                            {isInProgress && (
+                              <div className="pt-2 border-t">
+                                <div className="text-xs text-muted-foreground">
+                                  Candidate is participating in interview...
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center">
+                    No interviews scheduled yet.
+                  </div>
+                )}
+              </div>
+
+              {/* Offers Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    Offers ({selectedApplication.offers?.length || 0})
+                  </div>
+                  {(selectedApplication.status === "INTERVIEWED" || selectedApplication.status === "OFFER_SENT" || selectedApplication.status === "OFFER_ACCEPTED") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowCreateOfferModal(true)}
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Send Offer
+                    </Button>
+                  )}
+                </div>
+                {selectedApplication.offers && selectedApplication.offers.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedApplication.offers
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map((offer) => {
+                        const isPending = offer.status === "PENDING";
+                        const isAccepted = offer.status === "ACCEPTED";
+                        const isRejected = offer.status === "REJECTED";
+                        const isExpired = new Date(offer.expirationDate) < new Date() && isPending;
+                        const isWithdrawn = offer.status === "WITHDRAWN";
+
+                        return (
+                          <div
+                            key={offer.id}
+                            className={`rounded-lg border p-4 space-y-3 ${
+                              isAccepted
+                                ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                                : isRejected
+                                ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+                                : isPending
+                                ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                                : "bg-muted/50"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="text-sm font-medium">{offer.title}</div>
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      isAccepted
+                                        ? "border-green-500 text-green-700 dark:text-green-300"
+                                        : isRejected
+                                        ? "border-red-500 text-red-700 dark:text-red-300"
+                                        : isPending
+                                        ? "border-blue-500 text-blue-700 dark:text-blue-300"
+                                        : ""
+                                    }
+                                  >
+                                    {offer.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Sent: {new Date(offer.sentAt).toLocaleString("en-US")}
+                                </div>
+                                {offer.salaryMin !== null && offer.salaryMax !== null && (
+                                  <div className="mt-2">
+                                    <div className="text-xs font-medium mb-1">Salary:</div>
+                                    <div className="text-sm font-semibold">
+                                      {offer.salaryCurrency} {offer.salaryMin.toLocaleString()} - {offer.salaryMax.toLocaleString()}
+                                    </div>
+                                  </div>
+                                )}
+                                {offer.startDate && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    Start Date: {new Date(offer.startDate).toLocaleDateString("en-US")}
+                                  </div>
+                                )}
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Expires: {new Date(offer.expirationDate).toLocaleDateString("en-US")}
+                                  {isExpired && (
+                                    <span className="text-red-600 dark:text-red-400 ml-2">(Expired)</span>
+                                  )}
+                                </div>
+                                {offer.responseNote && (
+                                  <div className="mt-2 text-xs text-muted-foreground">
+                                    <div className="font-medium mb-1">Candidate Response:</div>
+                                    <div>{offer.responseNote}</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Actions for PENDING offers */}
+                            {isPending && !isExpired && (
+                              <div className="pt-2 border-t border-blue-200 dark:border-blue-800 flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    // TODO: Open edit offer modal
+                                  }}
+                                  className="flex-1"
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    if (!confirm("Are you sure you want to withdraw this offer?")) return;
+                                    try {
+                                      const response = await fetch(`${API_BASE}/offers/${offer.id}`, {
+                                        method: "PUT",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                          Authorization: `Bearer ${userId}`,
+                                        },
+                                        body: JSON.stringify({ status: "WITHDRAWN" }),
+                                      });
+                                      const data = await response.json();
+                                      if (data.success) {
+                                        // Reload applications
+                                        window.location.reload();
+                                      }
+                                    } catch {
+                                    }
+                                  }}
+                                  className="flex-1"
+                                >
+                                  Withdraw
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center">
+                    No offers sent yet.
+                  </div>
+                )}
+              </div>
+
               {/* Applied Date */}
               <div>
                 <div className="text-sm font-medium mb-2">Applied Date</div>
@@ -1085,7 +1473,272 @@ const RecruiterJobApplications = () => {
         variant="destructive"
         loading={savingNote}
       />
+
+      {/* Create Offer Modal */}
+      <Dialog open={showCreateOfferModal} onOpenChange={setShowCreateOfferModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Send Offer</DialogTitle>
+            <DialogDescription>
+              Create and send an offer to {selectedApplication?.candidate?.user?.firstName} {selectedApplication?.candidate?.user?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedApplication && (
+            <CreateOfferForm
+              applicationId={selectedApplication.id}
+              jobTitle={selectedApplication.job?.title || ""}
+              onSuccess={() => {
+                setShowCreateOfferModal(false);
+                window.location.reload();
+              }}
+              onCancel={() => setShowCreateOfferModal(false)}
+              creating={creatingOffer}
+              setCreating={setCreatingOffer}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </main>
+  );
+};
+
+// Create Offer Form Component
+const CreateOfferForm = ({
+  applicationId,
+  jobTitle,
+  onSuccess,
+  onCancel,
+  creating,
+  setCreating,
+}: {
+  applicationId: string;
+  jobTitle: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+  creating: boolean;
+  setCreating: (val: boolean) => void;
+}) => {
+  const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
+  const [formData, setFormData] = useState({
+    title: jobTitle || "",
+    salaryMin: "",
+    salaryMax: "",
+    salaryCurrency: "USD",
+    employmentType: "FULL_TIME",
+    startDate: "",
+    expirationDate: "",
+    location: "",
+    isRemote: false,
+    description: "",
+    benefits: "",
+    terms: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!applicationId || !formData.title || !formData.expirationDate) {
+      alert("Please fill in all required fields (Title, Expiration Date)");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await fetch(`${API_BASE}/offers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userId}`,
+        },
+        body: JSON.stringify({
+          applicationId,
+          ...formData,
+          salaryMin: formData.salaryMin ? parseFloat(formData.salaryMin) : null,
+          salaryMax: formData.salaryMax ? parseFloat(formData.salaryMax) : null,
+          startDate: formData.startDate || null,
+          expirationDate: formData.expirationDate,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        onSuccess();
+      } else {
+        alert(data.message || "Failed to create offer");
+      }
+    } catch {
+      alert("Failed to create offer");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="title">Offer Title *</Label>
+        <Input
+          id="title"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          placeholder="e.g., Software Engineer - Full-time"
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="salaryMin">Salary Min</Label>
+          <Input
+            id="salaryMin"
+            type="number"
+            value={formData.salaryMin}
+            onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
+            placeholder="50000"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="salaryMax">Salary Max</Label>
+          <Input
+            id="salaryMax"
+            type="number"
+            value={formData.salaryMax}
+            onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
+            placeholder="80000"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="salaryCurrency">Currency</Label>
+          <select
+            id="salaryCurrency"
+            value={formData.salaryCurrency}
+            onChange={(e) => setFormData({ ...formData, salaryCurrency: e.target.value })}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="USD">USD</option>
+            <option value="VND">VND</option>
+            <option value="EUR">EUR</option>
+            <option value="JPY">JPY</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="employmentType">Employment Type</Label>
+          <select
+            id="employmentType"
+            value={formData.employmentType}
+            onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="FULL_TIME">Full-time</option>
+            <option value="PART_TIME">Part-time</option>
+            <option value="CONTRACT">Contract</option>
+            <option value="FREELANCE">Freelance</option>
+            <option value="INTERNSHIP">Internship</option>
+            <option value="REMOTE">Remote</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="startDate">Start Date</Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={formData.startDate}
+            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="expirationDate">Expiration Date *</Label>
+          <Input
+            id="expirationDate"
+            type="date"
+            value={formData.expirationDate}
+            onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            value={formData.location}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            placeholder="e.g., San Francisco, CA"
+          />
+        </div>
+        <div className="space-y-2 flex items-end">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.isRemote}
+              onChange={(e) => setFormData({ ...formData, isRemote: e.target.checked })}
+              className="h-4 w-4"
+            />
+            <span className="text-sm">Remote work</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Detailed description of the offer..."
+          rows={4}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="benefits">Benefits</Label>
+        <Textarea
+          id="benefits"
+          value={formData.benefits}
+          onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
+          placeholder="Health insurance, PTO, etc."
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="terms">Terms & Conditions</Label>
+        <Textarea
+          id="terms"
+          value={formData.terms}
+          onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+          placeholder="Additional terms and conditions..."
+          rows={3}
+        />
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={creating}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={creating}>
+          {creating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2 h-4 w-4" />
+              Send Offer
+            </>
+          )}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 };
 

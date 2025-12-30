@@ -40,7 +40,7 @@ const Interviews = () => {
         setLoading(true);
         setError(null);
 
-        let headers: Record<string, string> = {};
+        const headers: Record<string, string> = {};
 
         // Try Clerk token first (for candidates)
         try {
@@ -69,8 +69,7 @@ const Interviews = () => {
         } else {
           setError(data.message || "Failed to fetch interviews");
         }
-      } catch (err) {
-        console.error("Error fetching interviews:", err);
+      } catch {
         setError("Network error");
       } finally {
         setLoading(false);

@@ -324,8 +324,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         setProjIsCurrent(false);
         setProjTechnologies([]);
         setProjTechInput("");
-      } catch (err) {
-        console.error("Failed to load profile", err);
+      } catch {
         setAboutError("Failed to load profile");
       } finally {
         setLoading(false);
@@ -370,8 +369,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         return null;
       }
       return String(json.data.url);
-    } catch (e) {
-      console.error(e);
+    } catch {
       setCvUploadError("Failed to upload CV.");
       return null;
     } finally {
@@ -404,8 +402,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
             }
           }
         }
-      } catch (e) {
-        console.error(e);
+      } catch {
         setCvUploadError("Uploaded CV, but failed to save to profile. Please click Save.");
       }
     }
@@ -436,8 +433,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         setSelectedSkillIds(ids);
         setInitialSkillIds(ids);
       }
-    } catch (err) {
-      console.error("Save skills failed", err);
+    } catch {
       setSkillsError("Failed to save skills");
     } finally {
       setSavingSkills(false);
@@ -559,8 +555,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         // Force re-render to ensure useMemo recalculates hasUnsavedChanges
         setSaveVersion(prev => prev + 1);
       }
-    } catch (err) {
-      console.error("Save profile failed", err);
+    } catch {
       setAboutError("Failed to save profile");
     } finally {
       setSaving(false);
@@ -602,9 +597,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
 
   // Handle delete confirmation
   const handleDeleteConfirm = async () => {
-    console.log("handleDeleteConfirm called", { deleteConfirmId, deleteConfirmType });
     if (!deleteConfirmId || !deleteConfirmType) {
-      console.log("Missing deleteConfirmId or deleteConfirmType");
       return;
     }
     
@@ -702,8 +695,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       await refreshFromMe();
       resetExperienceForm();
       setExpModalOpen(false);
-    } catch (err) {
-      console.error("Save experience failed", err);
+    } catch {
       setExperienceError("Failed to save experience");
     } finally {
       setExpSaving(false);
@@ -711,11 +703,9 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
   };
 
   const handleDeleteExperience = (id: string) => {
-    console.log("handleDeleteExperience called with id:", id);
     setDeleteConfirmType("experience");
     setDeleteConfirmId(id);
     setDeleteConfirmOpen(true);
-    console.log("deleteConfirmOpen set to true, deleteConfirmType:", "experience", "deleteConfirmId:", id);
   };
 
   const deleteExperience = async (id: string) => {
@@ -745,8 +735,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       }
       await refreshFromMe();
       if (expEditingId === id) resetExperienceForm();
-    } catch (err) {
-      console.error("Delete experience failed", err);
+    } catch {
       setExperienceError("Failed to delete experience");
     } finally {
       setDeleteConfirmLoading(false);
@@ -815,8 +804,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       await refreshFromMe();
       resetEducationForm();
       setEduModalOpen(false);
-    } catch (err) {
-      console.error("Save education failed", err);
+    } catch {
       setEducationError("Failed to save education");
     } finally {
       setEduSaving(false);
@@ -824,7 +812,6 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
   };
 
   const handleDeleteEducation = (id: string) => {
-    console.log("handleDeleteEducation called with id:", id);
     setDeleteConfirmType("education");
     setDeleteConfirmId(id);
     setDeleteConfirmOpen(true);
@@ -857,8 +844,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       }
       await refreshFromMe();
       if (eduEditingId === id) resetEducationForm();
-    } catch (err) {
-      console.error("Delete education failed", err);
+    } catch {
       setEducationError("Failed to delete education");
     } finally {
       setDeleteConfirmLoading(false);
@@ -943,8 +929,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       await refreshFromMe();
       resetProjectForm();
       setProjModalOpen(false);
-    } catch (err) {
-      console.error("Save project failed", err);
+    } catch {
       setProjectError("Failed to save project");
     } finally {
       setProjSaving(false);
@@ -952,7 +937,6 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
   };
 
   const handleDeleteProject = (id: string) => {
-    console.log("handleDeleteProject called with id:", id);
     setDeleteConfirmType("project");
     setDeleteConfirmId(id);
     setDeleteConfirmOpen(true);
@@ -985,8 +969,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       }
       await refreshFromMe();
       if (projEditingId === id) resetProjectForm();
-    } catch (err) {
-      console.error("Delete project failed", err);
+    } catch {
       setProjectError("Failed to delete project");
     } finally {
       setDeleteConfirmLoading(false);
@@ -1027,8 +1010,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                     }
                     await apiClient.updateMyAvatar(uploadRes.data.url, token ?? undefined);
                     setUser((prev) => prev ? { ...prev, avatarUrl: uploadRes.data.url } : prev);
-                  } catch (err) {
-                    console.error("Upload avatar failed", err);
+                  } catch {
                     alert("Failed to upload avatar");
                   } finally {
                     setAvatarUploading(false);
@@ -1089,8 +1071,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                     },
                     body: JSON.stringify({ isPublic: next }),
                   });
-                } catch (err) {
-                  console.error("Failed to toggle public profile", err);
+                } catch {
                   setIsPublic(!next);
                 }
               }}
@@ -1251,8 +1232,7 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
                           } else {
                             setNameError(data.message || "Failed to update name");
                           }
-                        } catch (err) {
-                          console.error("Update name failed", err);
+                        } catch {
                           setNameError("Failed to update name");
                         } finally {
                           setSavingName(false);
@@ -2249,20 +2229,9 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
       </Dialog>
 
       {/* Confirmation Dialog for Delete Actions */}
-      {(() => {
-        console.log("About to render ConfirmationDialog", { 
-          deleteConfirmOpen, 
-          deleteConfirmType, 
-          deleteConfirmId, 
-          title: getDeleteConfirmTitle(), 
-          description: getDeleteConfirmDescription() 
-        });
-        return null;
-      })()}
       <ConfirmationDialog
         open={deleteConfirmOpen}
         onOpenChange={(open) => {
-          console.log("ConfirmationDialog onOpenChange called with:", open, "deleteConfirmType:", deleteConfirmType, "deleteConfirmId:", deleteConfirmId);
           setDeleteConfirmOpen(open);
           if (!open) {
             setDeleteConfirmType(null);

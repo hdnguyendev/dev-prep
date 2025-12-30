@@ -137,9 +137,8 @@ export default function CandidatePublicProfile() {
           return;
         }
         setProfile(json.data as CandidateProfile);
-      } catch (e) {
+      } catch {
         if (abort) return;
-        console.error(e);
         setError("Failed to load profile");
       } finally {
         if (!abort) setLoading(false);

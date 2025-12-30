@@ -42,8 +42,7 @@ export const login = async (email: string, password: string): Promise<{ success:
     }
 
     return { success: false, message: data.message || "Login failed" };
-  } catch (error) {
-    console.error("Login error:", error);
+  } catch {
     return { success: false, message: "Network error" };
   }
 };

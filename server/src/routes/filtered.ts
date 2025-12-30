@@ -59,6 +59,9 @@ filteredRoutes.get("/applications", async (c) => {
 
     let whereClause: any = {};
 
+    // Additional filter by jobId if provided (for recruiter viewing specific job applications)
+    const jobId = query.jobId;
+
     // Filter based on role
     if (user.role === "CANDIDATE") {
       // CANDIDATE: Only see their own applications
@@ -70,6 +73,10 @@ filteredRoutes.get("/applications", async (c) => {
         });
       }
       whereClause = { candidateId: user.candidateProfile.id };
+      // If jobId is provided, add it to the filter
+      if (jobId) {
+        whereClause.jobId = jobId;
+      }
     } else if (user.role === "RECRUITER") {
       // RECRUITER: See applications for jobs they posted
       if (!user.recruiterProfile) {
@@ -79,29 +86,65 @@ filteredRoutes.get("/applications", async (c) => {
           meta: { total: 0, page, pageSize: take } 
         });
       }
-      whereClause = {
-        job: {
-          recruiterId: user.recruiterProfile.id,
-        },
-      };
+      // If jobId is provided, verify ownership first, then filter by jobId only
+      if (jobId) {
+        // Verify the job belongs to this recruiter
+        const job = await prisma.job.findUnique({
+          where: { id: jobId },
+          select: { recruiterId: true },
+        });
+        if (!job || job.recruiterId !== user.recruiterProfile.id) {
+          return c.json({ 
+            success: false, 
+            message: "Job not found or access denied" 
+          }, 403);
+        }
+        // If verified, filter by jobId only
+        whereClause = { jobId: jobId };
+      } else {
+        // If no jobId, get all jobIds from this recruiter first, then filter by jobId
+        const recruiterJobs = await prisma.job.findMany({
+          where: { recruiterId: user.recruiterProfile.id },
+          select: { id: true },
+        });
+        const jobIds = recruiterJobs.map((j) => j.id);
+        if (jobIds.length === 0) {
+          // No jobs, return empty result
+          return c.json({ 
+            success: true, 
+            data: [], 
+            meta: { total: 0, page, pageSize: take } 
+          });
+        }
+        whereClause = { jobId: { in: jobIds } };
+      }
     } else {
       // ADMIN: See all (but they should use admin panel)
       whereClause = {};
-    }
-
-    // Additional filter by jobId if provided (for recruiter viewing specific job applications)
-    const jobId = query.jobId;
-    if (jobId) {
-      whereClause.jobId = jobId;
+      if (jobId) {
+        whereClause.jobId = jobId;
+      }
     }
 
     // Add search filter if provided
     if (searchQuery) {
-      whereClause.OR = [
+      const searchConditions = [
         { job: { title: { contains: searchQuery, mode: "insensitive" } } },
         { job: { company: { name: { contains: searchQuery, mode: "insensitive" } } } },
         { status: { contains: searchQuery, mode: "insensitive" } },
       ];
+      
+      // If whereClause already has conditions, combine with AND
+      if (Object.keys(whereClause).length > 0) {
+        whereClause = {
+          AND: [
+            whereClause,
+            { OR: searchConditions },
+          ],
+        };
+      } else {
+        whereClause.OR = searchConditions;
+      }
     }
 
     const [data, total] = await Promise.all([
@@ -123,6 +166,14 @@ filteredRoutes.get("/applications", async (c) => {
               experiences: true,
             },
           },
+          interviews: {
+            // Include all interviews (PENDING, IN_PROGRESS, COMPLETED, etc.) so recruiters can see feedback
+            orderBy: { createdAt: "desc" },
+          },
+          offers: {
+            // Include all offers so recruiters can manage them
+            orderBy: { createdAt: "desc" },
+          },
           notes: { orderBy: { createdAt: "desc" } },
         },
         orderBy: { appliedAt: "desc" },
@@ -137,7 +188,13 @@ filteredRoutes.get("/applications", async (c) => {
     });
   } catch (error) {
     console.error("Applications filter error:", error);
-    return c.json({ success: false, message: "Failed to fetch applications" }, 500);
+    console.error("Error details:", error instanceof Error ? error.message : String(error));
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+    return c.json({ 
+      success: false, 
+      message: "Failed to fetch applications",
+      error: error instanceof Error ? error.message : String(error)
+    }, 500);
   }
 });
 
@@ -381,6 +438,16 @@ filteredRoutes.get("/jobs", async (c) => {
               user: true,
             },
           },
+          skills: {
+            include: {
+              skill: true,
+            },
+          },
+          categories: {
+            include: {
+              category: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       }),
@@ -435,6 +502,125 @@ filteredRoutes.get("/jobs", async (c) => {
   } catch (error) {
     console.error("Jobs filter error:", error);
     return c.json({ success: false, message: "Failed to fetch jobs" }, 500);
+  }
+});
+
+/**
+ * Update job (for recruiters only)
+ */
+filteredRoutes.put("/jobs/:id", async (c) => {
+  try {
+    const { id } = c.req.param();
+
+    // Authentication check
+    const authHeader = c.req.header("Authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (!token) {
+      return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    // Get authenticated user
+    let user = await prisma.user.findUnique({
+      where: { id: token },
+      include: { recruiterProfile: true },
+    });
+
+    if (!user) {
+      const { getOrCreateClerkUser } = await import("../utils/clerkAuth");
+      const clerkResult = await getOrCreateClerkUser(c);
+      if (!clerkResult.success || !clerkResult.user) {
+        return c.json({ success: false, message: "Not authenticated" }, 401);
+      }
+      user = clerkResult.user;
+    }
+
+    if (!user) {
+      return c.json({ success: false, message: "User not found" }, 404);
+    }
+
+    // Check if user is a recruiter
+    if (!user.recruiterProfile) {
+      return c.json(
+        { success: false, message: "Only recruiters can update jobs" },
+        403
+      );
+    }
+
+    // Check if job exists and belongs to this recruiter
+    const existingJob = await prisma.job.findUnique({
+      where: { id },
+      select: { recruiterId: true },
+    });
+
+    if (!existingJob) {
+      return c.json({ success: false, message: "Job not found" }, 404);
+    }
+
+    if (existingJob.recruiterId !== user.recruiterProfile.id) {
+      return c.json({ success: false, message: "Access denied" }, 403);
+    }
+
+    // Get update payload
+    const payload = await c.req.json();
+
+    console.log("🔍 Update job payload:", JSON.stringify(payload, null, 2));
+
+    // Filter out immutable fields and nested relations
+    // Only allow updating specific fields
+    const allowedFields = [
+      'title', 'description', 'requirements', 'benefits', 'location', 'locationType',
+      'employmentType', 'type', 'salaryMin', 'salaryMax', 'salaryCurrency', 'status',
+      'applicationDeadline', 'isUrgent', 'isRemote'
+    ];
+
+    const updateData: any = {};
+    for (const field of allowedFields) {
+      if (payload.hasOwnProperty(field)) {
+        const value = payload[field];
+        // Only include scalar values, not objects/arrays
+        if (typeof value !== 'object' || value === null) {
+          updateData[field] = value;
+        }
+      }
+    }
+
+    console.log("✅ Filtered update data:", JSON.stringify(updateData, null, 2));
+
+    // Update job
+    const updatedJob = await prisma.job.update({
+      where: { id },
+      data: updateData,
+      include: {
+        company: true,
+        recruiter: {
+          include: {
+            user: true,
+          },
+        },
+        skills: {
+          include: {
+            skill: true,
+          },
+        },
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+      },
+    });
+
+    return c.json({ success: true, data: updatedJob });
+  } catch (error: any) {
+    console.error("Error updating job:", error);
+    return c.json(
+      {
+        success: false,
+        message: error.message || "Failed to update job",
+      },
+      500
+    );
   }
 });
 

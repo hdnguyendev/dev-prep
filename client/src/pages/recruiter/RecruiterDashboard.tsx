@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import {
-  BriefcaseBusiness,
-  ClipboardList,
   Calendar,
   MessageSquare,
   TrendingUp,
@@ -240,7 +238,6 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   const [allApplications, setAllApplications] = useState<RecruiterApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<RecruiterApplication | null>(null);
   const [recruiterProfileId, setRecruiterProfileId] = useState<string | null>(null);
-  const [_loadingApplicationDetail, setLoadingApplicationDetail] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteText, setEditingNoteText] = useState("");
@@ -351,8 +348,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
 
         // Recent jobs
         setRecentJobs(jobs.slice(0, 5));
-      } catch (err) {
-        console.error("Failed to load recruiter data:", err);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -379,52 +375,6 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   function renderApplicationsTabContent() {
     return (
       <div className="space-y-6">
-        {/* Quick Actions */}
-        <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
-          <CardHeader>
-            <CardTitle className="text-amber-700 dark:text-amber-400 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-amber-500" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <Button 
-                variant="outline" 
-                className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors" 
-                onClick={() => navigate("/recruiter/dashboard")}
-              >
-                <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium">Overview</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
-                onClick={() => navigate("/recruiter/jobs")}
-              >
-                <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium">Manage Jobs</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-auto flex-col gap-2 py-4 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors" 
-                onClick={() => navigate("/recruiter/company")}
-              >
-                <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm font-medium">Edit Company</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-auto flex-col gap-2 py-4 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
-                onClick={() => navigate("/recruiter/jobs/new")}
-              >
-                <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="text-sm font-medium">Create New Job</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -567,52 +517,6 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   function renderCompanyTabContent() {
     return (
       <div className="space-y-6">
-        {/* Quick Actions */}
-        <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
-          <CardHeader>
-            <CardTitle className="text-amber-700 dark:text-amber-400 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-amber-500" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <Button 
-                variant="outline" 
-                className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors" 
-                onClick={() => navigate("/recruiter/dashboard")}
-              >
-                <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium">Overview</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
-                onClick={() => navigate("/recruiter/jobs")}
-              >
-                <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium">Manage Jobs</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-auto flex-col gap-2 py-4 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
-                onClick={() => navigate("/recruiter/applications")}
-              >
-                <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                <span className="text-sm font-medium">Review Applications</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-auto flex-col gap-2 py-4 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
-                onClick={() => navigate("/recruiter/jobs/new")}
-              >
-                <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="text-sm font-medium">Create New Job</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {company ? (
           <Card className="border-primary/20">
             <CardHeader>
@@ -930,8 +834,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
           }
         }
       }
-    } catch (err) {
-      console.error("Failed to fetch application detail:", err);
+    } catch {
     } finally {
       setLoadingApplicationDetail(false);
     }
@@ -969,8 +872,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
       };
       upsertSelectedApplication(next);
       setNoteDraft("");
-    } catch (err) {
-      console.error("Failed to add note", err);
+    } catch {
     } finally {
       setSavingNote(false);
     }
@@ -1009,8 +911,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
       upsertSelectedApplication(next);
       setEditingNoteId(null);
       setEditingNoteText("");
-    } catch (err) {
-      console.error("Failed to update note", err);
+    } catch {
     } finally {
       setSavingNote(false);
     }
@@ -1037,8 +938,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
         notes: (selectedApplication.notes || []).filter((n) => n.id !== noteId),
       };
       upsertSelectedApplication(next);
-    } catch (err) {
-      console.error("Failed to delete note", err);
+    } catch {
     } finally {
       setSavingNote(false);
     }
@@ -1271,8 +1171,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
       } else {
         alert(data.message || "Upload ảnh thất bại");
       }
-    } catch (error) {
-      console.error("Upload error:", error);
+    } catch {
       alert("Upload ảnh thất bại. Vui lòng thử lại.");
     } finally {
       if (type === "logo") {
@@ -1319,8 +1218,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
       } else {
         alert(data.message || "Failed to update company");
       }
-    } catch (err) {
-      console.error("Failed to save company:", err);
+    } catch {
       alert("Network error. Please try again.");
     } finally {
       setSaving(false);
@@ -1529,44 +1427,6 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                     </CardContent>
                   </Card>
                 </div>
-
-                {/* Quick Actions */}
-                <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
-                  <CardHeader>
-                    <CardTitle className="text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-amber-500" />
-                      Quick Actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                          <Button variant="outline" className="h-auto flex-col gap-2 py-4 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 dark:hover:border-blue-700 transition-colors" onClick={() => setTab("jobs")}>
-                      <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-medium">Manage Jobs</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-auto flex-col gap-2 py-4 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
-                            onClick={() => setTab("applications")}
-                    >
-                      <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                            <span className="text-sm font-medium">Review Applications</span>
-                    </Button>
-                          <Button variant="outline" className="h-auto flex-col gap-2 py-4 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors" onClick={() => setTab("company")}>
-                            <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                            <span className="text-sm font-medium">Edit Company</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-auto flex-col gap-2 py-4 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
-                            onClick={() => navigate("/recruiter/jobs", { state: { mode: "create" } })}
-                    >
-                      <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                      <span className="text-sm font-medium">Create New Job</span>
-                    </Button>
-                  </div>
-                  </CardContent>
-                </Card>
 
                 {/* Recent Jobs */}
                 <Card className="border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/30 via-background to-background dark:from-cyan-950/10">

@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo } from "react";
 import { apiClient, type UserNotification } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import logo from "@/assets/logo.svg";
+import { VIPBadge } from "@/components/VIPBadge";
 
 type DashboardTopbarProps = {
   title: string;
@@ -51,7 +52,7 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
             lastName: data.lastName,
           });
         }
-      } catch (err) {
+      } catch {
         // Ignore errors
       }
     };
@@ -191,9 +192,12 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
           {/* Candidate (Clerk) */}
           <SignedIn>
             <div className="relative flex items-center gap-2">
-              <span className="hidden lg:inline text-sm font-medium">
-                Hi, <span className="text-primary">{candidateDisplayName}</span>
-              </span>
+              <div className="hidden lg:flex items-center gap-2">
+                <span className="text-sm font-medium">
+                  Hi, <span className="text-primary">{candidateDisplayName}</span>
+                </span>
+                <VIPBadge onlyIfVIP={true} />
+              </div>
               <ThemeToggle />
               <button
                 type="button"
@@ -288,11 +292,19 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
           {/* Staff (custom auth) */}
           {isStaff && !isSignedIn && (
             <div className="flex items-center gap-2">
-              <div className="hidden lg:flex flex-col items-end">
-                <span className="text-xs font-medium">
-                  {customUser?.firstName} {customUser?.lastName}
+              <div className="hidden lg:flex items-center gap-2">
+                <span className="text-sm font-medium">
+                  Hi, <span className="text-primary">{customUser?.firstName} {customUser?.lastName}</span>
                 </span>
-                <span className="text-xs text-muted-foreground">{customUser?.role}</span>
+                {customUser?.role === "RECRUITER" && (
+                  <VIPBadge
+                    userId={customUser?.id}
+                    userRole="RECRUITER"
+                    onlyIfVIP={true}
+                    iconOnly={false}
+                    size="sm"
+                  />
+                )}
               </div>
               <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={handleStaffLogout} className="gap-2">

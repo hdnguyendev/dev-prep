@@ -15,6 +15,14 @@ export const Env = {
   EMAIL_SENDING_ENABLED:
     process.env.EMAIL_SENDING_ENABLED === "true" ||
     process.env.EMAIL_SENDING_ENABLED === "1",
+  // PayOS Payment Gateway
+  PAYOS_CLIENT_ID: process.env.PAYOS_CLIENT_ID,
+  PAYOS_API_KEY: process.env.PAYOS_API_KEY,
+  PAYOS_CHECKSUM_KEY: process.env.PAYOS_CHECKSUM_KEY,
+  PAYOS_BASE_URL: process.env.PAYOS_BASE_URL || "https://api-merchant.payos.vn",
+  PAYOS_WEBHOOK_URL: process.env.PAYOS_WEBHOOK_URL,
+
+  VITE_API_URL: process.env.VITE_API_URL,
 };
 
 // Only validate in non-worker environments

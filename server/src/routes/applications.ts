@@ -5,6 +5,8 @@ import {
   sendApplicationStatusEmail,
 } from "../app/services/email";
 import { getOrCreateClerkUser } from "../utils/clerkAuth";
+import { randomBytes } from "crypto";
+import { canCandidatePerformInterview } from "../app/services/membership";
 
 const applicationRoutes = new Hono();
 
@@ -15,6 +17,8 @@ const APPLICATION_STATUSES = [
   "INTERVIEW_SCHEDULED",
   "INTERVIEWED",
   "OFFER_SENT",
+  "OFFER_ACCEPTED",
+  "OFFER_REJECTED",
   "HIRED",
   "REJECTED",
   "WITHDRAWN",
@@ -180,7 +184,86 @@ applicationRoutes.patch("/:id/status", async (c) => {
       console.error("Failed to create application history:", historyError);
     }
 
-    // Gửi email cho ứng viên nếu status mới nằm trong nhóm "được duyệt" hoặc bị từ chối
+    // Automatically create Interview when status = INTERVIEW_SCHEDULED
+    let createdInterview: { accessCode: string; sessionUrl: string } | null = null;
+    if (status === "INTERVIEW_SCHEDULED") {
+      try {
+        // Check if interview already exists (avoid duplicates)
+        const existingInterview = await prisma.interview.findFirst({
+          where: {
+            applicationId: id,
+            status: "PENDING",
+          },
+        });
+
+        if (!existingInterview) {
+          // Generate unique access code (8 characters)
+          let accessCode: string;
+          let isUnique = false;
+          while (!isUnique) {
+            accessCode = randomBytes(4).toString("hex").toUpperCase().slice(0, 8);
+            const existing = await prisma.interview.findUnique({
+              where: { accessCode },
+            });
+            if (!existing) {
+              isUnique = true;
+            }
+          }
+
+          // Get job info to retrieve interviewQuestions
+          const applicationWithJob = await prisma.application.findUnique({
+            where: { id },
+            include: {
+              job: true,
+              candidate: true,
+            },
+          });
+
+          if (applicationWithJob?.job && applicationWithJob?.candidate) {
+            // Create sessionUrl (interview link)
+            const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+            const sessionUrl = `${baseUrl}/interview?accessCode=${accessCode}`;
+
+            // Expiration time: 7 days from now
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 7);
+
+            // Create interview
+            await prisma.interview.create({
+              data: {
+                applicationId: id,
+                candidateId: applicationWithJob.candidate.id,
+                jobId: applicationWithJob.job.id,
+                title: `Round 1: AI Screening - ${applicationWithJob.job.title}`,
+                type: "AI_VOICE",
+                status: "PENDING",
+                accessCode: accessCode!,
+                sessionUrl,
+                expiresAt,
+              },
+            });
+
+            createdInterview = {
+              accessCode: accessCode!,
+              sessionUrl,
+            };
+
+            console.log(`[Interview] Created interview for application ${id} with access code ${accessCode}`);
+          }
+        } else {
+          // If interview already exists, get info to send email
+          createdInterview = {
+            accessCode: existingInterview.accessCode,
+            sessionUrl: existingInterview.sessionUrl || "",
+          };
+        }
+      } catch (interviewError) {
+        // Don't fail request if interview creation fails
+        console.error("Failed to create interview:", interviewError);
+      }
+    }
+
+    // Send email to candidate if new status is in "approved" group or rejected
     try {
       if (
         (APPROVED_APPLICATION_STATUSES.includes(status as any) ||
@@ -197,15 +280,23 @@ applicationRoutes.patch("/:id/status", async (c) => {
           return;
         }
 
-        await sendApplicationStatusEmail({
+        // If status is INTERVIEW_SCHEDULED and has interview, include access code and link
+        const emailPayload: any = {
           to: targetEmail,
           candidateName: `${updated.candidate.user.firstName} ${updated.candidate.user.lastName}`.trim(),
           jobTitle: updated.job?.title ?? undefined,
           newStatus: status as any,
-        });
+        };
+
+        if (status === "INTERVIEW_SCHEDULED" && createdInterview) {
+          emailPayload.interviewAccessCode = createdInterview.accessCode;
+          emailPayload.interviewLink = createdInterview.sessionUrl;
+        }
+
+        await sendApplicationStatusEmail(emailPayload);
       }
     } catch (emailError) {
-      // Không được làm fail request nếu gửi email lỗi
+      // Don't fail request if email sending fails
       console.error("Failed to send application status email:", emailError);
     }
 

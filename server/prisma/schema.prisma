@@ -42,6 +42,8 @@ enum ApplicationStatus {
   INTERVIEW_SCHEDULED
   INTERVIEWED
   OFFER_SENT
+  OFFER_ACCEPTED
+  OFFER_REJECTED
   HIRED
   REJECTED
   WITHDRAWN
@@ -63,10 +65,10 @@ model User {
   email        String @unique
   passwordHash String
 
-  firstName String
-  lastName  String
-  phone     String?
-  avatarUrl String?
+  firstName         String
+  lastName          String
+  phone             String?
+  avatarUrl         String?
   /// Email dùng để nhận notification (có thể khác email đăng nhập / email Clerk)
   notificationEmail String?
 
@@ -86,6 +88,8 @@ model User {
   sentMessages     Message[]      @relation("SentMessages")
   receivedMessages Message[]      @relation("ReceivedMessages")
   notifications    Notification[]
+  memberships      UserMembership[]
+  payments         PaymentTransaction[]
 
   @@index([email])
 }
@@ -113,15 +117,15 @@ model CandidateProfile {
   updatedAt DateTime @updatedAt
 
   // Relations
-  experiences     Experience[]
-  educations      Education[]
-  projects        Project[]
-  skills          CandidateSkill[]
-  applications    Application[]
-  savedJobs       SavedJob[]
-  companyReviews  CompanyReview[]
-  interviews      Interview[]
-  companyFollows  CompanyFollow[]
+  experiences    Experience[]
+  educations     Education[]
+  projects       Project[]
+  skills         CandidateSkill[]
+  applications   Application[]
+  savedJobs      SavedJob[]
+  companyReviews CompanyReview[]
+  interviews     Interview[]
+  companyFollows CompanyFollow[]
 }
 
 // Profile dành cho nhà tuyển dụng
@@ -182,13 +186,13 @@ model Project {
   candidateId String
   candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-  name        String // Tên dự án
-  description String? @db.Text // Mô tả dự án
-  url         String? // Link demo/GitHub
-  startDate   DateTime?
-  endDate     DateTime?
-  isCurrent   Boolean @default(false) // Đang làm
-  technologies String[] @default([]) // Các công nghệ sử dụng
+  name         String // Tên dự án
+  description  String?   @db.Text // Mô tả dự án
+  url          String? // Link demo/GitHub
+  startDate    DateTime?
+  endDate      DateTime?
+  isCurrent    Boolean   @default(false) // Đang làm
+  technologies String[]  @default([]) // Các công nghệ sử dụng
 
   createdAt DateTime @default(now())
 }
@@ -243,10 +247,10 @@ model Company {
   updatedAt DateTime @updatedAt
 
   // Relations
-  recruiters      RecruiterProfile[]
-  jobs            Job[]
-  reviews         CompanyReview[]
-  followers       CompanyFollow[]
+  recruiters RecruiterProfile[]
+  jobs       Job[]
+  reviews    CompanyReview[]
+  followers  CompanyFollow[]
 }
 
 // Đánh giá công ty từ candidate
@@ -290,7 +294,7 @@ model CompanyFollow {
   company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Future notification preferences
-  notifyOnNewJob   Boolean @default(true)
+  notifyOnNewJob    Boolean @default(true)
   notifyOnJobUpdate Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -312,9 +316,9 @@ model Job {
   recruiter   RecruiterProfile @relation(fields: [recruiterId], references: [id])
 
   // Job Details
-  description  String  @db.Text // Rich Text HTML
-  requirements String? @db.Text
-  benefits     String? @db.Text
+  description        String   @db.Text // Rich Text HTML
+  requirements       String?  @db.Text
+  benefits           String?  @db.Text
   interviewQuestions String[] @default([]) // Câu hỏi phỏng vấn do recruiter thiết lập
 
   type   JobType   @default(FULL_TIME)
@@ -418,6 +422,7 @@ model Application {
   interviews Interview[]
   history    ApplicationHistory[] // Log lịch sử thay đổi trạng thái
   notes      ApplicationNote[] // Ghi chú nội bộ của team tuyển dụng
+  offers     Offer[] // Các offer đã gửi cho ứng viên
 
   @@unique([jobId, candidateId]) // Một người chỉ apply 1 lần cho 1 job
 }
@@ -443,6 +448,56 @@ model ApplicationNote {
   content  String @db.Text
 
   createdAt DateTime @default(now())
+}
+
+// --------------------------------------
+// 6.5. OFFER MANAGEMENT (Quản lý Offer)
+// --------------------------------------
+
+enum OfferStatus {
+  PENDING // Offer đã được gửi, chờ candidate phản hồi
+  ACCEPTED // Candidate đã chấp nhận
+  REJECTED // Candidate đã từ chối
+  EXPIRED // Offer hết hạn
+  WITHDRAWN // Recruiter đã rút lại offer
+}
+
+model Offer {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  // Thông tin offer
+  title          String // Tiêu đề offer (ví dụ: "Software Engineer - Full-time")
+  salaryMin      Float? // Mức lương tối thiểu
+  salaryMax      Float? // Mức lương tối đa
+  salaryCurrency Currency  @default(USD)
+  employmentType String? // FULL_TIME, PART_TIME, CONTRACT, etc.
+  startDate      DateTime? // Ngày bắt đầu làm việc dự kiến
+  expirationDate DateTime // Hạn chót để candidate phản hồi
+  location       String? // Địa điểm làm việc
+  isRemote       Boolean   @default(false)
+
+  // Nội dung offer
+  description String? @db.Text // Mô tả chi tiết về offer
+  benefits    String? @db.Text // Phúc lợi (health insurance, PTO, etc.)
+  terms       String? @db.Text // Điều khoản và điều kiện
+
+  // Trạng thái
+  status OfferStatus @default(PENDING)
+
+  // Response từ candidate
+  responseNote String?   @db.Text // Ghi chú từ candidate khi accept/reject
+  respondedAt  DateTime? // Thời điểm candidate phản hồi
+
+  // Metadata
+  sentBy    String? // Recruiter ID người gửi offer
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([status])
 }
 
 // --------------------------------------
@@ -485,7 +540,7 @@ model Interview {
   candidate   CandidateProfile? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
 
   jobId String?
-  job   Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  job   Job?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
 
   // Cấu hình phỏng vấn
   title  String // VD: "Vòng 1: AI Screening"
@@ -561,7 +616,6 @@ model QuestionBank {
   createdAt DateTime @default(now())
 }
 
-
 // --------------------------------------
 // 8. SYSTEM MESSAGING & NOTIFICATIONS
 // --------------------------------------
@@ -598,4 +652,192 @@ model Notification {
   link String? // Link điều hướng khi click
 
   createdAt DateTime @default(now())
+}
+
+// --------------------------------------
+// 9. MEMBERSHIP & PAYMENT SYSTEM (Hệ thống thành viên & thanh toán)
+// --------------------------------------
+
+/**
+ * Membership Plan Types
+ * Defines available membership plans for each user role
+ * Example: FREE, VIP for Candidates; FREE, VIP for Recruiters
+ */
+enum MembershipPlanType {
+  FREE // Free tier with limited features
+  VIP // Premium tier with full features
+}
+
+/**
+ * Membership Status
+ * Tracks the current state of a user's membership
+ */
+enum MembershipStatus {
+  ACTIVE   // Membership is active and valid
+  EXPIRED  // Membership has expired
+  CANCELED // User canceled their membership
+  PENDING  // Payment pending, membership not yet activated
+}
+
+/**
+ * Payment Status
+ * Tracks the status of payment transactions
+ */
+enum PaymentStatus {
+  PENDING    // Payment link created, waiting for user payment
+  COMPLETED  // Payment successful, membership activated
+  FAILED     // Payment failed
+  EXPIRED    // Payment link expired
+  CANCELED   // Payment canceled by user
+}
+
+/**
+ * MembershipPlan Model
+ * Defines the available membership plans in the system
+ * Each plan has specific features and limits
+ * 
+ * Design Decision:
+ * - Separate plans for Candidates and Recruiters (different needs)
+ * - Plans are predefined in the system (not user-created)
+ * - Extensible: can add more plan types in the future (e.g., ENTERPRISE)
+ */
+model MembershipPlan {
+  id   String @id @default(uuid())
+  name String @unique // e.g., "VIP Candidate", "VIP Recruiter"
+  
+  // Plan type and target role
+  planType MembershipPlanType @default(FREE)
+  role     UserRole           // CANDIDATE or RECRUITER
+  
+  // Pricing
+  price    Float   // Price in VND (0 for FREE plan)
+  currency Currency @default(VND)
+  duration Int      // Duration in days (e.g., 30 for monthly, 365 for yearly)
+  
+  // Feature limits (for FREE plans)
+  maxInterviews      Int? // Maximum interview sessions allowed (null = unlimited)
+  maxMatchingViews   Int? // Maximum CV-Job matching views (null = unlimited)
+  maxJobPostings     Int? // Maximum job postings (null = unlimited, for recruiters)
+  
+  // Feature flags (for VIP plans)
+  unlimitedInterviews    Boolean @default(false) // VIP: unlimited interviews
+  fullMatchingInsights   Boolean @default(false) // VIP: detailed matching insights
+  rankedCandidateList    Boolean @default(false) // VIP: ranked candidate list for recruiters
+  directCandidateContact Boolean @default(false) // VIP: can contact candidates directly
+  
+  // Description and metadata
+  description String? @db.Text // Plan description for users
+  features    String[] @default([]) // List of features (e.g., ["Unlimited Interviews", "Full Matching Insights"])
+  
+  isActive Boolean @default(true) // Whether this plan is currently available
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  memberships UserMembership[]
+  transactions PaymentTransaction[]
+  
+  @@index([role, planType])
+  @@index([isActive])
+}
+
+/**
+ * UserMembership Model
+ * Tracks the membership status of each user (Candidate or Recruiter)
+ * 
+ * Design Decision:
+ * - One active membership per user per role at a time
+ * - Membership history is preserved (for analytics)
+ * - Auto-expires based on endDate
+ * 
+ * Business Rules:
+ * - When a user purchases VIP, their membership is extended or upgraded
+ * - FREE membership is automatically assigned on user registration
+ * - Expired memberships revert to FREE plan features
+ */
+model UserMembership {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  planId String
+  plan   MembershipPlan @relation(fields: [planId], references: [id])
+  
+  // Membership period
+  startDate DateTime @default(now())
+  endDate   DateTime // When membership expires
+  
+  // Status tracking
+  status MembershipStatus @default(ACTIVE)
+  
+  // Auto-renewal (future feature)
+  autoRenew Boolean @default(false)
+  
+  // Metadata
+  notes String? @db.Text // Admin notes or cancellation reason
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  transactions PaymentTransaction[]
+  
+  @@index([userId, status])
+  @@index([endDate])
+  @@index([status])
+}
+
+/**
+ * PaymentTransaction Model
+ * Records all payment transactions for membership purchases
+ * 
+ * Design Decision:
+ * - Store complete payment data from PayOS for audit trail
+ * - Link to both MembershipPlan and UserMembership
+ * - Support idempotency (prevent duplicate processing)
+ * 
+ * PayOS Integration:
+ * - orderCode: Unique order identifier from PayOS
+ * - paymentLinkId: PayOS payment link ID
+ * - rawResponse: Full PayOS webhook response (JSON) for debugging
+ */
+model PaymentTransaction {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  planId String
+  plan   MembershipPlan @relation(fields: [planId], references: [id])
+  
+  membershipId String?
+  membership   UserMembership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  
+  // Payment details
+  orderCode      String  @unique // PayOS order code (unique to prevent duplicates)
+  amount         Float   // Amount paid
+  currency       Currency @default(VND)
+  paymentLinkId  String? // PayOS payment link ID
+  paymentLinkUrl String? // PayOS payment URL
+  
+  // Payment status
+  status PaymentStatus @default(PENDING)
+  
+  // PayOS webhook data (stored as JSON for audit)
+  rawRequest  Json? // Original payment request sent to PayOS
+  rawResponse Json? // PayOS webhook response (complete data)
+  
+  // Timestamps
+  paidAt    DateTime? // When payment was completed
+  expiredAt DateTime? // When payment link expires
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  // Error tracking
+  errorMessage String? @db.Text // If payment failed, store error reason
+  
+  @@index([userId])
+  @@index([orderCode])
+  @@index([status])
+  @@index([createdAt])
 }

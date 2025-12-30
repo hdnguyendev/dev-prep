@@ -336,6 +336,30 @@ exports.Prisma.ApplicationNoteScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.OfferScalarFieldEnum = {
+  id: 'id',
+  applicationId: 'applicationId',
+  title: 'title',
+  salaryMin: 'salaryMin',
+  salaryMax: 'salaryMax',
+  salaryCurrency: 'salaryCurrency',
+  employmentType: 'employmentType',
+  startDate: 'startDate',
+  expirationDate: 'expirationDate',
+  location: 'location',
+  isRemote: 'isRemote',
+  description: 'description',
+  benefits: 'benefits',
+  terms: 'terms',
+  status: 'status',
+  responseNote: 'responseNote',
+  respondedAt: 'respondedAt',
+  sentBy: 'sentBy',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.InterviewScalarFieldEnum = {
   id: 'id',
   applicationId: 'applicationId',
@@ -403,6 +427,61 @@ exports.Prisma.NotificationScalarFieldEnum = {
   isRead: 'isRead',
   link: 'link',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.MembershipPlanScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  planType: 'planType',
+  role: 'role',
+  price: 'price',
+  currency: 'currency',
+  duration: 'duration',
+  maxInterviews: 'maxInterviews',
+  maxMatchingViews: 'maxMatchingViews',
+  maxJobPostings: 'maxJobPostings',
+  unlimitedInterviews: 'unlimitedInterviews',
+  fullMatchingInsights: 'fullMatchingInsights',
+  rankedCandidateList: 'rankedCandidateList',
+  directCandidateContact: 'directCandidateContact',
+  description: 'description',
+  features: 'features',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserMembershipScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  planId: 'planId',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  status: 'status',
+  autoRenew: 'autoRenew',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PaymentTransactionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  planId: 'planId',
+  membershipId: 'membershipId',
+  orderCode: 'orderCode',
+  amount: 'amount',
+  currency: 'currency',
+  paymentLinkId: 'paymentLinkId',
+  paymentLinkUrl: 'paymentLinkUrl',
+  status: 'status',
+  rawRequest: 'rawRequest',
+  rawResponse: 'rawResponse',
+  paidAt: 'paidAt',
+  expiredAt: 'expiredAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  errorMessage: 'errorMessage'
 };
 
 exports.Prisma.SortOrder = {
@@ -585,6 +664,19 @@ exports.Prisma.ApplicationNoteOrderByRelevanceFieldEnum = {
   content: 'content'
 };
 
+exports.Prisma.OfferOrderByRelevanceFieldEnum = {
+  id: 'id',
+  applicationId: 'applicationId',
+  title: 'title',
+  employmentType: 'employmentType',
+  location: 'location',
+  description: 'description',
+  benefits: 'benefits',
+  terms: 'terms',
+  responseNote: 'responseNote',
+  sentBy: 'sentBy'
+};
+
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
@@ -640,6 +732,31 @@ exports.Prisma.NotificationOrderByRelevanceFieldEnum = {
   type: 'type',
   link: 'link'
 };
+
+exports.Prisma.MembershipPlanOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  features: 'features'
+};
+
+exports.Prisma.UserMembershipOrderByRelevanceFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  planId: 'planId',
+  notes: 'notes'
+};
+
+exports.Prisma.PaymentTransactionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  planId: 'planId',
+  membershipId: 'membershipId',
+  orderCode: 'orderCode',
+  paymentLinkId: 'paymentLinkId',
+  paymentLinkUrl: 'paymentLinkUrl',
+  errorMessage: 'errorMessage'
+};
 exports.UserRole = exports.$Enums.UserRole = {
   ADMIN: 'ADMIN',
   CANDIDATE: 'CANDIDATE',
@@ -676,8 +793,18 @@ exports.ApplicationStatus = exports.$Enums.ApplicationStatus = {
   INTERVIEW_SCHEDULED: 'INTERVIEW_SCHEDULED',
   INTERVIEWED: 'INTERVIEWED',
   OFFER_SENT: 'OFFER_SENT',
+  OFFER_ACCEPTED: 'OFFER_ACCEPTED',
+  OFFER_REJECTED: 'OFFER_REJECTED',
   HIRED: 'HIRED',
   REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN'
+};
+
+exports.OfferStatus = exports.$Enums.OfferStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED',
   WITHDRAWN: 'WITHDRAWN'
 };
 
@@ -695,6 +822,26 @@ exports.InterviewStatus = exports.$Enums.InterviewStatus = {
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
   EXPIRED: 'EXPIRED'
+};
+
+exports.MembershipPlanType = exports.$Enums.MembershipPlanType = {
+  FREE: 'FREE',
+  VIP: 'VIP'
+};
+
+exports.MembershipStatus = exports.$Enums.MembershipStatus = {
+  ACTIVE: 'ACTIVE',
+  EXPIRED: 'EXPIRED',
+  CANCELED: 'CANCELED',
+  PENDING: 'PENDING'
+};
+
+exports.PaymentStatus = exports.$Enums.PaymentStatus = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  EXPIRED: 'EXPIRED',
+  CANCELED: 'CANCELED'
 };
 
 exports.Prisma.ModelName = {
@@ -717,11 +864,15 @@ exports.Prisma.ModelName = {
   Application: 'Application',
   ApplicationHistory: 'ApplicationHistory',
   ApplicationNote: 'ApplicationNote',
+  Offer: 'Offer',
   Interview: 'Interview',
   InterviewExchange: 'InterviewExchange',
   QuestionBank: 'QuestionBank',
   Message: 'Message',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  MembershipPlan: 'MembershipPlan',
+  UserMembership: 'UserMembership',
+  PaymentTransaction: 'PaymentTransaction'
 };
 
 /**

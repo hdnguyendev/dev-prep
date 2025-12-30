@@ -16,6 +16,8 @@ export type ApplicationStatusForEmail =
   | "INTERVIEW_SCHEDULED"
   | "INTERVIEWED"
   | "OFFER_SENT"
+  | "OFFER_ACCEPTED"
+  | "OFFER_REJECTED"
   | "HIRED"
   | "REJECTED"
   | "WITHDRAWN";
@@ -25,6 +27,8 @@ export interface ApplicationStatusEmailPayload {
   candidateName?: string;
   jobTitle?: string;
   newStatus: ApplicationStatusForEmail;
+  interviewAccessCode?: string;
+  interviewLink?: string;
 }
 
 export interface NewJobEmailPayload {
@@ -35,11 +39,56 @@ export interface NewJobEmailPayload {
   jobLink: string;
 }
 
+export interface InterviewCompletedEmailToRecruiterPayload {
+  to: string;
+  recruiterName?: string;
+  candidateName: string;
+  jobTitle: string;
+  companyName?: string | null;
+  interviewId: string;
+  overallScore: number;
+  recommendation: string;
+  applicationId: string;
+}
+
+export interface OfferAcceptedEmailToRecruiterPayload {
+  to: string;
+  recruiterName?: string;
+  candidateName: string;
+  jobTitle: string;
+  companyName?: string | null;
+  offerTitle: string;
+  offerId: string;
+  applicationId: string;
+  responseNote?: string | null;
+}
+
+export interface OfferEmailPayload {
+  to: string;
+  candidateName?: string;
+  jobTitle: string;
+  companyName?: string | null;
+  offerTitle: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryCurrency: string;
+  employmentType?: string | null;
+  startDate?: string | null;
+  expirationDate: string;
+  location?: string | null;
+  isRemote: boolean;
+  description?: string | null;
+  benefits?: string | null;
+  terms?: string | null;
+  offerId: string;
+}
+
 // Các trạng thái coi như là "được duyệt" để gửi mail cho ứng viên
 export const APPROVED_APPLICATION_STATUSES: ApplicationStatusForEmail[] = [
   "SHORTLISTED",
   "INTERVIEW_SCHEDULED",
   "OFFER_SENT",
+  "OFFER_ACCEPTED",
   "HIRED",
 ];
 
@@ -53,7 +102,7 @@ export async function sendApplicationStatusEmail(
   const { to, candidateName, jobTitle, newStatus } = payload;
 
   const subject = buildStatusSubject(newStatus, jobTitle);
-  const { text, html } = buildStatusBody(newStatus, candidateName, jobTitle);
+  const { text, html } = buildStatusBody(newStatus, candidateName, jobTitle, payload);
 
   // Nếu chưa bật gửi mail hoặc thiếu config, chỉ log để tham khảo
   if (
@@ -131,7 +180,8 @@ function buildStatusSubject(status: ApplicationStatusForEmail, jobTitle?: string
 function buildStatusBody(
   status: ApplicationStatusForEmail,
   candidateName?: string,
-  jobTitle?: string
+  jobTitle?: string,
+  payload?: ApplicationStatusEmailPayload
 ): { text: string; html: string } {
   const greeting = candidateName ? `Hi ${candidateName},` : "Hi there,";
 
@@ -159,24 +209,51 @@ DevPrep Team`;
   }
 
   if (status === "INTERVIEW_SCHEDULED") {
-    const text = `${greeting}
+    const accessCode = payload?.interviewAccessCode;
+    const interviewLink = payload?.interviewLink;
+
+    let text = `${greeting}
 
 Your interview${jobTitle ? ` for "${jobTitle}"` : ""} has been scheduled.
 
-Please check your DevPrep dashboard for the exact time, date, and interview format.
+`;
+    
+    let bodyLines = [
+      greeting,
+      `Your interview${jobTitle ? ` for <strong>${jobTitle}</strong>` : ""} has been scheduled.`,
+    ];
 
-Best regards,
+    if (accessCode) {
+      text += `Your interview access code is: ${accessCode}
+
+`;
+      bodyLines.push(
+        `Your interview access code is: <strong style="font-size: 18px; letter-spacing: 2px; color: #0f766e; background-color: #f0fdfa; padding: 8px 16px; border-radius: 6px; display: inline-block; font-family: monospace;">${accessCode}</strong>`
+      );
+    }
+
+    if (interviewLink) {
+      text += `Click the link below to start your interview:
+${interviewLink}
+
+`;
+      bodyLines.push("Click the button below to start your interview:");
+    } else {
+      text += `Please check your DevPrep dashboard for the exact time, date, and interview format.
+
+`;
+      bodyLines.push("Please check your DevPrep dashboard for the exact time, date, and interview format.");
+    }
+
+    text += `Best regards,
 DevPrep Team`;
+
     const html = buildBaseHtml({
       title: "Interview scheduled",
       heading: "Your interview is scheduled 📅",
-      bodyLines: [
-        greeting,
-        `Your interview${jobTitle ? ` for <strong>${jobTitle}</strong>` : ""} has been scheduled.`,
-        "Please check your DevPrep dashboard for the exact time, date, and interview format.",
-      ],
-      ctaLabel: "View interview details",
-      ctaUrl: Env.APP_BASE_URL || "#",
+      bodyLines,
+      ctaLabel: interviewLink ? "Start Interview" : "View interview details",
+      ctaUrl: interviewLink || Env.APP_BASE_URL || "#",
     });
     return { text, html };
   }
@@ -199,6 +276,29 @@ DevPrep Team`;
         "Please review the offer in your DevPrep account and respond as soon as you can.",
       ],
       ctaLabel: "Review your offer",
+      ctaUrl: Env.APP_BASE_URL || "#",
+    });
+    return { text, html };
+  }
+
+  if (status === "OFFER_ACCEPTED") {
+    const text = `${greeting}
+
+Great news! You have accepted the job offer${jobTitle ? ` for "${jobTitle}"` : ""}.
+
+The company will review your acceptance and contact you shortly with next steps.
+
+Best regards,
+DevPrep Team`;
+    const html = buildBaseHtml({
+      title: "Offer accepted",
+      heading: "Offer accepted! 🎉",
+      bodyLines: [
+        greeting,
+        `Great news! You have accepted the job offer${jobTitle ? ` for <strong>${jobTitle}</strong>` : ""}.`,
+        "The company will review your acceptance and contact you shortly with next steps.",
+      ],
+      ctaLabel: "View application",
       ctaUrl: Env.APP_BASE_URL || "#",
     });
     return { text, html };
@@ -376,7 +476,13 @@ function buildBaseHtml(params: BaseEmailTemplateParams): string {
 
   const bodyHtml = bodyLines
     .filter(Boolean)
-    .map((line) => `<p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #1f2933;">${line}</p>`)
+    .map((line) => {
+      // Handle HTML content in bodyLines
+      if (line.startsWith("<") && line.endsWith(">")) {
+        return line;
+      }
+      return `<p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #1f2933;">${line}</p>`;
+    })
     .join("");
 
   return `<!doctype html>
@@ -430,6 +536,486 @@ function buildBaseHtml(params: BaseEmailTemplateParams): string {
     </table>
   </body>
 </html>`;
+}
+
+/**
+ * Send notification email to recruiter when candidate completes interview
+ */
+/**
+ * Send detailed offer email to candidate
+ */
+export async function sendOfferEmail(payload: OfferEmailPayload): Promise<void> {
+  const {
+    to,
+    candidateName,
+    jobTitle,
+    companyName,
+    offerTitle,
+    salaryMin,
+    salaryMax,
+    salaryCurrency,
+    employmentType,
+    startDate,
+    expirationDate,
+    location,
+    isRemote,
+    description,
+    benefits,
+    terms,
+    offerId,
+  } = payload;
+
+  const greeting = candidateName ? `Hi ${candidateName},` : "Hi there,";
+  const appBaseUrl = Env.APP_BASE_URL || "http://localhost:5173";
+  const offerLink = `${appBaseUrl}/candidate/applications?offerId=${offerId}`;
+
+  // Format salary
+  let salaryText = "";
+  if (salaryMin !== null && salaryMin !== undefined && salaryMax !== null && salaryMax !== undefined) {
+    salaryText = `${salaryCurrency} ${salaryMin.toLocaleString()} - ${salaryMax.toLocaleString()}`;
+  } else if (salaryMin !== null && salaryMin !== undefined) {
+    salaryText = `${salaryCurrency} ${salaryMin.toLocaleString()}+`;
+  } else if (salaryMax !== null && salaryMax !== undefined) {
+    salaryText = `Up to ${salaryCurrency} ${salaryMax.toLocaleString()}`;
+  }
+
+  // Build text email
+  const text = `${greeting}
+
+Congratulations! We are excited to extend a job offer to you.
+
+${companyName ? `Company: ${companyName}` : ""}
+${jobTitle ? `Position: ${jobTitle}` : ""}
+${offerTitle ? `Offer: ${offerTitle}` : ""}
+
+${salaryText ? `Salary: ${salaryText}` : ""}
+${employmentType ? `Employment Type: ${employmentType}` : ""}
+${startDate ? `Start Date: ${new Date(startDate).toLocaleDateString()}` : ""}
+${location ? `Location: ${location}` : ""}
+${isRemote ? "Remote: Yes" : ""}
+
+Expiration Date: ${new Date(expirationDate).toLocaleDateString()}
+
+${description ? `\nDescription:\n${description}` : ""}
+${benefits ? `\nBenefits:\n${benefits}` : ""}
+${terms ? `\nTerms & Conditions:\n${terms}` : ""}
+
+Please review the offer and respond by ${new Date(expirationDate).toLocaleDateString()}.
+
+View and respond to this offer: ${offerLink}
+
+Best regards,
+DevPrep Team`;
+
+  // Build HTML email
+  const bodyLines: string[] = [
+    greeting,
+    "Congratulations! We are excited to extend a job offer to you.",
+    "",
+  ];
+
+  // Offer details section
+  const details: string[] = [];
+  if (companyName) details.push(`<strong>Company:</strong> ${companyName}`);
+  if (jobTitle) details.push(`<strong>Position:</strong> ${jobTitle}`);
+  if (offerTitle) details.push(`<strong>Offer:</strong> ${offerTitle}`);
+  if (salaryText) details.push(`<strong>Salary:</strong> ${salaryText}`);
+  if (employmentType) details.push(`<strong>Employment Type:</strong> ${employmentType}`);
+  if (startDate) details.push(`<strong>Start Date:</strong> ${new Date(startDate).toLocaleDateString()}`);
+  if (location) details.push(`<strong>Location:</strong> ${location}`);
+  if (isRemote) details.push(`<strong>Remote:</strong> Yes`);
+  details.push(`<strong>Expiration Date:</strong> ${new Date(expirationDate).toLocaleDateString()}`);
+
+  if (details.length > 0) {
+    bodyLines.push("<div style='background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 16px 0;'>");
+    bodyLines.push(...details.map((d) => `<div style='margin: 8px 0;'>${d}</div>`));
+    bodyLines.push("</div>");
+  }
+
+  if (description) {
+    bodyLines.push("<div style='margin: 16px 0;'>");
+    bodyLines.push("<strong>Description:</strong>");
+    bodyLines.push(`<div style='margin-top: 8px; white-space: pre-wrap;'>${description}</div>`);
+    bodyLines.push("</div>");
+  }
+
+  if (benefits) {
+    bodyLines.push("<div style='margin: 16px 0;'>");
+    bodyLines.push("<strong>Benefits:</strong>");
+    bodyLines.push(`<div style='margin-top: 8px; white-space: pre-wrap;'>${benefits}</div>`);
+    bodyLines.push("</div>");
+  }
+
+  if (terms) {
+    bodyLines.push("<div style='margin: 16px 0;'>");
+    bodyLines.push("<strong>Terms & Conditions:</strong>");
+    bodyLines.push(`<div style='margin-top: 8px; white-space: pre-wrap;'>${terms}</div>`);
+    bodyLines.push("</div>");
+  }
+
+  bodyLines.push("");
+  bodyLines.push(`Please review the offer and respond by <strong>${new Date(expirationDate).toLocaleDateString()}</strong>.`);
+
+  const html = buildBaseHtml({
+    title: "Job Offer",
+    heading: "You have a job offer! 🎁",
+    bodyLines,
+    ctaLabel: "Review & Respond to Offer",
+    ctaUrl: offerLink,
+  });
+
+  const subject = jobTitle
+    ? `Job Offer: ${offerTitle || jobTitle}`
+    : "Job Offer from DevPrep";
+
+  // Check if email sending is enabled
+  if (
+    !Env.EMAIL_SENDING_ENABLED ||
+    !Env.SMTP_HOST ||
+    !Env.SMTP_PORT ||
+    !Env.SMTP_USER ||
+    !Env.SMTP_PASS ||
+    !Env.SMTP_FROM
+  ) {
+    console.log("[EMAIL:Offer] Email sending disabled or misconfigured. Payload:", {
+      to,
+      subject,
+      offerId,
+      EMAIL_SENDING_ENABLED: Env.EMAIL_SENDING_ENABLED,
+    });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: Env.SMTP_HOST,
+    port: Env.SMTP_PORT,
+    secure: Env.SMTP_PORT === 465,
+    auth: {
+      user: Env.SMTP_USER,
+      pass: Env.SMTP_PASS,
+    },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: Env.SMTP_FROM,
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log(`[EMAIL:Offer] Offer email sent to ${to} for offer ${offerId}`);
+  } catch (error) {
+    console.error("[EMAIL:Offer] Failed to send offer email:", error);
+    // Don't throw - email sending failure shouldn't break the offer creation
+  }
+}
+
+/**
+ * Send notification email to recruiter when candidate accepts an offer
+ */
+export async function sendOfferAcceptedEmailToRecruiter(
+  payload: OfferAcceptedEmailToRecruiterPayload
+): Promise<void> {
+  const {
+    to,
+    recruiterName,
+    candidateName,
+    jobTitle,
+    companyName,
+    offerTitle,
+    offerId,
+    applicationId,
+    responseNote,
+  } = payload;
+
+  const subject = `Offer accepted: ${candidateName} - ${jobTitle}`;
+  const greeting = recruiterName ? `Hi ${recruiterName},` : "Hi there,";
+
+  const text = `${greeting}
+
+Great news! Candidate ${candidateName} has accepted the job offer for ${jobTitle}${companyName ? ` at ${companyName}` : ""}.
+
+Offer Details:
+- Offer: ${offerTitle}
+${responseNote ? `- Candidate Response: ${responseNote}` : ""}
+
+You can now review the acceptance and proceed with onboarding or confirm the hire.
+
+Best regards,
+DevPrep Team`;
+
+  const baseUrl = Env.APP_BASE_URL || "http://localhost:5173";
+  const applicationUrl = `${baseUrl}/recruiter/jobs/${applicationId.split('-')[0]}/applications`;
+
+  const bodyLines: string[] = [
+    greeting,
+    `<strong>${candidateName}</strong> has accepted the job offer for <strong>${jobTitle}</strong>${companyName ? ` at <strong>${companyName}</strong>` : ""}.`,
+    "",
+    "<div style='background-color: #f9fafb; border-radius: 8px; padding: 16px; margin: 16px 0;'>",
+    "<div style='font-weight: 600; margin-bottom: 8px;'>Offer Details:</div>",
+    `<div style='margin: 8px 0;'><strong>Offer:</strong> ${offerTitle}</div>`,
+  ];
+
+  if (responseNote) {
+    bodyLines.push(`<div style='margin: 8px 0;'><strong>Candidate Response:</strong> <div style='margin-top: 4px; white-space: pre-wrap;'>${responseNote}</div></div>`);
+  }
+
+  bodyLines.push("</div>");
+  bodyLines.push("You can now review the acceptance and proceed with onboarding or confirm the hire.");
+
+  const html = buildBaseHtml({
+    title: "Offer accepted",
+    heading: "Offer Accepted! 🎉",
+    bodyLines,
+    ctaLabel: "View Application",
+    ctaUrl: applicationUrl,
+  });
+
+  if (
+    !Env.EMAIL_SENDING_ENABLED ||
+    !Env.SMTP_HOST ||
+    !Env.SMTP_PORT ||
+    !Env.SMTP_USER ||
+    !Env.SMTP_PASS ||
+    !Env.SMTP_FROM
+  ) {
+    console.log("[EMAIL:OfferAcceptedToRecruiter] Email sending disabled or misconfigured. Payload:", {
+      to,
+      subject,
+      candidateName,
+      jobTitle,
+      EMAIL_SENDING_ENABLED: Env.EMAIL_SENDING_ENABLED,
+    });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: Env.SMTP_HOST,
+    port: Env.SMTP_PORT,
+    secure: Env.SMTP_PORT === 465,
+    auth: {
+      user: Env.SMTP_USER,
+      pass: Env.SMTP_PASS,
+    },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: Env.SMTP_FROM,
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log(`[EMAIL:OfferAcceptedToRecruiter] Email sent successfully to ${to} for offer ${offerId}`);
+  } catch (error) {
+    console.error("[EMAIL:OfferAcceptedToRecruiter] Failed to send email:", error);
+  }
+}
+
+/**
+ * Send notification email to recruiter when candidate rejects an offer
+ */
+export async function sendOfferRejectedEmailToRecruiter(
+  payload: OfferRejectedEmailToRecruiterPayload
+): Promise<void> {
+  const {
+    to,
+    recruiterName,
+    candidateName,
+    jobTitle,
+    companyName,
+    offerTitle,
+    offerId,
+    applicationId,
+    responseNote,
+  } = payload;
+
+  const subject = `Offer rejected: ${candidateName} - ${jobTitle}`;
+  const greeting = recruiterName ? `Hi ${recruiterName},` : "Hi there,";
+
+  const text = `${greeting}
+
+Candidate ${candidateName} has rejected the job offer for ${jobTitle}${companyName ? ` at ${companyName}` : ""}.
+
+Offer Details:
+- Offer: ${offerTitle}
+${responseNote ? `- Candidate Response: ${responseNote}` : ""}
+
+You may want to consider other candidates or send a revised offer.
+
+Best regards,
+DevPrep Team`;
+
+  const baseUrl = Env.APP_BASE_URL || "http://localhost:5173";
+  const applicationUrl = `${baseUrl}/recruiter/jobs/${applicationId.split('-')[0]}/applications`;
+
+  const bodyLines: string[] = [
+    greeting,
+    `<strong>${candidateName}</strong> has rejected the job offer for <strong>${jobTitle}</strong>${companyName ? ` at <strong>${companyName}</strong>` : ""}.`,
+    "",
+    "<div style='background-color: #fef2f2; border-radius: 8px; padding: 16px; margin: 16px 0; border-left: 4px solid #ef4444;'>",
+    "<div style='font-weight: 600; margin-bottom: 8px; color: #991b1b;'>Offer Details:</div>",
+    `<div style='margin: 8px 0;'><strong>Offer:</strong> ${offerTitle}</div>`,
+  ];
+
+  if (responseNote) {
+    bodyLines.push(`<div style='margin: 8px 0;'><strong>Candidate Response:</strong> <div style='margin-top: 4px; white-space: pre-wrap;'>${responseNote}</div></div>`);
+  }
+
+  bodyLines.push("</div>");
+  bodyLines.push("You may want to consider other candidates or send a revised offer.");
+
+  const html = buildBaseHtml({
+    title: "Offer rejected",
+    heading: "Offer Rejected",
+    bodyLines,
+    ctaLabel: "View Application",
+    ctaUrl: applicationUrl,
+  });
+
+  if (
+    !Env.EMAIL_SENDING_ENABLED ||
+    !Env.SMTP_HOST ||
+    !Env.SMTP_PORT ||
+    !Env.SMTP_USER ||
+    !Env.SMTP_PASS ||
+    !Env.SMTP_FROM
+  ) {
+    console.log("[EMAIL:OfferRejectedToRecruiter] Email sending disabled or misconfigured. Payload:", {
+      to,
+      subject,
+      candidateName,
+      jobTitle,
+      EMAIL_SENDING_ENABLED: Env.EMAIL_SENDING_ENABLED,
+    });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: Env.SMTP_HOST,
+    port: Env.SMTP_PORT,
+    secure: Env.SMTP_PORT === 465,
+    auth: {
+      user: Env.SMTP_USER,
+      pass: Env.SMTP_PASS,
+    },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: Env.SMTP_FROM,
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log(`[EMAIL:OfferRejectedToRecruiter] Email sent successfully to ${to} for offer ${offerId}`);
+  } catch (error) {
+    console.error("[EMAIL:OfferRejectedToRecruiter] Failed to send email:", error);
+  }
+}
+
+export async function sendInterviewCompletedEmailToRecruiter(
+  payload: InterviewCompletedEmailToRecruiterPayload
+): Promise<void> {
+  const { to, recruiterName, candidateName, jobTitle, companyName, interviewId, overallScore, recommendation, applicationId } = payload;
+
+  const subject = `Interview completed: ${candidateName} - ${jobTitle}`;
+
+  const greeting = recruiterName ? `Hi ${recruiterName},` : "Hi there,";
+
+  const recommendationText = recommendation === "HIRE" 
+    ? "HIRE - Suitable candidate"
+    : recommendation === "CONSIDER"
+    ? "CONSIDER - Needs consideration"
+    : "REJECT - Not suitable";
+
+  const recommendationColor = recommendation === "HIRE"
+    ? "#10b981" // green
+    : recommendation === "CONSIDER"
+    ? "#f59e0b" // yellow
+    : "#ef4444"; // red
+
+  const text = `${greeting}
+
+Candidate ${candidateName} has completed the interview for ${jobTitle}${companyName ? ` at ${companyName}` : ""}.
+
+Interview Results:
+- Overall Score: ${overallScore.toFixed(1)} / 10
+- Recommendation: ${recommendationText}
+
+You can view the detailed feedback in your DevPrep dashboard.
+
+Best regards,
+DevPrep Team`;
+
+  const baseUrl = process.env.FRONTEND_URL || process.env.APP_BASE_URL || "http://localhost:5173";
+  const feedbackUrl = `${baseUrl}/interviews/${interviewId}/feedback`;
+  const applicationUrl = `${baseUrl}/recruiter/jobs/${applicationId.split('-')[0]}/applications`; // Simplified, might need jobId
+
+  const html = buildBaseHtml({
+    title: "Interview completed",
+    heading: "Interview Completed 📊",
+    bodyLines: [
+      greeting,
+      `<strong>${candidateName}</strong> has completed the interview for <strong>${jobTitle}</strong>${companyName ? ` at <strong>${companyName}</strong>` : ""}.`,
+      "",
+      "<div style='background-color: #f9fafb; border-radius: 8px; padding: 16px; margin: 16px 0;'>",
+      "<div style='font-weight: 600; margin-bottom: 8px;'>Interview Results:</div>",
+      `<div style='margin: 8px 0;'><strong>Overall Score:</strong> <span style='font-size: 18px; font-weight: 700; color: #0f766e;'>${overallScore.toFixed(1)} / 10</span></div>`,
+      `<div style='margin: 8px 0;'><strong>Recommendation:</strong> <span style='background-color: ${recommendationColor}20; color: ${recommendationColor}; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>${recommendationText}</span></div>`,
+      "</div>",
+      "Click the button below to view detailed feedback and analysis.",
+    ],
+    ctaLabel: "View Interview Feedback",
+    ctaUrl: feedbackUrl,
+  });
+
+  if (
+    !Env.EMAIL_SENDING_ENABLED ||
+    !Env.SMTP_HOST ||
+    !Env.SMTP_PORT ||
+    !Env.SMTP_USER ||
+    !Env.SMTP_PASS ||
+    !Env.SMTP_FROM
+  ) {
+    console.log("[EMAIL:InterviewCompletedToRecruiter] Email sending disabled or misconfigured. Payload:", {
+      to,
+      subject,
+      text,
+      EMAIL_SENDING_ENABLED: Env.EMAIL_SENDING_ENABLED,
+      SMTP_HOST: Env.SMTP_HOST,
+      SMTP_PORT: Env.SMTP_PORT,
+      SMTP_USER: Env.SMTP_USER,
+      SMTP_FROM: Env.SMTP_FROM,
+    });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: Env.SMTP_HOST,
+    port: Env.SMTP_PORT,
+    secure: Env.SMTP_PORT === 465,
+    auth: {
+      user: Env.SMTP_USER,
+      pass: Env.SMTP_PASS,
+    },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: Env.SMTP_FROM,
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log("[EMAIL:InterviewCompletedToRecruiter] Email sent successfully to", to);
+  } catch (err) {
+    console.error("[EMAIL:InterviewCompletedToRecruiter] Failed to send email", err);
+  }
 }
 
 

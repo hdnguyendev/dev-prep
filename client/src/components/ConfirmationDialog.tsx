@@ -40,7 +40,6 @@ export function ConfirmationDialog({
     // Don't close dialog here - let the onConfirm handler manage it
   };
 
-  console.log("ConfirmationDialog render", { open, title, description });
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -117,8 +117,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className }: Rich
       } else {
         alert(data.message || "Failed to upload image");
       }
-    } catch (error) {
-      console.error("Upload error:", error);
+    } catch {
       alert("Failed to upload image. Please try again.");
     } finally {
       // Reset input

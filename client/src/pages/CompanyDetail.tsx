@@ -1,31 +1,31 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { apiClient, type Company, type Job, type JobType, type CompanyReview } from "@/lib/api";
-import { useAuth } from "@clerk/clerk-react";
 import { Textarea } from "@/components/ui/textarea";
-import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { apiClient, type Company, type CompanyReview, type Job, type JobType } from "@/lib/api";
+import { useAuth } from "@clerk/clerk-react";
 import {
-  MapPin,
-  Users,
-  Globe,
-  CheckCircle,
   ArrowLeft,
-  Briefcase,
-  DollarSign,
   ArrowRight,
-  TrendingUp,
-  ExternalLink,
-  Star,
   Award,
   Bell,
-  LayoutGrid,
-  Table,
+  Briefcase,
+  CheckCircle,
   Clock,
+  DollarSign,
+  ExternalLink,
+  Globe,
+  LayoutGrid,
+  MapPin,
+  Star,
+  Table,
+  TrendingUp,
+  Users,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 
 const CompanyDetail = () => {
   const { slug } = useParams();
@@ -90,8 +90,7 @@ const CompanyDetail = () => {
             setReviewsTotalPages(Math.ceil(total / pageSize));
           }
         }
-      } catch (err) {
-        console.error("Error fetching reviews:", err);
+      } catch {
       }
     };
 
@@ -171,9 +170,8 @@ const CompanyDetail = () => {
             setIsFollowing(false);
           }
         }
-      } catch (err) {
-        console.error("Error fetching company:", err);
-        setError(err instanceof Error ? err.message : "Failed to load company");
+      } catch {
+        setError("Failed to load company");
       } finally {
         setLoading(false);
       }
@@ -202,8 +200,7 @@ const CompanyDetail = () => {
           setIsFollowing(true);
         }
       }
-    } catch (err) {
-      console.error("Error toggling company follow:", err);
+    } catch {
     } finally {
       setFollowLoading(false);
     }
@@ -341,8 +338,7 @@ const CompanyDetail = () => {
 
         alert(myReview ? "Review updated successfully!" : "Review submitted successfully!");
       }
-    } catch (err) {
-      console.error("Error submitting review:", err);
+    } catch {
       alert("Failed to submit review. Please try again.");
     } finally {
       setSubmittingReview(false);
@@ -386,7 +382,9 @@ const CompanyDetail = () => {
             setReviews(reviewsResponse.data);
             if (reviewsResponse.meta) {
               setReviewsTotal(reviewsResponse.meta.total || 0);
-              setReviewsTotalPages(reviewsResponse.meta.totalPages || 0);
+              const total = reviewsResponse.meta.total || 0;
+              const pageSize = reviewsResponse.meta.pageSize || reviewsPageSize;
+              setReviewsTotalPages(Math.ceil(total / pageSize));
             }
           }
           if (statsResponse.success) setReviewStats(statsResponse.data);
@@ -396,8 +394,7 @@ const CompanyDetail = () => {
       } else {
         alert("Failed to delete review. Please try again.");
       }
-    } catch (err) {
-      console.error("Error deleting review:", err);
+    } catch {
       alert("Failed to delete review. Please try again.");
     } finally {
       setDeletingReview(false);
@@ -427,7 +424,7 @@ const CompanyDetail = () => {
   if (loading) {
     return (
       <main className="min-h-dvh bg-gradient-to-b from-background via-purple-500/5 to-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-0">
           <div className="animate-pulse space-y-6">
             <div className="h-8 w-32 bg-muted rounded" />
             <div className="h-64 bg-muted rounded-xl" />
@@ -446,7 +443,7 @@ const CompanyDetail = () => {
   if (error || !company) {
     return (
       <main className="min-h-dvh bg-gradient-to-b from-background via-purple-500/5 to-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-0">
           <Button
             variant="ghost"
             onClick={() => navigate("/companies")}
@@ -699,15 +696,24 @@ const CompanyDetail = () => {
             </Card>
           ) : jobsViewMode === "grid" ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {jobs.map((job, index) => (
+              {jobs.map((job) => (
                 <Card
                   key={job.id}
                   className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-xl cursor-pointer h-full flex flex-col"
                   style={{
-                    animationDelay: `${index * 50}ms`,
-                    animation: "slideUp 0.5s ease-out forwards",
+                    // animationDelay: `${index * 50}ms`,
+                    // animation: "slideUp 0.5s ease-out forwards",
                   }}
-                  onClick={() => navigate(`/jobs/${job.id}`)}
+                  onClick={async () => {
+                    // Track click for candidates
+                    if (isSignedIn) {
+                      const token = await getToken();
+                      if (token) {
+                        apiClient.trackJobClick(job.id, token);
+                      }
+                    }
+                    navigate(`/jobs/${job.id}`);
+                  }}
                 >
                   <CardHeader className="relative pb-3">
                     <div className="flex items-start justify-between mb-2">
@@ -783,86 +789,123 @@ const CompanyDetail = () => {
               ))}
             </div>
           ) : (
-            <Card>
+            <Card className="border shadow-sm">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full table-fixed">
-                    <colgroup>
-                      <col className="w-[32%]" />
-                      <col className="w-[16%]" />
-                      <col className="w-[13%]" />
-                      <col className="w-[16%]" />
-                      <col className="w-[15%]" />
-                      <col className="w-[8%]" />
-                    </colgroup>
-                    <thead className="border-b bg-muted/50">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-semibold">Job</th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold">Location</th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold">Type</th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold">Salary</th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold">Posted</th>
-                        <th className="px-3 py-2 text-right text-xs font-semibold"></th>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-gradient-to-r from-muted/50 to-muted/30">
+                        <th className="px-4 py-4 text-left text-sm font-semibold">
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                            Job Title
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            Location
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            Type
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            Salary
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            Posted
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-right text-sm font-semibold">Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {jobs.map((job, index) => (
+                      {jobs.map((job) => (
                         <tr
                           key={job.id}
-                          className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                          className="border-b hover:bg-muted/50 cursor-pointer transition-colors group"
                           onClick={() => navigate(`/jobs/${job.id}`)}
                         >
-                          <td className="px-3 py-3">
-                            <div className="font-medium line-clamp-2 min-w-0 text-sm">{job.title}</div>
-                            <div className="flex flex-wrap gap-1 mt-1.5">
+                          <td className="px-4 py-4">
+                            <div className="font-semibold text-base line-clamp-1 min-w-0 group-hover:text-primary transition-colors">
+                              {job.title}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
                               {getSkillTags(job).slice(0, 3).map((tag, i) => (
-                                <Badge key={i} variant="outline" className="text-xs py-0">
+                                <Badge key={i} variant="secondary" className="text-xs py-0.5 px-2">
                                   {tag}
                                 </Badge>
                               ))}
+                              {getSkillTags(job).length > 3 && (
+                                <Badge variant="outline" className="text-xs py-0.5 px-2">
+                                  +{getSkillTags(job).length - 3}
+                                </Badge>
+                              )}
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              <span className="truncate">{job.isRemote ? "Remote" : job.location || "Not specified"}</span>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span className="text-sm truncate">
+                                {job.isRemote ? (
+                                  <span className="flex items-center gap-1">
+                                    <Globe className="h-3 w-3" />
+                                    Remote
+                                  </span>
+                                ) : (
+                                  job.location || "Not specified"
+                                )}
+                              </span>
                             </div>
                           </td>
-                          <td className="px-3 py-3">
-                            <div className="flex flex-col gap-1">
-                              <Badge variant="outline" className="text-xs w-fit py-0">
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col gap-1.5">
+                              <Badge variant="outline" className="text-xs w-fit py-1 px-2">
                                 {getEmploymentTypeLabel(job.type)}
                               </Badge>
                               {job.isRemote && (
-                                <Badge variant="outline" className="text-xs gap-1 w-fit py-0">
+                                <Badge variant="secondary" className="text-xs gap-1 w-fit py-1 px-2">
                                   <Globe className="h-3 w-3" />
                                   Remote
                                 </Badge>
                               )}
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-xs font-medium min-w-0">
-                            <div className="truncate">{formatSalary(job)}</div>
-                          </td>
-                          <td className="px-3 py-3 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 shrink-0" />
-                              <span className="truncate">{postedAgo(job.createdAt)}</span>
+                          <td className="px-4 py-4">
+                            <div className="text-sm font-medium text-foreground min-w-0">
+                              {formatSalary(job)}
                             </div>
                           </td>
-                          <td className="px-3 py-3">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground truncate">
+                                {postedAgo(job.createdAt)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
                             <div className="flex items-center justify-end">
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
-                                className="h-7 px-2 text-xs gap-1"
+                                className="h-8 px-3 text-sm gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(`/jobs/${job.id}`);
                                 }}
                               >
                                 View
-                                <ArrowRight className="h-3 w-3" />
+                                <ArrowRight className="h-4 w-4" />
                               </Button>
                             </div>
                           </td>

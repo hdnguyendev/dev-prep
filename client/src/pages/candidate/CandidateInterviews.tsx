@@ -63,7 +63,6 @@ export default function CandidateInterviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<InterviewRow[]>([]);
-  const [_qInput] = useState("");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
@@ -120,9 +119,8 @@ export default function CandidateInterviews() {
           return;
         }
         setRows((response.data || []) as InterviewRow[]);
-      } catch (e) {
+      } catch {
         if (abort) return;
-        console.error(e);
         setError("Network error");
       } finally {
         if (!abort) setLoading(false);

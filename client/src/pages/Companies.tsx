@@ -18,7 +18,6 @@ import { useApiList } from "@/lib/hooks/useApiList";
 import {
   Building2,
   MapPin,
-  Users,
   Globe,
   CheckCircle,
   Search,
@@ -35,6 +34,7 @@ import {
   Filter,
   Zap,
   Target,
+  Users,
 } from "lucide-react";
 
 const Companies = () => {
@@ -201,7 +201,7 @@ const Companies = () => {
 
   if (loading) {
     return (
-      <main className="container mx-auto flex min-h-dvh items-center justify-center px-4 py-8">
+      <main className="container mx-auto flex min-h-dvh items-center justify-center px-4 py-0">
         <div className="text-center">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 animate-pulse">
             <Building2 className="h-8 w-8 text-primary" />
@@ -215,7 +215,7 @@ const Companies = () => {
 
   if (error) {
     return (
-      <main className="container mx-auto flex min-h-dvh items-center justify-center px-4 py-8">
+      <main className="container mx-auto flex min-h-dvh items-center justify-center px-4 py-0">
         <Card className="max-w-md border-red-200">
           <CardHeader>
             <div className="mb-4 flex justify-center">
@@ -297,30 +297,34 @@ const Companies = () => {
             {/* Search Bar */}
             <Card className="border-2 shadow-lg mb-6">
               <CardContent className="p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-                  {/* Search */}
-                  <div className="relative flex-1 min-w-0 flex gap-2">
-                  <div className="relative flex-1 min-w-0">
+                <form
+                  className="grid gap-3 sm:grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto]"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSearch();
+                  }}
+                >
+                  {/* Search Input */}
+                  <div className="relative sm:col-span-1">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="Search companies by name, industry, location..."
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
                       className="h-11 pl-9"
                     />
-                    </div>
-                    <Button onClick={handleSearch} className="h-11">
-                      <Search className="h-4 w-4 mr-2" />
-                      Search
-                    </Button>
                   </div>
 
-                  {/* Divider */}
-                  <div className="hidden h-8 w-px bg-border md:block" />
+                  {/* Search Button */}
+                  <Button type="submit" className="h-11 px-4 sm:px-8 gap-2 sm:col-span-1 md:col-span-1">
+                    <Search className="h-4 w-4" />
+                    <span className="hidden sm:inline">Search</span>
+                    <span className="sm:hidden">Go</span>
+                  </Button>
 
-                  {/* Filters */}
-                  <div className="flex flex-wrap items-center gap-2">
+                  {/* Filters - Desktop */}
+                  <div className="hidden md:flex items-center gap-2 sm:col-span-2 md:col-span-1 md:col-start-3">
                     <Button
                       type="button"
                       size="sm"
@@ -392,7 +396,55 @@ const Companies = () => {
                       {COMPANY_FILTER_TEXT.clear}
                     </Button>
                   </div>
-                </div>
+
+                  {/* Mobile Filters Row */}
+                  <div className="flex flex-wrap items-center gap-2 sm:col-span-2 md:hidden">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={verifiedOnly ? "default" : "outline"}
+                      onClick={() => setVerifiedOnly((v) => !v)}
+                      className="h-9 text-xs"
+                    >
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                      Verified
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={hasWebsiteOnly ? "default" : "outline"}
+                      onClick={() => setHasWebsiteOnly((v) => !v)}
+                      className="h-9 text-xs"
+                    >
+                      <Globe className="mr-1 h-3 w-3" />
+                      Website
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setIsFilterOpen(true)}
+                      className="h-9 gap-1.5 text-xs"
+                    >
+                      <Filter className="h-3 w-3" />
+                      More
+                      {activeFilterCount > 0 && (
+                        <Badge variant="outline" className="ml-1 h-4 min-w-4 px-1 text-[10px] bg-primary/10 text-primary border-primary/20">
+                          {activeFilterCount}
+                        </Badge>
+                      )}
+                    </Button>
+                    <select
+                      value={sort}
+                      onChange={(e) => setSort(e.target.value as "recommended" | "rating" | "name")}
+                      className="h-9 rounded-md border border-input bg-background px-2 text-xs flex-1 min-w-[120px]"
+                    >
+                      <option value="recommended">Recommended</option>
+                      <option value="rating">Top rated</option>
+                      <option value="name">A → Z</option>
+                    </select>
+                  </div>
+                </form>
               </CardContent>
             </Card>
 
@@ -525,7 +577,7 @@ const Companies = () => {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-0">
         {/* Stats Bar */}
         <div className="mb-8 grid gap-4 md:grid-cols-4">
           <Card className="group relative overflow-hidden border-2 transition-all hover:shadow-xl hover:-translate-y-1">

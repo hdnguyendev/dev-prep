@@ -66,7 +66,7 @@ export default function CandidateDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [interviews, setInterviews] = useState<InterviewRow[]>([]);
-  const [_followedCompanies, setFollowedCompanies] = useReactState<Company[]>([]);
+  const [followedCompanies, setFollowedCompanies] = useState<Company[]>([]);
   const [realtimeMessages] = useReactState<string[]>([]);
 
   useEffect(() => {
@@ -77,7 +77,13 @@ export default function CandidateDashboard() {
         setLoading(true);
         setError(null);
         const token = await getToken();
-        if (!token) return;
+        console.log("Dashboard auth token:", token ? "present" : "missing");
+        console.log("Dashboard user loaded:", isLoaded);
+        if (!token) {
+          setError("Authentication required. Please log in.");
+          setLoading(false);
+          return;
+        }
 
         const [appsResponse, intsResponse, followsResponse] = await Promise.all([
           apiClient.getFilteredApplications({ page: 1, pageSize: 200 }, token),
@@ -89,10 +95,10 @@ export default function CandidateDashboard() {
         setApplications((appsResponse?.data || []) as ApplicationRow[]);
         setInterviews((intsResponse?.data || []) as InterviewRow[]);
         setFollowedCompanies((followsResponse?.data || []) as Company[]);
-      } catch (e) {
+      } catch (error) {
         if (abort) return;
-        console.error(e);
-        setError("Failed to load dashboard");
+        console.error("Error loading dashboard:", error);
+        setError(`Failed to load dashboard: ${error instanceof Error ? error.message : String(error)}`);
       } finally {
         if (!abort) setLoading(false);
       }
@@ -102,6 +108,9 @@ export default function CandidateDashboard() {
       abort = true;
     };
   }, [getToken, isLoaded]);
+
+  // Debug: Log current state
+  console.log("CandidateDashboard state:", { applications, interviews, followedCompanies, loading, error });
 
   // WebSocket realtime notifications have been removed.
 

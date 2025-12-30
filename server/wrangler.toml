@@ -43,3 +43,8 @@ mode = "smart"
 [observability]
 enabled = true
 head_sampling_rate = 1
+
+# Cron Triggers - Scheduled tasks
+# Chạy mỗi ngày lúc 2:00 AM UTC để cleanup expired interviews
+[triggers]
+crons = ["0 2 * * *"]

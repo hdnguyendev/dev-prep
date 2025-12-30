@@ -7,7 +7,6 @@ type JobInput = {
   slug: string;
   description: string;
   requirements?: string | null;
-  responsibilities?: string | null;
   interviewQuestions?: string[];
   location?: string | null;
   locationType?: string;
@@ -37,6 +36,16 @@ export const getJobs = async () => {
     },
     include: {
       company: true,
+      skills: {
+        include: {
+          skill: true,
+        },
+      },
+      categories: {
+        include: {
+          category: true,
+        },
+      },
     },
   });
 
@@ -88,6 +97,54 @@ export const getJobById = async (id: string) => {
     where: { id },
     include: {
       company: true,
+      skills: {
+        include: {
+          skill: true,
+        },
+      },
+      categories: {
+        include: {
+          category: true,
+        },
+      },
+    },
+  });
+
+  // Calculate averageRating for company if job exists
+  if (job?.company?.id) {
+    const stats = await prisma.companyReview.aggregate({
+      where: { companyId: job.company.id },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    if (job.company) {
+      job.company = {
+        ...job.company,
+        averageRating: stats._avg.rating || 0,
+        totalReviews: stats._count.rating || 0,
+      };
+    }
+  }
+
+  return job;
+};
+
+export const getJobBySlug = async (slug: string) => {
+  const job = await prisma.job.findUnique({
+    where: { slug },
+    include: {
+      company: true,
+      skills: {
+        include: {
+          skill: true,
+        },
+      },
+      categories: {
+        include: {
+          category: true,
+        },
+      },
     },
   });
 
@@ -112,8 +169,19 @@ export const getJobById = async (id: string) => {
 };
 
 export const createJob = async (payload: JobInput) => {
+  // Filter out and map fields that don't exist in Prisma schema
+  const { responsibilities, locationType, employmentType, salaryCurrency, ...rest } = payload as any;
+  
+  // Map frontend fields to Prisma fields
+  const prismaData: any = {
+    ...rest,
+    isRemote: locationType === "REMOTE" || payload.isRemote || false,
+    type: employmentType || payload.type || "FULL_TIME",
+    currency: salaryCurrency || payload.currency || "VND",
+  };
+  
   const newJob = await prisma.job.create({
-    data: payload,
+    data: prismaData,
   });
 
   // Notify followers only when a new PUBLISHED job is created
@@ -196,9 +264,28 @@ export const updateJob = async (id: string, payload: JobInput) => {
     select: { status: true, companyId: true, title: true },
   });
 
+  // Filter out and map fields that don't exist in Prisma schema
+  const { responsibilities, locationType, employmentType, salaryCurrency, ...rest } = payload as any;
+  
+  // Map frontend fields to Prisma fields
+  const prismaData: any = {
+    ...rest,
+  };
+  
+  // Only update these fields if they're provided
+  if (locationType !== undefined) {
+    prismaData.isRemote = locationType === "REMOTE" || payload.isRemote || false;
+  }
+  if (employmentType !== undefined) {
+    prismaData.type = employmentType || payload.type;
+  }
+  if (salaryCurrency !== undefined) {
+    prismaData.currency = salaryCurrency || payload.currency;
+  }
+  
   const updatedJob = await prisma.job.update({
     where: { id },
-    data: payload,
+    data: prismaData,
   });
 
   if (!existingJob || !existingJob.companyId) {
@@ -304,10 +391,53 @@ export const deleteJob = async (id: string) => {
   return deletedJob;
 };
 
+/**
+ * Increment view count for a job
+ * Used when a user views a job detail page
+ */
+export const incrementViewCount = async (jobId: string) => {
+  try {
+    await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        viewsCount: {
+          increment: 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error(`[Jobs] Failed to increment view count for job ${jobId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Increment click count for a job
+ * Used when a user clicks on a job card/listing
+ */
+export const incrementClickCount = async (jobId: string) => {
+  try {
+    await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        clicksCount: {
+          increment: 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error(`[Jobs] Failed to increment click count for job ${jobId}:`, error);
+    throw error;
+  }
+};
+
 export const appJobs = {
   getJobs,
   getJobById,
+  getJobBySlug,
   createJob,
   updateJob,
   deleteJob,
+  incrementViewCount,
+  incrementClickCount,
 };

@@ -74,6 +74,7 @@ export async function createStandaloneInterview(
 export type UpdatePracticeInterviewInput = {
   id: string;
   status?: InterviewStatus;
+  startedAt?: string; // ISO
   endedAt?: string; // ISO
   durationSeconds?: number;
   fullTranscript?: string;
