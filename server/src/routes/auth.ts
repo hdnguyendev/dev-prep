@@ -488,7 +488,7 @@ authRoutes.get("/me", async (c) => {
       success: true, 
       id: user.id,
       email: user.email,
-      notificationEmail: user.notificationEmail,
+      notificationEmail: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,

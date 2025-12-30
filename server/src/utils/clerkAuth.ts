@@ -5,39 +5,30 @@
 
 import type { Context } from "hono";
 import { getAuth } from "@hono/clerk-auth";
+import { createClerkClient } from '@clerk/backend'
 import prisma from "../app/db/prisma";
 
 export async function getOrCreateClerkUser(c: Context) {
   const auth = getAuth(c);
-  
-  console.log("🔍 Clerk auth check:", {
-    hasAuth: !!auth,
-    userId: auth?.userId,
-    sessionId: auth?.sessionId,
-  });
-  
+  const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY || "" })
+  const clerkUser = await clerkClient.users.getUser(auth?.userId || "");
+
   if (!auth?.userId) {
     console.error("❌ No Clerk userId found in auth object");
     return { success: false, error: "Not authenticated with Clerk", user: null };
   }
 
-  const clerkUserId = auth.userId;
-  
-  
-  // Try different field names that Clerk might use
-  const sessionClaims = auth.sessionClaims as any;
-  const email = sessionClaims?.email as string || `clerk_${clerkUserId}@devprep.com`;
-  // Use default names - user will update via profile form
-  const firstName = "Candidate";
-  const lastName = "User";
+  const email = clerkUser.emailAddresses[0]?.emailAddress || `clerk_user_${auth?.userId}@clerk.com`;
+  const firstName = clerkUser.firstName || "Candidate";
+  const lastName = clerkUser.lastName || "User";
+  const avatarUrl = clerkUser.imageUrl || "https://ui-avatars.com/api/?name=DevPrep&background=random";
+  const notificationEmail = clerkUser.emailAddresses[0]?.emailAddress || email;
+  const phone = clerkUser.phoneNumbers[0]?.phoneNumber || "";
   
   // Try to find existing user
   let user = await prisma.user.findFirst({
     where: {
-      OR: [
-        { email: { contains: clerkUserId } }, // Match clerk ID in email
-        { email }, // Match exact email
-      ],
+      email,
     },
     include: {
       candidateProfile: true,
@@ -62,6 +53,9 @@ export async function getOrCreateClerkUser(c: Context) {
           candidateProfile: {
             create: {}, // Auto-create candidate profile
           },
+          notificationEmail,
+          phone,
+          avatarUrl,
         },
         include: {
           candidateProfile: true,
