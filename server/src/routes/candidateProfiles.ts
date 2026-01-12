@@ -276,19 +276,22 @@ candidateProfilesRoutes.put("/candidate-profiles/:id", async (c) => {
       notificationEmail?: string | null;
     };
 
+    // Build update data object - only include fields that are explicitly provided
+    const updateData: Record<string, unknown> = {};
+    
+    if (headline !== undefined) updateData.headline = headline ?? null;
+    if (bio !== undefined) updateData.bio = bio ?? null;
+    if (website !== undefined) updateData.website = website ?? null;
+    if (linkedin !== undefined) updateData.linkedin = linkedin ?? null;
+    if (github !== undefined) updateData.github = github ?? null;
+    if (address !== undefined) updateData.address = address ?? null;
+    if (cvUrl !== undefined) updateData.cvUrl = cvUrl ?? null;
+    if (typeof isPublic === "boolean") updateData.isPublic = isPublic;
+
     const updated = await prisma.$transaction(async (tx) => {
       const profile = await tx.candidateProfile.update({
         where: { id },
-        data: {
-          headline: headline ?? null,
-          bio: bio ?? null,
-          website: website ?? null,
-          linkedin: linkedin ?? null,
-          github: github ?? null,
-          address: address ?? null,
-          cvUrl: cvUrl ?? null,
-          ...(typeof isPublic === "boolean" ? { isPublic } : {}),
-        },
+        data: updateData,
       });
 
       if (typeof notificationEmail === "string") {

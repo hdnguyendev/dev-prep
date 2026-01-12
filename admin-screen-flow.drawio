@@ -1,0 +1,240 @@
+<mxGraphModel dx="2000" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3200" pageHeight="2000" math="0" shadow="0" adaptiveColors="auto">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    
+    <!-- Entry Flow: Top Row -->
+    <mxCell id="entry-point" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" value="Entry Point" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="40" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="screen-login" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;tooltip=Staff authentication page for Admin and Recruiter login" value="Staff Login" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="40" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="screen-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="40" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="entry-arrow" edge="1" parent="1" source="entry-point" target="screen-login" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Login">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="login-arrow" edge="1" parent="1" source="screen-login" target="screen-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Success">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Flow 1: Manage Users -->
+    <mxCell id="flow1-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" value="Flow 1: Manage Users" vertex="1">
+      <mxGeometry height="30" width="300" x="50" y="180" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow1-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="230" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow1-users" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=List and manage all users (Candidates, Recruiters, Admins) with search, filter, and CRUD operations" value="Users" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="230" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow1-user-detail" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=View and edit individual user details including profile, role, verification status" value="User Detail" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="230" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow1-arrow1" edge="1" parent="1" source="flow1-dashboard" target="flow1-users" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Manage Users">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="flow1-arrow2" edge="1" parent="1" source="flow1-users" target="flow1-user-detail" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Select User">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Flow 2: Manage Companies -->
+    <mxCell id="flow2-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" value="Flow 2: Manage Companies" vertex="1">
+      <mxGeometry height="30" width="300" x="50" y="360" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow2-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="410" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow2-companies" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=List and manage all companies with verification status, search, filter, and CRUD operations" value="Companies" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="410" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow2-company-detail" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=View and edit company details, verify or unverify companies, manage company information" value="Company Detail" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="410" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow2-arrow1" edge="1" parent="1" source="flow2-dashboard" target="flow2-companies" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Manage Companies">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="flow2-arrow2" edge="1" parent="1" source="flow2-companies" target="flow2-company-detail" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Select Company">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Flow 3: Manage Jobs -->
+    <mxCell id="flow3-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" value="Flow 3: Manage Jobs" vertex="1">
+      <mxGeometry height="30" width="300" x="50" y="540" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow3-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="590" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow3-jobs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=List and manage all job postings with status, search, filter, and CRUD operations" value="Jobs" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="590" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow3-job-detail" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=View and edit job details including title, description, requirements, status, and salary" value="Job Detail" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="590" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow3-arrow1" edge="1" parent="1" source="flow3-dashboard" target="flow3-jobs" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Manage Jobs">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="flow3-arrow2" edge="1" parent="1" source="flow3-jobs" target="flow3-job-detail" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Select Job">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Flow 4: Manage Applications -->
+    <mxCell id="flow4-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" value="Flow 4: Manage Applications" vertex="1">
+      <mxGeometry height="30" width="300" x="50" y="720" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow4-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="770" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow4-applications" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=List and manage all job applications with status, search, filter, and CRUD operations" value="Applications" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="770" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow4-application-detail" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=View and edit application details including resume, cover letter, status, and candidate information" value="Application Detail" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="770" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow4-arrow1" edge="1" parent="1" source="flow4-dashboard" target="flow4-applications" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Manage Applications">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="flow4-arrow2" edge="1" parent="1" source="flow4-applications" target="flow4-application-detail" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Select Application">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Flow 5: Manage Interviews -->
+    <mxCell id="flow5-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" value="Flow 5: Manage Interviews" vertex="1">
+      <mxGeometry height="30" width="300" x="50" y="900" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow5-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="950" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow5-interviews" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=List and manage all interviews (AI Video, AI Voice, AI Chat, Coding Test) with status and search" value="Interviews" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="950" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow5-interview-detail" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=View interview details including type, status, access code, recording, transcript, and AI analysis" value="Interview Detail" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="950" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow5-arrow1" edge="1" parent="1" source="flow5-dashboard" target="flow5-interviews" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Manage Interviews">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="flow5-arrow2" edge="1" parent="1" source="flow5-interviews" target="flow5-interview-detail" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Select Interview">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Flow 6: Manage Skills & Categories -->
+    <mxCell id="flow6-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" value="Flow 6: Manage Skills &amp; Categories" vertex="1">
+      <mxGeometry height="30" width="300" x="50" y="1080" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow6-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="1130" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow6-skills" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Manage job skills with name and icon, create, edit, and delete skills used in job postings" value="Skills" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="1130" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow6-categories" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Manage job categories with name and icon, create, edit, and delete categories for job classification" value="Categories" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="1130" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow6-arrow1" edge="1" parent="1" source="flow6-dashboard" target="flow6-skills" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Manage Skills">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="flow6-arrow2" edge="1" parent="1" source="flow6-dashboard" target="flow6-categories" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Manage Categories">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Flow 7: View Candidates -->
+    <mxCell id="flow7-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" value="Flow 7: View Candidates" vertex="1">
+      <mxGeometry height="30" width="300" x="50" y="1260" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow7-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Admin dashboard showing platform overview, statistics, and resource management options" value="Dashboard" vertex="1">
+      <mxGeometry height="80" width="150" x="50" y="1310" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow7-candidates" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=Browse and search candidate directory with filters to find candidates by skills, experience, or location" value="Candidates" vertex="1">
+      <mxGeometry height="80" width="150" x="350" y="1310" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow7-candidate-profile" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=18;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;tooltip=View candidate public profile including resume, skills, experience, education, and application history" value="Candidate Profile" vertex="1">
+      <mxGeometry height="80" width="150" x="650" y="1310" as="geometry" />
+    </mxCell>
+    
+    <mxCell id="flow7-arrow1" edge="1" parent="1" source="flow7-dashboard" target="flow7-candidates" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="View Candidates">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="flow7-arrow2" edge="1" parent="1" source="flow7-candidates" target="flow7-candidate-profile" style="endArrow=block;html=1;rounded=0;strokeWidth=3;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" value="Select Candidate">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+    <!-- Back navigation flows (from right to left, at bottom) -->
+    <mxCell id="back-flow1" edge="1" parent="1" source="flow1-users" target="flow1-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow2" edge="1" parent="1" source="flow1-user-detail" target="flow1-users" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow3" edge="1" parent="1" source="flow2-companies" target="flow2-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow4" edge="1" parent="1" source="flow2-company-detail" target="flow2-companies" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow5" edge="1" parent="1" source="flow3-jobs" target="flow3-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow6" edge="1" parent="1" source="flow3-job-detail" target="flow3-jobs" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow7" edge="1" parent="1" source="flow4-applications" target="flow4-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow8" edge="1" parent="1" source="flow4-application-detail" target="flow4-applications" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow9" edge="1" parent="1" source="flow5-interviews" target="flow5-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow10" edge="1" parent="1" source="flow5-interview-detail" target="flow5-interviews" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow11" edge="1" parent="1" source="flow6-skills" target="flow6-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow12" edge="1" parent="1" source="flow6-categories" target="flow6-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow13" edge="1" parent="1" source="flow7-candidates" target="flow7-dashboard" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="back-flow14" edge="1" parent="1" source="flow7-candidate-profile" target="flow7-candidates" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" value="Back">
+      <mxGeometry width="50" height="50" relative="1" as="geometry" />
+    </mxCell>
+    
+  </root>
+</mxGraphModel>
+

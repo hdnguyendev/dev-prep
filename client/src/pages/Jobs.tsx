@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SmartSearchInput } from "@/components/SmartSearchInput";
 import { apiClient, type Job, type JobType } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
 import {
@@ -23,6 +25,8 @@ import {
   LayoutGrid,
   Table,
   Star,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 const Jobs = () => {
@@ -36,6 +40,9 @@ const Jobs = () => {
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
+  const [minSalary, setMinSalary] = useState<number>(0);
+  const [maxSalary, setMaxSalary] = useState<number>(25); // Max 25k USD/month
+  const [includeNegotiable, setIncludeNegotiable] = useState(true); // Include negotiable salaries by default
   const [types, setTypes] = useState<Record<JobType, boolean>>({
     FULL_TIME: false,
     PART_TIME: false,
@@ -45,23 +52,40 @@ const Jobs = () => {
     REMOTE: false,
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [experienceLevels, setExperienceLevels] = useState<string[]>([]);
+  const [postedDate, setPostedDate] = useState<string>(""); // "24h", "week", "month", "3months"
+  const [companySize, setCompanySize] = useState<string>("");
+  const [minCompanyRating, setMinCompanyRating] = useState<number>(0);
+  const [companyVerified, setCompanyVerified] = useState<boolean | null>(null); // null = all, true = verified only, false = unverified only
+  const [workLocation, setWorkLocation] = useState<string>(""); // "remote", "onsite", "hybrid", ""
+  const [currency, setCurrency] = useState<string>(""); // "USD", "VND", "EUR", "JPY", ""
+  const [deadlineFilter, setDeadlineFilter] = useState<string>(""); // "week", "month", "3months", ""
+  const [hasBenefits, setHasBenefits] = useState<boolean | null>(null);
   const [sort, setSort] = useState("recent");
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
     const saved = localStorage.getItem("jobs-view-mode");
     return (saved === "table" || saved === "grid") ? saved : "grid";
   });
-  const pageSize = 9;
-  const fetchPageSize = 200;
+  const pageSize = 20;
+  const fetchPageSize = 500; // Increased to fetch more jobs from database
 
   useEffect(() => {
     const q = (searchParams.get("query") || "").trim();
     const loc = (searchParams.get("location") || "").trim();
+    const category = searchParams.get("category");
+    
     if (q) {
       setQuery(q);
       setQueryInput(q);
     }
     if (loc) setLocation(loc);
+    if (category) {
+      // Set selectedTags to filter by category
+      setSelectedTags([category]);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -101,6 +125,22 @@ const Jobs = () => {
         }
         
         if (response.success) {
+          console.log("📥 Fetched jobs:", response.data.length);
+          // Log first job to check structure
+          if (response.data.length > 0) {
+            const firstJob = response.data[0];
+            console.log("📋 First job structure:", {
+              id: firstJob.id,
+              title: firstJob.title,
+              experienceLevel: firstJob.experienceLevel,
+              publishedAt: firstJob.publishedAt,
+              createdAt: firstJob.createdAt,
+              categories: firstJob.categories,
+              skills: firstJob.skills,
+              hasCategories: !!firstJob.categories && firstJob.categories.length > 0,
+              hasSkills: !!firstJob.skills && firstJob.skills.length > 0,
+            });
+          }
           setJobs(response.data);
         } else {
           setError(response.message || "Failed to fetch jobs");
@@ -254,6 +294,50 @@ const Jobs = () => {
     return Array.from(c).slice(0, 20);
   }, [jobs]);
 
+  const allSkills = useMemo(() => {
+    const s = new Set<string>();
+    jobs.forEach((j) => {
+      (j.skills || []).forEach((skill) => {
+        if (skill.skill?.name) s.add(skill.skill.name);
+      });
+    });
+    return Array.from(s).slice(0, 30);
+  }, [jobs]);
+
+  const allExperienceLevels = useMemo(() => {
+    const levels = new Set<string>();
+    jobs.forEach((j) => {
+      if (j.experienceLevel) {
+        const level = j.experienceLevel.trim();
+        const levelLower = level.toLowerCase();
+        // Check exact match first
+        if (levelLower === "junior" || levelLower === "entry" || levelLower.includes("intern")) {
+          levels.add("Junior");
+        } else if (levelLower === "mid" || levelLower === "middle" || levelLower.includes("mid")) {
+          levels.add("Mid");
+        } else if (levelLower === "senior" || levelLower.includes("senior")) {
+          levels.add("Senior");
+        } else if (levelLower === "lead" || levelLower.includes("lead") || levelLower.includes("principal") || levelLower.includes("architect")) {
+          levels.add("Lead");
+        } else {
+          // If doesn't match any known pattern, add the original value (capitalized)
+          levels.add(level.charAt(0).toUpperCase() + level.slice(1).toLowerCase());
+        }
+      }
+    });
+    return Array.from(levels).sort();
+  }, [jobs]);
+
+  const allCompanySizes = useMemo(() => {
+    const sizes = new Set<string>();
+    jobs.forEach((j) => {
+      if (j.company?.companySize) {
+        sizes.add(j.company.companySize);
+      }
+    });
+    return Array.from(sizes).sort();
+  }, [jobs]);
+
   const postedAgo = (createdAt: string) => {
     const ts = createdAt ? new Date(createdAt).getTime() : 0;
     if (!ts) return "";
@@ -264,8 +348,16 @@ const Jobs = () => {
     return `${days} days ago`;
   };
 
-  // Client-side filtering only for location, type, and tags (search is done on server)
+  // Client-side filtering with all filters
   const filtered = useMemo(() => {
+    console.log("🔍 Filtering jobs with:", {
+      experienceLevels,
+      postedDate,
+      selectedCategories,
+      selectedSkills,
+      jobsCount: jobs.length,
+    });
+    
     const activeTypes = Object.entries(types)
       .filter(([, v]) => v)
       .map(([k]) => k);
@@ -274,21 +366,245 @@ const Jobs = () => {
       if (j.status === "DRAFT" || j.status === "CLOSED") {
         return false;
       }
+      
+      // Location filter
       const matchesLocation =
         !location || getLocation(j).toLowerCase().includes(location.toLowerCase());
+      
+      // Job type filter
       const matchesType =
         activeTypes.length === 0 || activeTypes.includes(j.type);
-      const jobTags = (j.skills || []).map((s) => s.skill?.name).filter((x): x is string => Boolean(x));
-      const matchesTags =
-        selectedTags.length === 0 || selectedTags.every((t) => jobTags.includes(t));
-      return matchesLocation && matchesType && matchesTags;
+      
+      // Work location filter (Remote/Onsite/Hybrid)
+      const matchesWorkLocation = (() => {
+        if (!workLocation) return true;
+        if (workLocation === "remote") return j.isRemote === true;
+        if (workLocation === "onsite") return j.isRemote === false && j.location && !j.location.toLowerCase().includes("remote");
+        if (workLocation === "hybrid") {
+          // Hybrid jobs: has location but also allows remote, or location mentions hybrid
+          return (j.location && (j.location.toLowerCase().includes("hybrid") || (j.isRemote && j.location))) || 
+                 (j.isRemote && j.location);
+        }
+        return true;
+      })();
+      
+      // Experience level filter
+      const matchesExperience = (() => {
+        if (experienceLevels.length === 0) return true;
+        if (!j.experienceLevel) {
+          console.log("❌ Job has no experienceLevel:", j.title);
+          return false;
+        }
+        const jobLevel = j.experienceLevel.trim();
+        const jobLevelLower = jobLevel.toLowerCase();
+        const matched = experienceLevels.some(level => {
+          const levelTrimmed = level.trim();
+          const levelLower = levelTrimmed.toLowerCase();
+          // Exact match (case-insensitive)
+          if (jobLevelLower === levelLower) return true;
+          // For "Junior": match Junior, Entry, Intern
+          if (levelLower === "junior") {
+            return jobLevelLower === "junior" || jobLevelLower === "entry" || jobLevelLower.includes("intern");
+          }
+          // For "Mid": match Mid, Middle
+          if (levelLower === "mid") {
+            return jobLevelLower === "mid" || jobLevelLower === "middle" || jobLevelLower.includes("mid");
+          }
+          // For "Senior": match Senior
+          if (levelLower === "senior") {
+            return jobLevelLower === "senior" || jobLevelLower.includes("senior");
+          }
+          // For "Lead": match Lead, Principal, Architect
+          if (levelLower === "lead") {
+            return jobLevelLower === "lead" || jobLevelLower.includes("lead") || jobLevelLower.includes("principal") || jobLevelLower.includes("architect");
+          }
+          // Fallback: contains check
+          return jobLevelLower.includes(levelLower) || levelLower.includes(jobLevelLower);
+        });
+        if (!matched) {
+          console.log(`❌ Experience mismatch: job="${jobLevel}" vs filter=[${experienceLevels.join(", ")}]`);
+        }
+        return matched;
+      })();
+      
+      // Posted date filter
+      const matchesPostedDate = (() => {
+        if (!postedDate) return true;
+        // Use publishedAt if available, otherwise use createdAt
+        const dateToCheck = j.publishedAt || j.createdAt;
+        if (!dateToCheck) {
+          // If no date, exclude if filter is set
+          return false;
+        }
+        try {
+          const published = new Date(dateToCheck).getTime();
+          if (isNaN(published)) return false;
+          const now = Date.now();
+          const diffMs = now - published;
+          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          
+          switch (postedDate) {
+            case "24h": return diffDays <= 1;
+            case "week": return diffDays <= 7;
+            case "month": return diffDays <= 30;
+            case "3months": return diffDays <= 90;
+            default: return true;
+          }
+        } catch {
+          return false;
+        }
+      })();
+      
+      // Deadline filter
+      const matchesDeadline = (() => {
+        if (!deadlineFilter || !j.deadline) return true;
+        try {
+          const deadline = new Date(j.deadline).getTime();
+          if (isNaN(deadline)) return true;
+          const now = Date.now();
+          const diffMs = deadline - now;
+          const diffDays = diffMs / (1000 * 60 * 60 * 24);
+          
+          switch (deadlineFilter) {
+            case "week": return diffDays >= 0 && diffDays <= 7;
+            case "month": return diffDays >= 0 && diffDays <= 30;
+            case "3months": return diffDays >= 0 && diffDays <= 90;
+            default: return true;
+          }
+        } catch {
+          return true;
+        }
+      })();
+      
+      // Currency filter
+      const matchesCurrency = !currency || j.currency === currency;
+      
+      // Company verified filter
+      const matchesCompanyVerified = companyVerified === null || j.company?.isVerified === companyVerified;
+      
+      // Company size filter
+      const matchesCompanySize = (() => {
+        if (!companySize || !j.company?.companySize) return true;
+        const jobSize = j.company.companySize.toLowerCase().trim();
+        const filterSize = companySize.toLowerCase().trim();
+        // Exact match or contains
+        return jobSize === filterSize || jobSize.includes(filterSize) || filterSize.includes(jobSize);
+      })();
+      
+      // Company rating filter
+      const matchesCompanyRating = (() => {
+        if (minCompanyRating === 0) return true;
+        const rating = j.company?.averageRating;
+        // If no rating, exclude if min rating is set
+        if (rating === undefined || rating === null) return false;
+        return rating >= minCompanyRating;
+      })();
+      
+      // Benefits filter
+      const matchesBenefits = (() => {
+        if (hasBenefits === null) return true;
+        const hasJobBenefits = j.benefits && j.benefits.trim() !== "";
+        if (hasBenefits === false) return !hasJobBenefits;
+        return hasJobBenefits;
+      })();
+      
+      // Categories filter
+      const matchesCategories = (() => {
+        if (selectedCategories.length === 0) return true;
+        const jobCategories = getCategoryTags(j);
+        console.log(`📁 Job "${j.title}" categories:`, jobCategories, "vs filter:", selectedCategories);
+        if (jobCategories.length === 0) {
+          console.log(`❌ Job has no categories:`, j.title);
+          return false;
+        }
+        // At least one selected category must match (case-insensitive)
+        const matched = selectedCategories.some(cat => {
+          const catLower = cat.toLowerCase().trim();
+          return jobCategories.some(jobCat => jobCat.toLowerCase().trim() === catLower);
+        });
+        if (!matched) {
+          console.log(`❌ Category mismatch: job=[${jobCategories.join(", ")}] vs filter=[${selectedCategories.join(", ")}]`);
+        }
+        return matched;
+      })();
+      
+      // Skills filter
+      const matchesSkills = (() => {
+        if (selectedSkills.length === 0) return true;
+        const jobSkills = (j.skills || []).map((s) => s.skill?.name).filter((x): x is string => Boolean(x));
+        console.log(`🛠️ Job "${j.title}" skills:`, jobSkills, "vs filter:", selectedSkills);
+        if (jobSkills.length === 0) {
+          console.log(`❌ Job has no skills:`, j.title);
+          return false;
+        }
+        // At least one selected skill must match (case-insensitive)
+        const matched = selectedSkills.some(skill => {
+          const skillLower = skill.toLowerCase().trim();
+          return jobSkills.some(jobSkill => jobSkill.toLowerCase().trim() === skillLower);
+        });
+        if (!matched) {
+          console.log(`❌ Skill mismatch: job=[${jobSkills.join(", ")}] vs filter=[${selectedSkills.join(", ")}]`);
+        }
+        return matched;
+      })();
+      
+      // Legacy selectedTags filter (for backward compatibility)
+      if (selectedTags.length > 0) {
+        const jobCategories = getCategoryTags(j);
+        const jobSkills = (j.skills || []).map((s) => s.skill?.name).filter((x): x is string => Boolean(x));
+        const matchesTags = selectedTags.every((tag) => 
+          jobCategories.includes(tag) || jobSkills.includes(tag)
+        );
+        if (!matchesTags) return false;
+      }
+      
+      // Salary filter
+      const matchesSalary = (() => {
+        if (minSalary === 0 && maxSalary === 25 && includeNegotiable) return true;
+        if (j.isSalaryNegotiable && includeNegotiable && minSalary === 0) return true;
+        if (j.isSalaryNegotiable && !includeNegotiable) return false;
+        if (!j.salaryMin && !j.salaryMax) return includeNegotiable;
+        const jobMin = j.salaryMin || 0;
+        const jobMax = j.salaryMax || jobMin;
+        const filterMin = minSalary * 1000;
+        const filterMax = maxSalary * 1000;
+        return jobMin <= filterMax && jobMax >= filterMin;
+      })();
+      
+      const allMatch = matchesLocation && matchesType && matchesWorkLocation && matchesExperience &&
+             matchesPostedDate && matchesDeadline && matchesCurrency && matchesCompanyVerified &&
+             matchesCompanySize && matchesCompanyRating && matchesBenefits && matchesCategories &&
+             matchesSkills && matchesSalary;
+      
+      if (!allMatch && (experienceLevels.length > 0 || postedDate || selectedCategories.length > 0 || selectedSkills.length > 0)) {
+        console.log(`❌ Job "${j.title}" filtered out:`, {
+          matchesLocation,
+          matchesType,
+          matchesWorkLocation,
+          matchesExperience,
+          matchesPostedDate,
+          matchesDeadline,
+          matchesCurrency,
+          matchesCompanyVerified,
+          matchesCompanySize,
+          matchesCompanyRating,
+          matchesBenefits,
+          matchesCategories,
+          matchesSkills,
+          matchesSalary,
+        });
+      }
+      
+      return allMatch;
     });
+    
+    console.log(`✅ Filtered ${list.length} jobs from ${jobs.length} total`);
     if (sort === "salary")
       list = list.sort((a, b) => (b.salaryMin || 0) - (a.salaryMin || 0));
     if (sort === "recent")
       list = list.sort((a, b) => (new Date(b.createdAt).getTime() || 0) - (new Date(a.createdAt).getTime() || 0));
     return list;
-  }, [jobs, location, selectedTags, sort, types]);
+  }, [jobs, location, selectedTags, selectedSkills, selectedCategories, experienceLevels, postedDate, companySize, minCompanyRating, companyVerified, workLocation, currency, deadlineFilter, hasBenefits, sort, types, minSalary, maxSalary, includeNegotiable]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -296,6 +612,30 @@ const Jobs = () => {
   const toggleType = (k: JobType) => setTypes((prev) => ({ ...prev, [k]: !prev[k] }));
   const toggleTag = (t: string) =>
     setSelectedTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+  const toggleSkill = (skill: string) => {
+    console.log("🛠️ Toggling skill:", skill);
+    setSelectedSkills((prev) => {
+      const newSkills = prev.includes(skill) ? prev.filter((x) => x !== skill) : [...prev, skill];
+      console.log("🛠️ New selected skills:", newSkills);
+      return newSkills;
+    });
+  };
+  const toggleCategory = (cat: string) => {
+    console.log("📁 Toggling category:", cat);
+    setSelectedCategories((prev) => {
+      const newCategories = prev.includes(cat) ? prev.filter((x) => x !== cat) : [...prev, cat];
+      console.log("📁 New selected categories:", newCategories);
+      return newCategories;
+    });
+  };
+  const toggleExperienceLevel = (level: string) => {
+    console.log("👤 Toggling experience level:", level);
+    setExperienceLevels((prev) => {
+      const newLevels = prev.includes(level) ? prev.filter((x) => x !== level) : [...prev, level];
+      console.log("👤 New selected experience levels:", newLevels);
+      return newLevels;
+    });
+  };
 
   const handleViewModeChange = (mode: "grid" | "table") => {
     setViewMode(mode);
@@ -412,13 +752,12 @@ const Jobs = () => {
                   }}
                 >
                   <div className="relative sm:col-span-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Job title, company, keywords..."
+                    <SmartSearchInput
                       value={queryInput}
-                      onChange={(e) => setQueryInput(e.target.value)}
+                      onChange={setQueryInput}
                       onKeyPress={handleKeyPress}
-                      className="pl-9 h-11"
+                      placeholder="Job title, company, keywords..."
+                      className="h-11"
                     />
                   </div>
                   <div className="relative sm:col-span-1 md:col-span-1">
@@ -460,15 +799,36 @@ const Jobs = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           {/* Filters Sidebar - Desktop */}
-          <aside className="hidden lg:block space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Filter className="h-4 w-4" />
-                  Filters
+          <aside className="hidden lg:block">
+            <Card className="sticky top-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filters
+                  </div>
+                  {(selectedCategories.length > 0 || selectedSkills.length > 0 || experienceLevels.length > 0 || postedDate || companySize || minCompanyRating > 0 || companyVerified !== null || workLocation || currency || deadlineFilter || hasBenefits !== null || minSalary > 0 || maxSalary < 25 || !includeNegotiable || Object.values(types).some(Boolean)) && (
+                    <Badge variant="secondary" className="text-xs">
+                      {[
+                        Object.values(types).filter(Boolean).length,
+                        selectedCategories.length,
+                        selectedSkills.length,
+                        experienceLevels.length,
+                        postedDate ? 1 : 0,
+                        workLocation ? 1 : 0,
+                        currency ? 1 : 0,
+                        deadlineFilter ? 1 : 0,
+                        companySize ? 1 : 0,
+                        minCompanyRating > 0 ? 1 : 0,
+                        companyVerified !== null ? 1 : 0,
+                        hasBenefits !== null ? 1 : 0,
+                        (minSalary > 0 || maxSalary < 25 || !includeNegotiable) ? 1 : 0,
+                      ].reduce((a, b) => a + b, 0)}
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
                 {/* Employment Type */}
                 <div>
                   <div className="mb-3 text-sm font-semibold">Employment Type</div>
@@ -491,49 +851,453 @@ const Jobs = () => {
 
                 <Separator />
 
-                {/* Categories */}
-                {allCategories.length > 0 && (
-                  <>
-                    <div>
-                      <div className="mb-3 text-sm font-semibold">Categories</div>
-                      <div className="flex flex-wrap gap-2">
-                        {allCategories.map((cat) => (
-                          <Badge
-                            key={`cat-${cat}`}
-                            variant={selectedTags.includes(cat) ? "default" : "outline"}
-                            className="cursor-pointer hover:border-primary transition-colors"
-                            onClick={() => toggleTag(cat)}
-                          >
-                            {selectedTags.includes(cat) && <CheckCircle className="mr-1 h-3 w-3" />}
-                            {cat}
-                          </Badge>
-                        ))}
+                {/* Salary Range */}
+                <div>
+                  <div className="mb-3 text-sm font-semibold">Salary Range (USD)</div>
+                  <div className="space-y-4">
+                    {/* Slider */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>${minSalary}k</span>
+                        <span>${maxSalary}k</span>
+                      </div>
+                      <div className="relative h-2">
+                        <div className="absolute h-2 w-full rounded-full bg-muted" />
+                        <div
+                          className="absolute h-2 rounded-full bg-primary"
+                          style={{
+                            left: `${(minSalary / 25) * 100}%`,
+                            width: `${((maxSalary - minSalary) / 25) * 100}%`,
+                          }}
+                        />
+                        <input
+                          type="range"
+                          min="0"
+                          max="25"
+                          step="0.5"
+                          value={minSalary}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (val <= maxSalary) setMinSalary(val);
+                          }}
+                          className="absolute top-0 h-2 w-full appearance-none bg-transparent cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:shadow-lg"
+                        />
+                        <input
+                          type="range"
+                          min="0"
+                          max="25"
+                          step="0.5"
+                          value={maxSalary}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (val >= minSalary) setMaxSalary(val);
+                          }}
+                          className="absolute top-0 h-2 w-full appearance-none bg-transparent cursor-pointer z-20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:shadow-lg"
+                        />
                       </div>
                     </div>
-                    <Separator />
-                  </>
-                )}
 
-                {/* Skills/Tags */}
-                <div>
-                  <div className="mb-3 text-sm font-semibold">Skills</div>
-                  <div className="flex flex-wrap gap-2">
-                    {allTags.filter(t => !allCategories.includes(t)).map((t) => (
-                      <Badge
-                        key={t}
-                        variant={selectedTags.includes(t) ? "default" : "outline"}
-                        className="cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => toggleTag(t)}
+                    {/* Input Fields */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Min (k)</label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={minSalary === 0 ? "" : minSalary}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : Number(e.target.value);
+                            if (!isNaN(val) && val >= 0 && val <= 25 && val <= maxSalary) {
+                              setMinSalary(val);
+                            }
+                          }}
+                          className="h-9 text-sm"
+                          min="0"
+                          max="25"
+                          step="0.5"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Max (k)</label>
+                        <Input
+                          type="number"
+                          placeholder="25"
+                          value={maxSalary === 25 ? "" : maxSalary}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 25 : Number(e.target.value);
+                            if (!isNaN(val) && val >= 0 && val <= 25 && val >= minSalary) {
+                              setMaxSalary(val);
+                            }
+                          }}
+                          className="h-9 text-sm"
+                          min="0"
+                          max="25"
+                          step="0.5"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preset Ranges */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: "$1-3k", min: 1, max: 3 },
+                        { label: "$3-5k", min: 3, max: 5 },
+                        { label: "$5-8k", min: 5, max: 8 },
+                        { label: "$8k+", min: 8, max: 25 },
+                      ].map((preset) => (
+                        <Button
+                          key={preset.label}
+                          variant={minSalary === preset.min && maxSalary === preset.max ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setMinSalary(preset.min);
+                            setMaxSalary(preset.max);
+                          }}
+                          className="h-8 text-xs"
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+
+                    {/* Include Negotiable Checkbox */}
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <input
+                        type="checkbox"
+                        id="include-negotiable"
+                        checked={includeNegotiable}
+                        onChange={(e) => setIncludeNegotiable(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                      />
+                      <label htmlFor="include-negotiable" className="text-sm text-muted-foreground cursor-pointer">
+                        Include negotiable salaries
+                      </label>
+                    </div>
+
+                    {/* Clear Button */}
+                    {(minSalary > 0 || maxSalary < 25 || !includeNegotiable) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setMinSalary(0);
+                          setMaxSalary(25);
+                          setIncludeNegotiable(true);
+                          setIncludeNegotiable(true);
+                        }}
+                        className="w-full text-xs"
                       >
-                        {selectedTags.includes(t) && <CheckCircle className="mr-1 h-3 w-3" />}
-                        {t}
-                      </Badge>
-                    ))}
+                        Reset Salary Filter
+                      </Button>
+                    )}
                   </div>
                 </div>
 
+                <Separator />
+
+                {/* Work Location */}
+                <div>
+                  <div className="mb-3 text-sm font-semibold">Work Location</div>
+                  <div className="space-y-2">
+                    {[
+                      { value: "remote", label: "Remote" },
+                      { value: "onsite", label: "On-site" },
+                      { value: "hybrid", label: "Hybrid" },
+                    ].map((option) => (
+                      <label key={option.value} className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="radio"
+                          name="workLocation"
+                          value={option.value}
+                          checked={workLocation === option.value}
+                          onChange={(e) => setWorkLocation(e.target.checked ? option.value : "")}
+                          className="h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <span className="text-sm group-hover:text-primary transition-colors">
+                          {option.label}
+                        </span>
+                      </label>
+                    ))}
+                    {workLocation && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setWorkLocation("")}
+                        className="w-full text-xs mt-2"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Categories & Skills - Collapsible */}
+                <Collapsible>
+                  <CollapsibleTrigger className="w-full flex items-center justify-between text-sm font-semibold hover:text-primary transition-colors py-2">
+                    <span>Categories & Skills</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-2">
+                    {/* Categories */}
+                    {allCategories.length > 0 && (
+                      <div>
+                        <div className="mb-2 text-xs font-medium text-muted-foreground">Categories</div>
+                        <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                          {allCategories.map((cat) => (
+                            <Badge
+                              key={`cat-${cat}`}
+                              variant={selectedCategories.includes(cat) ? "default" : "outline"}
+                              className="cursor-pointer hover:border-primary transition-colors text-xs"
+                              onClick={() => toggleCategory(cat)}
+                            >
+                              {selectedCategories.includes(cat) && <CheckCircle className="mr-1 h-3 w-3" />}
+                              {cat}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Skills */}
+                    {allSkills.length > 0 && (
+                      <div>
+                        <div className="mb-2 text-xs font-medium text-muted-foreground">Skills</div>
+                        <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                          {allSkills.map((skill) => (
+                            <Badge
+                              key={`skill-${skill}`}
+                              variant={selectedSkills.includes(skill) ? "default" : "outline"}
+                              className="cursor-pointer hover:border-primary transition-colors text-xs"
+                              onClick={() => toggleSkill(skill)}
+                            >
+                              {selectedSkills.includes(skill) && <CheckCircle className="mr-1 h-3 w-3" />}
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Experience Level & Posted Date - Collapsible */}
+                <Collapsible>
+                  <CollapsibleTrigger className="w-full flex items-center justify-between text-sm font-semibold hover:text-primary transition-colors py-2">
+                    <span>Experience & Date</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-2">
+                    {/* Experience Level */}
+                    {allExperienceLevels.length > 0 && (
+                      <div>
+                        <div className="mb-2 text-xs font-medium text-muted-foreground">Experience Level</div>
+                        <div className="space-y-1.5">
+                          {allExperienceLevels.map((level) => (
+                            <label key={level} className="flex items-center gap-2 cursor-pointer group">
+                              <input
+                                type="checkbox"
+                                checked={experienceLevels.includes(level)}
+                                onChange={() => toggleExperienceLevel(level)}
+                                className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-xs group-hover:text-primary transition-colors">
+                                {level}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Posted Date */}
+                    <div>
+                      <div className="mb-2 text-xs font-medium text-muted-foreground">Posted Date</div>
+                      <div className="space-y-1.5">
+                        {[
+                          { value: "24h", label: "Last 24 hours" },
+                          { value: "week", label: "Last week" },
+                          { value: "month", label: "Last month" },
+                          { value: "3months", label: "Last 3 months" },
+                        ].map((option) => (
+                          <label key={option.value} className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                              type="radio"
+                              name="postedDate"
+                              value={option.value}
+                              checked={postedDate === option.value}
+                              onChange={(e) => setPostedDate(e.target.checked ? option.value : "")}
+                              className="h-3.5 w-3.5 rounded-full border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-xs group-hover:text-primary transition-colors">
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Advanced Filters - Collapsible */}
+                <Collapsible>
+                  <CollapsibleTrigger className="w-full flex items-center justify-between text-sm font-semibold hover:text-primary transition-colors py-2">
+                    <span>Advanced Filters</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-3 pt-2">
+                    {/* Company Filters */}
+                    <div>
+                      <div className="mb-2 text-xs font-medium text-muted-foreground">Company</div>
+                      <div className="space-y-3">
+                        {/* Company Verified */}
+                        <div>
+                          <div className="mb-1.5 text-xs text-muted-foreground">Verified Status</div>
+                          <div className="space-y-1.5">
+                            {[
+                              { value: null, label: "All companies" },
+                              { value: true, label: "Verified only" },
+                              { value: false, label: "Unverified only" },
+                            ].map((option) => (
+                              <label key={String(option.value)} className="flex items-center gap-2 cursor-pointer group">
+                                <input
+                                  type="radio"
+                                  name="companyVerified"
+                                  checked={companyVerified === option.value}
+                                  onChange={() => setCompanyVerified(option.value)}
+                                  className="h-3.5 w-3.5 rounded-full border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="text-xs group-hover:text-primary transition-colors">
+                                  {option.label}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Company Size */}
+                        {allCompanySizes.length > 0 && (
+                          <div>
+                            <div className="mb-1.5 text-xs text-muted-foreground">Company Size</div>
+                            <select
+                              value={companySize}
+                              onChange={(e) => setCompanySize(e.target.value)}
+                              className="w-full h-8 rounded-md border border-input bg-background px-2 py-1 text-xs"
+                            >
+                              <option value="">All sizes</option>
+                              {allCompanySizes.map((size) => (
+                                <option key={size} value={size}>
+                                  {size}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Company Rating */}
+                        <div>
+                          <div className="mb-1.5 text-xs text-muted-foreground">Min Rating</div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="5"
+                              step="0.5"
+                              value={minCompanyRating}
+                              onChange={(e) => setMinCompanyRating(Number(e.target.value))}
+                              className="flex-1 h-1.5"
+                            />
+                            <span className="text-xs text-muted-foreground w-10 text-right">
+                              {minCompanyRating > 0 ? `${minCompanyRating.toFixed(1)}+` : "Any"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Currency */}
+                    <div>
+                      <div className="mb-2 text-xs font-medium text-muted-foreground">Currency</div>
+                      <div className="space-y-1.5">
+                        {[
+                          { value: "", label: "All currencies" },
+                          { value: "USD", label: "USD" },
+                          { value: "VND", label: "VND" },
+                          { value: "EUR", label: "EUR" },
+                          { value: "JPY", label: "JPY" },
+                        ].map((option) => (
+                          <label key={option.value || "all"} className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                              type="radio"
+                              name="currency"
+                              value={option.value}
+                              checked={currency === option.value}
+                              onChange={(e) => setCurrency(e.target.value)}
+                              className="h-3.5 w-3.5 rounded-full border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-xs group-hover:text-primary transition-colors">
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Deadline */}
+                    <div>
+                      <div className="mb-2 text-xs font-medium text-muted-foreground">Application Deadline</div>
+                      <div className="space-y-1.5">
+                        {[
+                          { value: "", label: "Any deadline" },
+                          { value: "week", label: "Within 1 week" },
+                          { value: "month", label: "Within 1 month" },
+                          { value: "3months", label: "Within 3 months" },
+                        ].map((option) => (
+                          <label key={option.value || "any"} className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                              type="radio"
+                              name="deadlineFilter"
+                              value={option.value}
+                              checked={deadlineFilter === option.value}
+                              onChange={(e) => setDeadlineFilter(e.target.value)}
+                              className="h-3.5 w-3.5 rounded-full border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-xs group-hover:text-primary transition-colors">
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Benefits */}
+                    <div>
+                      <div className="mb-2 text-xs font-medium text-muted-foreground">Benefits</div>
+                      <div className="space-y-1.5">
+                        {[
+                          { value: null, label: "All jobs" },
+                          { value: true, label: "With benefits" },
+                          { value: false, label: "Without benefits" },
+                        ].map((option) => (
+                          <label key={String(option.value)} className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                              type="radio"
+                              name="hasBenefits"
+                              checked={hasBenefits === option.value}
+                              onChange={() => setHasBenefits(option.value)}
+                              className="h-3.5 w-3.5 rounded-full border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-xs group-hover:text-primary transition-colors">
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
                 {/* Clear Filters */}
-                {(Object.values(types).some((v) => v) || selectedTags.length > 0) && (
+                {(Object.values(types).some((v) => v) || selectedTags.length > 0 || selectedSkills.length > 0 || selectedCategories.length > 0 || experienceLevels.length > 0 || postedDate || companySize || minCompanyRating > 0 || companyVerified !== null || workLocation || currency || deadlineFilter || hasBenefits !== null || minSalary > 0 || maxSalary < 25 || !includeNegotiable) && (
                   <>
                     <Separator />
                     <Button
@@ -549,6 +1313,20 @@ const Jobs = () => {
                           REMOTE: false,
                         });
                         setSelectedTags([]);
+                        setSelectedSkills([]);
+                        setSelectedCategories([]);
+                        setExperienceLevels([]);
+                        setPostedDate("");
+                        setCompanySize("");
+                        setMinCompanyRating(0);
+                        setCompanyVerified(null);
+                        setWorkLocation("");
+                        setCurrency("");
+                        setDeadlineFilter("");
+                        setHasBenefits(null);
+                        setMinSalary(0);
+                        setMaxSalary(25);
+                        setIncludeNegotiable(true);
                       }}
                       className="w-full"
                     >
@@ -628,20 +1406,241 @@ const Jobs = () => {
 
                       <Separator />
 
+                      {/* Salary Range */}
+                      <div>
+                        <div className="mb-3 text-sm font-semibold">Salary Range (USD)</div>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>${minSalary}k</span>
+                              <span>${maxSalary}k</span>
+                            </div>
+                            <div className="relative h-2">
+                              <div className="absolute h-2 w-full rounded-full bg-muted" />
+                              <div
+                                className="absolute h-2 rounded-full bg-primary"
+                                style={{
+                                  left: `${(minSalary / 25) * 100}%`,
+                                  width: `${((maxSalary - minSalary) / 25) * 100}%`,
+                                }}
+                              />
+                              <input
+                                type="range"
+                                min="0"
+                                max="25"
+                                step="0.5"
+                                value={minSalary}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  if (val <= maxSalary) setMinSalary(val);
+                                }}
+                                className="absolute top-0 h-2 w-full appearance-none bg-transparent cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:shadow-lg"
+                              />
+                              <input
+                                type="range"
+                                min="0"
+                                max="25"
+                                step="0.5"
+                                value={maxSalary}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  if (val >= minSalary) setMaxSalary(val);
+                                }}
+                                className="absolute top-0 h-2 w-full appearance-none bg-transparent cursor-pointer z-20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:shadow-lg"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Input Fields */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-xs text-muted-foreground mb-1 block">Min (k)</label>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={minSalary === 0 ? "" : minSalary}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? 0 : Number(e.target.value);
+                                  if (!isNaN(val) && val >= 0 && val <= 25 && val <= maxSalary) {
+                                    setMinSalary(val);
+                                  }
+                                }}
+                                className="h-9 text-sm"
+                                min="0"
+                                max="25"
+                                step="0.5"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-muted-foreground mb-1 block">Max (k)</label>
+                              <Input
+                                type="number"
+                                placeholder="25"
+                                value={maxSalary === 25 ? "" : maxSalary}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? 25 : Number(e.target.value);
+                                  if (!isNaN(val) && val >= 0 && val <= 25 && val >= minSalary) {
+                                    setMaxSalary(val);
+                                  }
+                                }}
+                                className="h-9 text-sm"
+                                min="0"
+                                max="25"
+                                step="0.5"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Include Negotiable Checkbox */}
+                          <div className="flex items-center gap-2 pt-2 border-t">
+                            <input
+                              type="checkbox"
+                              id="include-negotiable-mobile"
+                              checked={includeNegotiable}
+                              onChange={(e) => setIncludeNegotiable(e.target.checked)}
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                            />
+                            <label htmlFor="include-negotiable-mobile" className="text-sm text-muted-foreground cursor-pointer">
+                              Include negotiable salaries
+                            </label>
+                          </div>
+
+                          {/* Clear Button */}
+                          {(minSalary > 0 || maxSalary < 25 || !includeNegotiable) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setMinSalary(0);
+                                setMaxSalary(25);
+                                setIncludeNegotiable(true);
+                              }}
+                              className="w-full text-xs"
+                            >
+                              Reset Salary Filter
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Work Location */}
+                      <div>
+                        <div className="mb-3 text-sm font-semibold">Work Location</div>
+                        <div className="space-y-2">
+                          {[
+                            { value: "remote", label: "Remote" },
+                            { value: "onsite", label: "On-site" },
+                            { value: "hybrid", label: "Hybrid" },
+                          ].map((option) => (
+                            <label key={option.value} className="flex items-center gap-2 cursor-pointer group">
+                              <input
+                                type="radio"
+                                name="workLocationMobile"
+                                value={option.value}
+                                checked={workLocation === option.value}
+                                onChange={(e) => setWorkLocation(e.target.checked ? option.value : "")}
+                                className="h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm group-hover:text-primary transition-colors">
+                                {option.label}
+                              </span>
+                            </label>
+                          ))}
+                          {workLocation && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setWorkLocation("")}
+                              className="w-full text-xs mt-2"
+                            >
+                              Clear
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Experience Level */}
+                      {allExperienceLevels.length > 0 && (
+                        <>
+                          <div>
+                            <div className="mb-3 text-sm font-semibold">Experience Level</div>
+                            <div className="space-y-2">
+                              {allExperienceLevels.map((level) => (
+                                <label key={level} className="flex items-center gap-2 cursor-pointer group">
+                                  <input
+                                    type="checkbox"
+                                    checked={experienceLevels.includes(level)}
+                                    onChange={() => toggleExperienceLevel(level)}
+                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                  />
+                                  <span className="text-sm group-hover:text-primary transition-colors">
+                                    {level}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          <Separator />
+                        </>
+                      )}
+
+                      {/* Posted Date */}
+                      <div>
+                        <div className="mb-3 text-sm font-semibold">Posted Date</div>
+                        <div className="space-y-2">
+                          {[
+                            { value: "24h", label: "Last 24 hours" },
+                            { value: "week", label: "Last week" },
+                            { value: "month", label: "Last month" },
+                            { value: "3months", label: "Last 3 months" },
+                          ].map((option) => (
+                            <label key={option.value} className="flex items-center gap-2 cursor-pointer group">
+                              <input
+                                type="radio"
+                                name="postedDateMobile"
+                                value={option.value}
+                                checked={postedDate === option.value}
+                                onChange={(e) => setPostedDate(e.target.checked ? option.value : "")}
+                                className="h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm group-hover:text-primary transition-colors">
+                                {option.label}
+                              </span>
+                            </label>
+                          ))}
+                          {postedDate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setPostedDate("")}
+                              className="w-full text-xs mt-2"
+                            >
+                              Clear
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+
                       {/* Categories */}
                       {allCategories.length > 0 && (
                         <>
                           <div>
                             <div className="mb-3 text-sm font-semibold">Categories</div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
                               {allCategories.map((cat) => (
                                 <Badge
                                   key={`cat-${cat}`}
-                                  variant={selectedTags.includes(cat) ? "default" : "outline"}
+                                  variant={selectedCategories.includes(cat) ? "default" : "outline"}
                                   className="cursor-pointer hover:border-primary transition-colors"
-                                  onClick={() => toggleTag(cat)}
+                                  onClick={() => toggleCategory(cat)}
                                 >
-                                  {selectedTags.includes(cat) && <CheckCircle className="mr-1 h-3 w-3" />}
+                                  {selectedCategories.includes(cat) && <CheckCircle className="mr-1 h-3 w-3" />}
                                   {cat}
                                 </Badge>
                               ))}
@@ -651,26 +1650,198 @@ const Jobs = () => {
                         </>
                       )}
 
-                      {/* Skills/Tags */}
+                      {/* Skills */}
+                      {allSkills.length > 0 && (
+                        <>
+                          <div>
+                            <div className="mb-3 text-sm font-semibold">Skills</div>
+                            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                              {allSkills.map((skill) => (
+                                <Badge
+                                  key={`skill-${skill}`}
+                                  variant={selectedSkills.includes(skill) ? "default" : "outline"}
+                                  className="cursor-pointer hover:border-primary transition-colors"
+                                  onClick={() => toggleSkill(skill)}
+                                >
+                                  {selectedSkills.includes(skill) && <CheckCircle className="mr-1 h-3 w-3" />}
+                                  {skill}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <Separator />
+                        </>
+                      )}
+
+                      {/* Company Filters */}
                       <div>
-                        <div className="mb-3 text-sm font-semibold">Skills</div>
-                        <div className="flex flex-wrap gap-2">
-                          {allTags.filter(t => !allCategories.includes(t)).map((t) => (
-                            <Badge
-                              key={t}
-                              variant={selectedTags.includes(t) ? "default" : "outline"}
-                              className="cursor-pointer hover:border-primary transition-colors"
-                              onClick={() => toggleTag(t)}
-                            >
-                              {selectedTags.includes(t) && <CheckCircle className="mr-1 h-3 w-3" />}
-                              {t}
-                            </Badge>
+                        <div className="mb-3 text-sm font-semibold">Company</div>
+                        <div className="space-y-4">
+                          {/* Company Verified */}
+                          <div>
+                            <div className="mb-2 text-xs text-muted-foreground">Verified Status</div>
+                            <div className="space-y-2">
+                              {[
+                                { value: null, label: "All companies" },
+                                { value: true, label: "Verified only" },
+                                { value: false, label: "Unverified only" },
+                              ].map((option) => (
+                                <label key={String(option.value)} className="flex items-center gap-2 cursor-pointer group">
+                                  <input
+                                    type="radio"
+                                    name="companyVerifiedMobile"
+                                    checked={companyVerified === option.value}
+                                    onChange={() => setCompanyVerified(option.value)}
+                                    className="h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary"
+                                  />
+                                  <span className="text-sm group-hover:text-primary transition-colors">
+                                    {option.label}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Company Size */}
+                          {allCompanySizes.length > 0 && (
+                            <div>
+                              <div className="mb-2 text-xs text-muted-foreground">Company Size</div>
+                              <select
+                                value={companySize}
+                                onChange={(e) => setCompanySize(e.target.value)}
+                                className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                              >
+                                <option value="">All sizes</option>
+                                {allCompanySizes.map((size) => (
+                                  <option key={size} value={size}>
+                                    {size}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
+                          {/* Company Rating */}
+                          <div>
+                            <div className="mb-2 text-xs text-muted-foreground">Min Rating</div>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="5"
+                                  step="0.5"
+                                  value={minCompanyRating}
+                                  onChange={(e) => setMinCompanyRating(Number(e.target.value))}
+                                  className="flex-1 h-2"
+                                />
+                                <span className="text-xs text-muted-foreground w-12 text-right">
+                                  {minCompanyRating > 0 ? `${minCompanyRating.toFixed(1)}+` : "Any"}
+                                </span>
+                              </div>
+                              {minCompanyRating > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setMinCompanyRating(0)}
+                                  className="w-full text-xs"
+                                >
+                                  Clear
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Currency */}
+                      <div>
+                        <div className="mb-3 text-sm font-semibold">Currency</div>
+                        <div className="space-y-2">
+                          {[
+                            { value: "", label: "All currencies" },
+                            { value: "USD", label: "USD" },
+                            { value: "VND", label: "VND" },
+                            { value: "EUR", label: "EUR" },
+                            { value: "JPY", label: "JPY" },
+                          ].map((option) => (
+                            <label key={option.value || "all"} className="flex items-center gap-2 cursor-pointer group">
+                              <input
+                                type="radio"
+                                name="currencyMobile"
+                                value={option.value}
+                                checked={currency === option.value}
+                                onChange={(e) => setCurrency(e.target.value)}
+                                className="h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm group-hover:text-primary transition-colors">
+                                {option.label}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Deadline */}
+                      <div>
+                        <div className="mb-3 text-sm font-semibold">Application Deadline</div>
+                        <div className="space-y-2">
+                          {[
+                            { value: "", label: "Any deadline" },
+                            { value: "week", label: "Within 1 week" },
+                            { value: "month", label: "Within 1 month" },
+                            { value: "3months", label: "Within 3 months" },
+                          ].map((option) => (
+                            <label key={option.value || "any"} className="flex items-center gap-2 cursor-pointer group">
+                              <input
+                                type="radio"
+                                name="deadlineFilterMobile"
+                                value={option.value}
+                                checked={deadlineFilter === option.value}
+                                onChange={(e) => setDeadlineFilter(e.target.value)}
+                                className="h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm group-hover:text-primary transition-colors">
+                                {option.label}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Benefits */}
+                      <div>
+                        <div className="mb-3 text-sm font-semibold">Benefits</div>
+                        <div className="space-y-2">
+                          {[
+                            { value: null, label: "All jobs" },
+                            { value: true, label: "With benefits" },
+                            { value: false, label: "Without benefits" },
+                          ].map((option) => (
+                            <label key={String(option.value)} className="flex items-center gap-2 cursor-pointer group">
+                              <input
+                                type="radio"
+                                name="hasBenefitsMobile"
+                                checked={hasBenefits === option.value}
+                                onChange={() => setHasBenefits(option.value)}
+                                className="h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm group-hover:text-primary transition-colors">
+                                {option.label}
+                              </span>
+                            </label>
                           ))}
                         </div>
                       </div>
 
                       {/* Clear Filters */}
-                      {(Object.values(types).some((v) => v) || selectedTags.length > 0) && (
+                      {(Object.values(types).some((v) => v) || selectedTags.length > 0 || selectedSkills.length > 0 || selectedCategories.length > 0 || experienceLevels.length > 0 || postedDate || companySize || minCompanyRating > 0 || companyVerified !== null || workLocation || currency || deadlineFilter || hasBenefits !== null || minSalary > 0 || maxSalary < 25 || !includeNegotiable) && (
                         <>
                           <Separator />
                           <Button
@@ -686,6 +1857,20 @@ const Jobs = () => {
                                 REMOTE: false,
                               });
                               setSelectedTags([]);
+                              setSelectedSkills([]);
+                              setSelectedCategories([]);
+                              setExperienceLevels([]);
+                              setPostedDate("");
+                              setCompanySize("");
+                              setMinCompanyRating(0);
+                              setCompanyVerified(null);
+                              setWorkLocation("");
+                              setCurrency("");
+                              setDeadlineFilter("");
+                              setHasBenefits(null);
+                              setMinSalary(0);
+                              setMaxSalary(25);
+                              setIncludeNegotiable(true);
                             }}
                             className="w-full"
                           >
@@ -869,15 +2054,26 @@ const Jobs = () => {
                     </CardContent>
 
                     <CardFooter className="relative flex-col gap-3 border-t bg-gradient-to-br from-background to-muted/30 p-4">
-                      {/* Salary Section */}
-                      <div className="w-full flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="rounded-lg bg-primary/10 p-2">
-                            <DollarSign className="h-4 w-4 text-primary" />
+                      {/* Salary & Location Section */}
+                      <div className="w-full flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="rounded-lg bg-primary/10 p-2">
+                              <DollarSign className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-muted-foreground">Salary</div>
+                              <div className="font-semibold text-sm">{getSalaryRange(job)}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">Salary</div>
-                            <div className="font-semibold text-sm">{getSalaryRange(job)}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="rounded-lg bg-blue-500/10 p-2">
+                              <MapPin className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-muted-foreground">Location</div>
+                              <div className="font-semibold text-sm">{getLocation(job)}</div>
+                            </div>
                           </div>
                         </div>
                         <Badge variant="outline" className="text-xs">

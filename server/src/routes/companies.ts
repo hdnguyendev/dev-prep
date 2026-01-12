@@ -57,6 +57,51 @@ companyRoutes.get("/slug/:slug", async (c) => {
   }
 });
 
+/**
+ * Get company name suggestions for autocomplete
+ * GET /companies/suggestions?q=google
+ * Returns lowercase company names from database only
+ */
+companyRoutes.get("/suggestions", async (c) => {
+  try {
+    const query = c.req.query();
+    const searchQuery = (query.q || query.search || "").trim();
+    
+    if (!searchQuery || searchQuery.length < 2) {
+      return c.json({ success: true, data: [] });
+    }
+
+    // Get distinct company names that match the search query
+    const companies = await prisma.company.findMany({
+      where: {
+        name: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        name: true,
+      },
+      distinct: ["name"],
+      take: 10, // Limit to 10 suggestions
+      orderBy: {
+        createdAt: "desc", // Most recent first
+      },
+    });
+
+    // Extract unique names and convert to lowercase
+    const suggestions = [...new Set(companies.map(company => company.name.toLowerCase()))];
+
+    return c.json({ success: true, data: suggestions });
+  } catch (error: any) {
+    console.error("Error fetching company suggestions:", error);
+    return c.json(
+      { success: false, message: error.message || "Failed to fetch suggestions" },
+      500
+    );
+  }
+});
+
 // Get jobs for a specific company
 companyRoutes.get("/:id/jobs", async (c) => {
   try {

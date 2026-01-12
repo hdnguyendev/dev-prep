@@ -1,0 +1,72 @@
+graph TB
+    subgraph INPUT["📥 INPUT: Job Text"]
+        JOB_TEXT["Job Description + Requirements + Responsibilities<br/>━━━━━━━━━━━━━━━━<br/>Example:<br/>'We are looking for a Senior Frontend Developer<br/>with strong communication skills and leadership<br/>experience. Must have React, Node.js, and PostgreSQL.<br/>The candidate should be adaptable and creative.'"]
+    end
+    
+    subgraph EXTRACTION["🔍 TEXT EXTRACTION ENGINE<br/>(Rule-based Pattern Matching)"]
+        COMBINE["1. Combine Text<br/>fullText = description + requirements + responsibilities<br/>Convert to lowercase"]
+        
+        subgraph SOFT_SKILLS["Soft Skills Extraction"]
+            SS_PATTERNS["Pattern Matching<br/>━━━━━━━━━━━━━━━━<br/>Communication:<br/>/communicat(e|ion|ing|ive)/gi<br/>/verbal/gi, /written/gi, /presentation/gi<br/><br/>Leadership:<br/>/lead(ership|ing|er)/gi<br/>/mentoring/gi, /coaching/gi<br/><br/>Problem Solving:<br/>/problem.solv(e|ing)/gi<br/>/analytical/gi, /critical.think(ing)?/gi<br/><br/>Adaptability:<br/>/adaptable/gi, /flexible/gi<br/>/resilient/gi, /agile/gi<br/><br/>Creativity:<br/>/creativ(e|ity)/gi<br/>/innovative/gi, /design.think(ing)?/gi<br/><br/>Attention to Detail:<br/>/attention.to.detail/gi<br/>/detailed.oriented/gi, /meticulous/gi"]
+            
+            SS_COUNT["Count Matches<br/>For each soft skill:<br/>count = number of pattern matches<br/>Returns: {communication: 2, leadership: 1, ...}"]
+        end
+        
+        subgraph TECHNOLOGIES["Technology Extraction"]
+            TECH_PATTERNS["Pattern Matching by Category<br/>━━━━━━━━━━━━━━━━<br/>Frontend:<br/>/react/gi, /vue/gi, /angular/gi<br/>/javascript/gi, /typescript/gi<br/><br/>Backend:<br/>/node/gi, /express/gi, /django/gi<br/>/python/gi, /java/gi<br/><br/>Database:<br/>/mysql/gi, /postgresql/gi<br/>/mongodb/gi, /redis/gi<br/><br/>Cloud:<br/>/aws/gi, /gcp/gi, /azure/gi<br/>/docker/gi, /kubernetes/gi<br/><br/>Tools:<br/>/git/gi, /jenkins/gi<br/>/jira/gi, /slack/gi"]
+            
+            TECH_EXTRACT["Extract Unique Matches<br/>For each category:<br/>matches = unique regex matches<br/>Returns: {frontend: ['react'], backend: ['node'], ...}"]
+        end
+        
+        KEYWORDS["3. Keyword Extraction<br/>━━━━━━━━━━━━━━━━<br/>• Remove stop words<br/>• Extract words > 3 chars<br/>• Count frequency<br/>• Return top 10 keywords"]
+        
+        COMPLEXITY["4. Complexity Assessment<br/>━━━━━━━━━━━━━━━━<br/>Based on technical terms:<br/>• scalability, performance<br/>• architecture, microservices<br/>• leadership terms<br/>• advanced/expert/senior<br/>Returns: 1-5 scale"]
+    end
+    
+    subgraph OUTPUT["📤 OUTPUT: Structured Data"]
+        SOFT_OUTPUT["Soft Skills Object<br/>━━━━━━━━━━━━━━━━<br/>{<br/>  communication: 2,<br/>  leadership: 1,<br/>  problemSolving: 0,<br/>  adaptability: 1,<br/>  creativity: 1,<br/>  attentionToDetail: 0<br/>}"]
+        
+        TECH_OUTPUT["Technologies Object<br/>━━━━━━━━━━━━━━━━<br/>{<br/>  frontend: ['react'],<br/>  backend: ['node'],<br/>  database: ['postgresql'],<br/>  cloud: [],<br/>  tools: []<br/>}"]
+        
+        OTHER_OUTPUT["Other Extractions<br/>━━━━━━━━━━━━━━━━<br/>• languages: []<br/>• environment: {startup: 0, ...}<br/>• keywords: ['senior', 'frontend', ...]<br/>• complexity: 4"]
+    end
+    
+    subgraph USAGE["🎯 USAGE IN SCORING"]
+        SCORING1["Dimension 5: Soft Skills Score<br/>━━━━━━━━━━━━━━━━<br/>Uses: jobTextAnalysis.softSkills<br/>Compares with candidate soft skills"]
+        
+        SCORING2["Dimension 6: Technology Score<br/>━━━━━━━━━━━━━━━━<br/>Uses: jobTextAnalysis.technologies<br/>Compares with candidate technologies"]
+    end
+    
+    JOB_TEXT --> COMBINE
+    COMBINE --> SS_PATTERNS
+    COMBINE --> TECH_PATTERNS
+    COMBINE --> KEYWORDS
+    COMBINE --> COMPLEXITY
+    
+    SS_PATTERNS --> SS_COUNT
+    SS_COUNT --> SOFT_OUTPUT
+    
+    TECH_PATTERNS --> TECH_EXTRACT
+    TECH_EXTRACT --> TECH_OUTPUT
+    
+    KEYWORDS --> OTHER_OUTPUT
+    COMPLEXITY --> OTHER_OUTPUT
+    
+    SOFT_OUTPUT --> SCORING1
+    TECH_OUTPUT --> SCORING2
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef extraction fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef soft fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef tech fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef output fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    classDef usage fill:#e0f2f1,stroke:#004d40,stroke-width:2px,color:#000
+    
+    class JOB_TEXT,INPUT input
+    class COMBINE,EXTRACTION extraction
+    class SS_PATTERNS,SS_COUNT,SOFT_SKILLS soft
+    class TECH_PATTERNS,TECH_EXTRACT,TECHNOLOGIES tech
+    class SOFT_OUTPUT,TECH_OUTPUT,OTHER_OUTPUT,OUTPUT output
+    class SCORING1,SCORING2,USAGE usage
+

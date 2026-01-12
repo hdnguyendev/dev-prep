@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useLocation } from "react-router";
 import { adminResources } from "@/lib/adminResources";
 import { adminClient, useAdminToken } from "@/lib/adminClient";
 import { normalizeAdminPayload } from "@/lib/adminNormalize";
@@ -41,6 +41,7 @@ const formatLabel = (field: string) => {
 const AdminDetail = () => {
   const { resource: resourcePath, id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const getToken = useAdminToken();
   const [row, setRow] = useState<AdminRow | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -378,7 +379,15 @@ const AdminDetail = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                // Navigate back to the list page for this resource instead of dashboard
+                if (resource) {
+                  const resourceKey = resource.key || resource.path;
+                  navigate(`/admin/manage?resource=${resourceKey}`);
+                } else {
+                  navigate(-1);
+                }
+              }}
               className="h-10 w-10 rounded-lg hover:bg-muted"
             >
               <ExternalLink className="h-5 w-5 rotate-180" />

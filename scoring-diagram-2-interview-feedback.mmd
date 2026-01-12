@@ -1,0 +1,115 @@
+graph TB
+    subgraph Input["INPUT: Raw Data"]
+        I1["Interview Transcript<br/>- Full conversation text<br/>- Question-Answer pairs<br/>- Turn order"]
+        I2["Interview Metadata<br/>- Question Type (Technical/Behavioral/General)<br/>- Seniority Level (Junior/Mid/Senior)<br/>- Must-have Keywords<br/>- Nice-to-have Keywords<br/>- Language (EN/VI)"]
+    end
+    
+    subgraph PerQuestion["PER-QUESTION SCORING (0-10)"]
+        direction TB
+        
+        subgraph Q1["1. Length Score (15%)"]
+            Q1A["Count Words<br/>words = countWords(answerText)"]
+            Q1B["Check Minimum by Seniority<br/>Junior: min = 18, good = 25-70<br/>Mid: min = 25, good = 40-90<br/>Senior: min = 35, good = 60-120"]
+            Q1C["Calculate Score<br/>if words == 0: score = 0<br/>else if words < minGood: score = 4<br/>else if words < okWords: score = 7<br/>else: score = 8"]
+            Q1A --> Q1B --> Q1C
+        end
+        
+        subgraph Q2["2. Structure Score (20%)"]
+            Q2A["Detect Structure Signals<br/>Check for STAR keywords:<br/>- situation, task, action, result<br/>- problem, approach, outcome<br/>- context, challenge, solution"]
+            Q2B["Check Logical Flow<br/>Verify: problem → solution → result<br/>Check for sequential markers"]
+            Q2C["Calculate Score<br/>if hasStructure: score = 10<br/>else: score = 4"]
+            Q2A --> Q2B --> Q2C
+        end
+        
+        subgraph Q3["3. Examples Score (20%)"]
+            Q3A["Detect Example Signals<br/>Check for:<br/>- 'for example', 'e.g.', 'ví dụ'<br/>- Numbers: '10%', '1000 users'<br/>- Metrics: 'KPI', 'latency', 'ROI'<br/>- Specific technologies/tools"]
+            Q3B["Count Examples<br/>exampleCount = countExampleSignals(answer)"]
+            Q3C["Calculate Score<br/>if hasExamples: score = 10<br/>else: score = 4"]
+            Q3A --> Q3B --> Q3C
+        end
+        
+        subgraph Q4["4. Confidence Score (15%)"]
+            Q4A["Detect Filler Words<br/>Check for hesitation:<br/>EN: 'uh', 'um', 'maybe', 'probably'<br/>VI: 'ờ', 'ừm', 'chắc', 'không chắc'"]
+            Q4B["Count Filler Occurrences<br/>fillerCount = countFillerWords(answer)"]
+            Q4C["Calculate Score<br/>if hesitant OR fillerCount >= 4: score = 4<br/>else: score = 8"]
+            Q4A --> Q4B --> Q4C
+        end
+        
+        subgraph Q5["5. Keyword Match Score (15%)"]
+            Q5A["Extract Keywords<br/>mustHaveKeywords = job.mustHave<br/>niceToHaveKeywords = job.niceToHave"]
+            Q5B["Count Matches<br/>mustHits = countMatches(answer, mustHave)<br/>niceHits = countMatches(answer, niceToHave)"]
+            Q5C["Calculate Score<br/>score = min(mustHits × 3 + niceHits × 1, 10)"]
+            Q5A --> Q5B --> Q5C
+        end
+        
+        subgraph Q6["6. Relevance Score (15%)"]
+            Q6A["Tokenize Text<br/>questionTokens = tokenize(questionText)<br/>answerTokens = tokenize(answerText)"]
+            Q6B["Calculate Jaccard Similarity<br/>intersection = commonTokens<br/>union = allUniqueTokens<br/>jaccard = intersection / union"]
+            Q6C["Calculate Score<br/>score = clampInt(jaccard × 10, 0, 10)"]
+            Q6A --> Q6B --> Q6C
+        end
+        
+        subgraph Adjust["ADJUST BY QUESTION TYPE"]
+            A1["Technical Questions<br/>+8% Keyword Match<br/>+5% Relevance<br/>+3% Examples<br/>-3% Structure"]
+            A2["Behavioral Questions<br/>+8% Structure<br/>+5% Examples<br/>+3% Confidence<br/>-4% Keyword Match"]
+            A3["General Questions<br/>Giữ nguyên trọng số mặc định"]
+        end
+        
+        subgraph Blend["BLEND SCORES"]
+            B1["weightedScore =<br/>(lengthScore × w.length) +<br/>(structureScore × w.structure) +<br/>(examplesScore × w.examples) +<br/>(confidenceScore × w.confidence) +<br/>(keywordScore × w.keywordMatch) +<br/>(relevanceScore × w.relevance)"]
+            B2["Normalize by Total Weight<br/>finalScore = weightedScore / totalWeight<br/>Clamp to 0-10"]
+        end
+    end
+    
+        subgraph Aggregate["AGGREGATE SCORES"]
+        AG1["Average Per-Question Score<br/>avgScore = sum(perQuestionScores) / questionCount"]
+        AG2["Overall Score<br/>overallScore = avgScore × 10<br/>(Scale from 0-10 to 0-100)"]
+        AG3["Category Scores (0-10)<br/>- Clarity: % answers ≥ 6 points<br/>- Structure: % structured answers<br/>- Depth & Evidence: avg + examples bonus<br/>- Relevance: avg relevance score<br/>- Keyword Match: keyword coverage"]
+    end
+    
+    subgraph Recommendation["RECOMMENDATION"]
+        R1["if overallScore ≥ 80:<br/>  recommendation = 'HIRE'<br/>else if overallScore ≥ 60:<br/>  recommendation = 'CONSIDER'<br/>else:<br/>  recommendation = 'REJECT'"]
+    end
+    
+    subgraph Output["OUTPUT: Interview Feedback"]
+        O1["Overall Score: 0-100<br/>Recommendation: HIRE/CONSIDER/REJECT<br/><br/>Category Scores:<br/>- Clarity: 0-10<br/>- Structure: 0-10<br/>- Depth & Evidence: 0-10<br/>- Relevance: 0-10<br/>- Keyword Match: 0-10<br/><br/>Per-Question Scores:<br/>- Question 1: score, feedback<br/>- Question 2: score, feedback<br/>- ...<br/><br/>Summary:<br/>- Strengths<br/>- Areas for Improvement"]
+    end
+    
+    I1 --> Q1
+    I2 --> Q1
+    I1 --> Q2
+    I2 --> Q2
+    I1 --> Q3
+    I2 --> Q3
+    I1 --> Q4
+    I2 --> Q4
+    I1 --> Q5
+    I2 --> Q5
+    I1 --> Q6
+    I2 --> Q6
+    
+    Q1C --> Adjust
+    Q2C --> Adjust
+    Q3C --> Adjust
+    Q4C --> Adjust
+    Q5C --> Adjust
+    Q6C --> Adjust
+    
+    Adjust --> Blend
+    B1 --> B2
+    B2 --> AG1
+    AG1 --> AG2
+    AG1 --> AG3
+    AG2 --> R1
+    AG2 --> O1
+    AG3 --> O1
+    R1 --> O1
+    
+    style Input fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style PerQuestion fill:#f5f5f5,stroke:#424242,stroke-width:2px
+    style Adjust fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    style Blend fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px
+    style Aggregate fill:#ce93d8,stroke:#4a148c,stroke-width:2px
+    style Recommendation fill:#ab47bc,stroke:#4a148c,stroke-width:2px
+    style Output fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
+

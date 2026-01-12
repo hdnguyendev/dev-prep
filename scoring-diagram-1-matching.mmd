@@ -1,0 +1,100 @@
+graph TB
+    subgraph Input["INPUT: Raw Data"]
+        C1["Candidate Profile<br/>- Skills<br/>- Experiences<br/>- Education<br/>- Headline/Title<br/>- Address<br/>- Soft Skills<br/>- Technologies"]
+        J1["Job Requirements<br/>- Required Skills<br/>- Optional Skills<br/>- Experience Level<br/>- Job Title<br/>- Education Requirements<br/>- Location<br/>- Job Description"]
+    end
+    
+    subgraph Layer1["LAYER 1: MATCHING SCORE CALCULATION"]
+        direction TB
+        
+        subgraph M1["1. Skills Score (30%)"]
+            M1A["Normalize Skills<br/>- Lowercase<br/>- Remove special chars<br/>- Handle synonyms"]
+            M1B["Compare Skills<br/>matched = intersection<br/>missing = required - matched"]
+            M1C["Calculate Score<br/>requiredMatch% = matchedCount / requiredCount × 100<br/>optionalBonus = min(optionalMatchCount / optionalCount × 20, 20)<br/>score = min(requiredMatch% + optionalBonus, 100)"]
+            M1A --> M1B --> M1C
+        end
+        
+        subgraph M2["2. Experience Score (18%)"]
+            M2A["Calculate Total Years<br/>sum all experience durations<br/>years = (endDate - startDate) / 365.25"]
+            M2B["Map to Level<br/>Intern: 0-1 years<br/>Junior: 1-2 years<br/>Mid: 2-5 years<br/>Senior: 5-8 years<br/>Lead: 8-12 years<br/>Principal: 12+ years"]
+            M2C["Compare Levels<br/>if candidateLevel >= requiredLevel:<br/>  score = 100<br/>else:<br/>  score = max(0, 100 - levelDiff × 25)"]
+            M2A --> M2B --> M2C
+        end
+        
+        subgraph M3["3. Title Score (12%)"]
+            M3A["Normalize Titles<br/>- Lowercase<br/>- Remove special chars<br/>- Split into words<br/>- Filter words > 2 chars"]
+            M3B["Find Common Keywords<br/>commonWords = intersection(candidateWords, jobWords)"]
+            M3C["Calculate Similarity<br/>similarity = commonWords.length / totalUniqueWords × 100<br/>score = min(similarity, 100)"]
+            M3A --> M3B --> M3C
+        end
+        
+        subgraph M4["4. Education Score (12%)"]
+            M4A["Check Required Degree<br/>if job.requiredDegree exists:<br/>  match = candidate.degree === job.requiredDegree"]
+            M4B["Check Preferred Degree<br/>if job.preferredDegree exists:<br/>  preferredMatch = candidate.degree === job.preferredDegree"]
+            M4C["Check Field of Study<br/>if job.requiredField exists:<br/>  fieldMatch = candidate.field === job.requiredField"]
+            M4D["Calculate Score<br/>if requiredMatch: score = 100<br/>else if preferredMatch: score = 70<br/>else if fieldMatch: score = 50<br/>else: score = 0"]
+            M4A --> M4D
+            M4B --> M4D
+            M4C --> M4D
+        end
+        
+        subgraph M5["5. Soft Skills Score (12%)"]
+            M5A["Extract Soft Skills from Job<br/>Analyze job description text<br/>Extract: communication, leadership,<br/>problem-solving, adaptability, etc."]
+            M5B["Compare with Candidate<br/>candidateSoftSkills = candidate.softSkills object<br/>jobSoftSkills = extracted from job text"]
+            M5C["Calculate Match<br/>For each skill:<br/>  if candidate has skill: add points<br/>score = (matchedSkills / totalJobSkills) × 100"]
+            M5A --> M5B --> M5C
+        end
+        
+        subgraph M6["6. Technology Score (8%)"]
+            M6A["Extract Technologies from Job<br/>Analyze job description<br/>Extract: frontend, backend,<br/>database, cloud, tools"]
+            M6B["Compare with Candidate<br/>candidateTechs = candidate.technologies<br/>jobTechs = extracted from job"]
+            M6C["Calculate Match<br/>For each category:<br/>  match% = intersection / union<br/>score = average of all categories × 100"]
+            M6A --> M6B --> M6C
+        end
+        
+        subgraph M7["7. Location Score (8%)"]
+            M7A["Check Remote Work<br/>if job.isRemote:<br/>  score = 100<br/>  return"]
+            M7B["Extract Locations<br/>candidateLocation = parse(candidate.address)<br/>jobLocation = parse(job.location)"]
+            M7C["Calculate Distance<br/>if same city: score = 100<br/>if same country: score = 70<br/>if different country: score = 30<br/>if no location info: score = 50"]
+            M7A --> M7B --> M7C
+        end
+    end
+    
+    subgraph Weighted["WEIGHTED CALCULATION"]
+        W1["weightedScore =<br/>(skillScore × 0.30) +<br/>(experienceScore × 0.18) +<br/>(titleScore × 0.12) +<br/>(educationScore × 0.12) +<br/>(softSkillsScore × 0.12) +<br/>(technologyScore × 0.08) +<br/>(locationScore × 0.08)"]
+    end
+    
+    subgraph Output["OUTPUT: Match Score"]
+        O1["Match Score: 0-100<br/>Breakdown:<br/>- Skills: XX%<br/>- Experience: XX%<br/>- Title: XX%<br/>- Education: XX%<br/>- Soft Skills: XX%<br/>- Technology: XX%<br/>- Location: XX%<br/><br/>Details:<br/>- Matched Skills<br/>- Missing Skills<br/>- Experience Gap<br/>- Title Similarity<br/>- Education Match"]
+    end
+    
+    C1 --> M1
+    J1 --> M1
+    C1 --> M2
+    J1 --> M2
+    C1 --> M3
+    J1 --> M3
+    C1 --> M4
+    J1 --> M4
+    C1 --> M5
+    J1 --> M5
+    C1 --> M6
+    J1 --> M6
+    C1 --> M7
+    J1 --> M7
+    
+    M1C --> W1
+    M2C --> W1
+    M3C --> W1
+    M4D --> W1
+    M5C --> W1
+    M6C --> W1
+    M7C --> W1
+    
+    W1 --> O1
+    
+    style Input fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Layer1 fill:#f5f5f5,stroke:#424242,stroke-width:2px
+    style Weighted fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Output fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
+

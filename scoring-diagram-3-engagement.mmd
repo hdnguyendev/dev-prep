@@ -1,0 +1,106 @@
+graph TB
+    subgraph Input["INPUT: Interaction Data"]
+        I1["Candidate Actions<br/>- Job Views (viewsCount)<br/>- Job Clicks (clicksCount)<br/>- Application Status"]
+        I2["Job Data<br/>- Job ID<br/>- Published Date<br/>- Deadline<br/>- Status"]
+    end
+    
+    subgraph Tracking["INTERACTION TRACKING"]
+        direction TB
+        
+        subgraph T1["1. Job Views Tracking"]
+            T1A["Event: Candidate views job detail page<br/>Trigger: GET /jobs/:id"]
+            T1B["Check User Role<br/>if user.role === 'CANDIDATE':<br/>  increment viewsCount"]
+            T1C["Update Database<br/>Job.viewsCount += 1<br/>Track per candidate per job"]
+            T1A --> T1B --> T1C
+        end
+        
+        subgraph T2["2. Job Clicks Tracking"]
+            T2A["Event: Candidate clicks on job card<br/>Trigger: POST /jobs/:id/click"]
+            T2B["Check User Role<br/>if user.role === 'CANDIDATE':<br/>  increment clicksCount"]
+            T2C["Update Database<br/>Job.clicksCount += 1<br/>Track click-through rate"]
+            T2A --> T2B --> T2C
+        end
+        
+        subgraph T3["3. Application Status Tracking"]
+            T3A["Event: Candidate applies for job<br/>Trigger: POST /applications"]
+            T3B["Create Application Record<br/>status = 'APPLIED'<br/>applicationDate = now()"]
+            T3C["Track Status Changes<br/>APPLIED → REVIEWING → SHORTLISTED<br/>→ INTERVIEW_SCHEDULED → ..."]
+            T3A --> T3B --> T3C
+        end
+    end
+    
+    subgraph Metrics["METRICS CALCULATION"]
+        direction TB
+        
+        subgraph M1["1. View Metrics"]
+            M1A["Total Views<br/>totalViews = Job.viewsCount<br/>(Cumulative count)"]
+            M1B["Unique Views<br/>uniqueViews = count(distinct candidateId)<br/>(If tracking per candidate)"]
+            M1C["View Rate<br/>viewRate = viewsCount / impressions<br/>(If impressions tracked)"]
+            M1A --> M1B --> M1C
+        end
+        
+        subgraph M2["2. Click Metrics"]
+            M2A["Total Clicks<br/>totalClicks = Job.clicksCount<br/>(Cumulative count)"]
+            M2B["Click-Through Rate (CTR)<br/>CTR = clicksCount / viewsCount × 100<br/>(Percentage of views that clicked)"]
+            M2C["Conversion Rate<br/>conversionRate = applicationsCount / clicksCount × 100<br/>(Percentage of clicks that applied)"]
+            M2A --> M2B --> M2C
+        end
+        
+        subgraph M3["3. Application Metrics"]
+            M3A["Application Status Distribution<br/>APPLIED: count(status='APPLIED')<br/>REVIEWING: count(status='REVIEWING')<br/>SHORTLISTED: count(status='SHORTLISTED')<br/>..."]
+            M3B["Application Rate<br/>applicationRate = applicationsCount / viewsCount × 100<br/>(Percentage of views that applied)"]
+            M3C["Time to Apply<br/>timeToApply = applicationDate - firstViewDate<br/>(Time between first view and application)"]
+            M3A --> M3B --> M3C
+        end
+        
+        subgraph M4["4. Engagement Score Calculation"]
+            M4A["Weighted Engagement Score<br/>engagementScore =<br/>  (viewsWeight × normalizedViews) +<br/>  (clicksWeight × normalizedClicks) +<br/>  (applicationWeight × normalizedApplications)"]
+            M4B["Normalization<br/>normalizedViews = viewsCount / maxViewsInCategory<br/>normalizedClicks = clicksCount / maxClicksInCategory<br/>normalizedApplications = applicationCount / maxApplicationsInCategory"]
+            M4C["Final Score<br/>engagementScore = 0-100<br/>(Higher = more engaged candidate)"]
+            M4A --> M4B --> M4C
+        end
+    end
+    
+    subgraph Analysis["BEHAVIOR ANALYSIS"]
+        direction TB
+        
+        A1["High Engagement Indicators<br/>- High viewsCount (shows interest)<br/>- High clicksCount (active exploration)<br/>- Quick application (low timeToApply)<br/>- Multiple interactions"]
+        
+        A2["Engagement Patterns<br/>- View → Click → Apply (ideal flow)<br/>- Multiple views (deep consideration)<br/>- Click without apply (browsing)<br/>- Apply without view (direct application)"]
+        
+        A3["Candidate Segmentation<br/>- Highly Engaged: high views + clicks + apply<br/>- Moderately Engaged: some views, few clicks<br/>- Low Engagement: minimal interaction"]
+    end
+    
+    subgraph Output["OUTPUT: Engagement Metrics"]
+        O1["Per-Job Metrics:<br/>- viewsCount: total views<br/>- clicksCount: total clicks<br/>- CTR: click-through rate<br/>- applicationRate: application rate<br/>- conversionRate: click-to-apply rate<br/><br/>Per-Candidate Metrics:<br/>- Total views across jobs<br/>- Total clicks across jobs<br/>- Total applications<br/>- Average time to apply<br/>- Engagement score<br/><br/>Aggregate Metrics:<br/>- Most viewed jobs<br/>- Most clicked jobs<br/>- Highest conversion jobs<br/>- Engagement trends over time"]
+    end
+    
+    I1 --> T1
+    I2 --> T1
+    I1 --> T2
+    I2 --> T2
+    I1 --> T3
+    I2 --> T3
+    
+    T1C --> M1
+    T2C --> M2
+    T3C --> M3
+    
+    M1C --> M4
+    M2C --> M4
+    M3C --> M4
+    
+    M4C --> A1
+    M4C --> A2
+    M4C --> A3
+    
+    A1 --> O1
+    A2 --> O1
+    A3 --> O1
+    
+    style Input fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style Tracking fill:#f5f5f5,stroke:#424242,stroke-width:2px
+    style Metrics fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    style Analysis fill:#a5d6a7,stroke:#1b5e20,stroke-width:2px
+    style Output fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
+

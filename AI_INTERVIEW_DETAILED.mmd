@@ -1,0 +1,109 @@
+graph TB
+    subgraph PHASE1["📥 PHASE 1: INPUT PREPARATION"]
+        IN1["Interview Setup<br/>━━━━━━━━━━━━━━━━<br/>• Role: Senior Frontend Developer<br/>• Level: Senior<br/>• Tech Stack: React, TypeScript<br/>• Type: AI Audio Interview<br/>• Question Count: 5"]
+        
+        IN2["Questions Source<br/>━━━━━━━━━━━━━━━━<br/>Mode: Provided<br/>Questions:<br/>1. Tell me about yourself<br/>2. Why this role?<br/>3. Challenging project?<br/>4. Handle conflicts?<br/>5. Your strengths?"]
+        
+        IN3["Company Info<br/>━━━━━━━━━━━━━━━━<br/>Optional:<br/>• Company name<br/>• Culture<br/>• Benefits"]
+        
+        IN4["Vapi.ai Assistant Config<br/>━━━━━━━━━━━━━━━━<br/>• Transcriber: Deepgram Nova-2<br/>• Voice: 11Labs Sarah<br/>• Model: GPT-4<br/>• System Prompt: Interviewer role"]
+    end
+    
+    subgraph PHASE2["🎤 PHASE 2: REAL-TIME INTERVIEW"]
+        RT1["Candidate Joins<br/>━━━━━━━━━━━━━━━━<br/>Enter access code<br/>→ Connect to Vapi.ai<br/>→ WebRTC established"]
+        
+        RT2["Voice Conversation Loop<br/>━━━━━━━━━━━━━━━━<br/>1. AI asks question (11Labs TTS)<br/>2. Candidate answers (voice)<br/>3. Deepgram transcribes (STT)<br/>4. GPT-4 processes & responds<br/>5. Repeat for all questions"]
+        
+        RT3["Real-time Transcription<br/>━━━━━━━━━━━━━━━━<br/>User: 'I have 5 years of experience...'<br/>AI: 'That's great! Can you tell me...'<br/>→ Saved as messages array"]
+        
+        RT4["Q&A Extraction<br/>━━━━━━━━━━━━━━━━<br/>Extract structured turns:<br/>[{<br/>  orderIndex: 1,<br/>  questionText: 'Tell me...',<br/>  answerText: 'I have...',<br/>  questionCategory: 'BEHAVIORAL'<br/>}]"]
+    end
+    
+    subgraph PHASE3["💾 PHASE 3: DATA PERSISTENCE"]
+        DB1["Save Interview Record<br/>━━━━━━━━━━━━━━━━<br/>• status: IN_PROGRESS<br/>• transcript: full text<br/>• applicationId: linked"]
+        
+        DB2["Save Interview Exchanges<br/>━━━━━━━━━━━━━━━━<br/>For each Q&A pair:<br/>• InterviewExchange record<br/>• orderIndex<br/>• questionText<br/>• answerText<br/>• questionCategory"]
+    end
+    
+    subgraph PHASE4["📊 PHASE 4: AI EVALUATION"]
+        EV1["Trigger Analysis<br/>━━━━━━━━━━━━━━━━<br/>POST /interviews/:id/analyze<br/>Input:<br/>• Full transcript<br/>• Turns array<br/>• Seniority: SENIOR<br/>• Keywords: [React, TypeScript, ...]"]
+        
+        EV2{"Evaluation Mode<br/>Check ENV"}
+        
+        EV3["Mode: GEMINI<br/>━━━━━━━━━━━━━━━━<br/>generateInterviewFeedbackWithGemini()"]
+        
+        EV4["Mode: RULE_BASED<br/>━━━━━━━━━━━━━━━━<br/>generateInterviewFeedbackRuleBased()"]
+        
+        subgraph GEMINI_PROCESS["🧠 Gemini Processing"]
+            GP1["Build Analysis Prompt<br/>━━━━━━━━━━━━━━━━<br/>Include:<br/>• Full transcript<br/>• Structured Q&A<br/>• Evaluation criteria<br/>• Scoring weights"]
+            
+            GP2["Call Gemini 2.5 Flash<br/>━━━━━━━━━━━━━━━━<br/>Model: gemini-2.5-flash<br/>Input: Analysis prompt<br/>Output: Structured JSON"]
+            
+            GP3["Parse & Validate JSON<br/>━━━━━━━━━━━━━━━━<br/>Schema validation:<br/>• overallScore: 0-100<br/>• recommendation: HIRE/CONSIDER/REJECT<br/>• categoryScores: Array<br/>• perQuestion: Array"]
+        end
+        
+        subgraph RULE_PROCESS["📋 Rule-based Processing"]
+            RP1["Score Each Answer<br/>━━━━━━━━━━━━━━━━<br/>6 Criteria:<br/>1. Length (count words)<br/>2. Structure (STAR detection)<br/>3. Examples (metrics detection)<br/>4. Confidence (filler words)<br/>5. Keyword Match<br/>6. Relevance (Jaccard)"]
+            
+            RP2["Calculate Weights<br/>━━━━━━━━━━━━━━━━<br/>Adjust by question type:<br/>• Technical: +keywordMatch<br/>• Behavioral: +structure<br/>• General: default"]
+            
+            RP3["Generate Feedback<br/>━━━━━━━━━━━━━━━━<br/>• Overall score (avg × 10)<br/>• Recommendation logic<br/>• Category scores<br/>• Per-question feedback"]
+        end
+    end
+    
+    subgraph PHASE5["✅ PHASE 5: RESULTS & OUTPUT"]
+        OUT1["Structured Feedback Object<br/>━━━━━━━━━━━━━━━━<br/>{<br/>  overallScore: 85,<br/>  recommendation: 'HIRE',<br/>  summary: 'Strong candidate...',<br/>  strengths: ['Clear communication', ...],<br/>  areasForImprovement: [...],<br/>  categoryScores: [<br/>    {name: 'Clarity', score: 9, ...},<br/>    ...<br/>  ],<br/>  perQuestion: [<br/>    {orderIndex: 1, score: 8, feedback: '...'},<br/>    ...<br/>  ]<br/>}"]
+        
+        OUT2["Database Updates<br/>━━━━━━━━━━━━━━━━<br/>• Interview.status = 'COMPLETED'<br/>• Interview.overallScore = 85<br/>• Interview.recommendation = 'HIRE'<br/>• Interview.summary = '...'<br/>• Interview.aiAnalysisData = {...}<br/>• InterviewExchange.score = 8 (per Q)"]
+        
+        OUT3["Application Status Update<br/>━━━━━━━━━━━━━━━━<br/>If linked to application:<br/>• Application.status = 'INTERVIEWED'<br/>• ApplicationHistory record created"]
+        
+        OUT4["Email Notifications<br/>━━━━━━━━━━━━━━━━<br/>• To Recruiter:<br/>  Interview completed<br/>  Score: 85/100<br/>  Recommendation: HIRE<br/>• Link to view feedback"]
+    end
+    
+    %% Flow connections
+    IN1 --> RT1
+    IN2 --> RT1
+    IN3 --> RT1
+    IN4 --> RT1
+    
+    RT1 --> RT2
+    RT2 --> RT3
+    RT3 --> RT4
+    
+    RT4 --> DB1
+    RT4 --> DB2
+    
+    DB1 --> EV1
+    DB2 --> EV1
+    
+    EV1 --> EV2
+    EV2 -->|GEMINI| EV3
+    EV2 -->|RULE_BASED| EV4
+    
+    EV3 --> GP1 --> GP2 --> GP3 --> OUT1
+    EV4 --> RP1 --> RP2 --> RP3 --> OUT1
+    
+    OUT1 --> OUT2
+    OUT2 --> OUT3
+    OUT2 --> OUT4
+    
+    %% Styling
+    classDef phase1 fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef phase2 fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    classDef phase3 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef phase4 fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef gemini fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef rule fill:#fffde7,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef phase5 fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef decision fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class IN1,IN2,IN3,IN4,PHASE1 phase1
+    class RT1,RT2,RT3,RT4,PHASE2 phase2
+    class DB1,DB2,PHASE3 phase3
+    class EV1,EV3,EV4,PHASE4 phase4
+    class GP1,GP2,GP3,GEMINI_PROCESS gemini
+    class RP1,RP2,RP3,RULE_PROCESS rule
+    class OUT1,OUT2,OUT3,OUT4,PHASE5 phase5
+    class EV2 decision
+

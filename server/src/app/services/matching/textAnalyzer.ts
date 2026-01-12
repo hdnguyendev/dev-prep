@@ -348,6 +348,15 @@ function assessComplexity(text: string): number {
 
 /**
  * Calculates soft skills compatibility score
+ * 
+ * Handles missing candidate soft skills data gracefully:
+ * - If candidate has no soft skills data: Returns neutral score (50) to avoid unfair penalty
+ * - If candidate has partial data: Calculates based on available data
+ * - If candidate has complete data: Full calculation with matching
+ * 
+ * Rationale: Candidate profiles may not include soft skills assessment.
+ * Giving 0 points would unfairly penalize candidates who haven't completed
+ * soft skills evaluation, so we use a neutral score (50) instead.
  */
 export function calculateSoftSkillsScore(
   candidateSoftSkills: {
@@ -379,6 +388,18 @@ export function calculateSoftSkillsScore(
     creativity: 'Creativity',
     attentionToDetail: 'Attention to Detail',
   };
+
+  // Check if candidate has any soft skills data
+  const hasCandidateData = candidateSoftSkills && Object.values(candidateSoftSkills).some(val => val !== undefined && val !== null && val > 0);
+  
+  // If no candidate data available, return neutral score (50) to avoid unfair penalty
+  if (!hasCandidateData) {
+    return {
+      score: 50, // Neutral score: neither reward nor penalty
+      matches: [],
+      gaps: [],
+    };
+  }
 
   const matches: string[] = [];
   const gaps: string[] = [];

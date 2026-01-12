@@ -1,0 +1,128 @@
+<mxfile host="app.diagrams.net" modified="2025-01-27T00:00:00.000Z" agent="5.0" version="21.0.0" etag="simple" type="device">
+  <diagram name="Tech Stack Simple" id="simple">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Frontend Group -->
+        <mxCell id="fe_group" value="🌐 Frontend&#xa;Cloudflare Pages" style="swimlane;whiteSpace=wrap;html=1;fillColor=#61dafb;strokeColor=#20232a;fontColor=#000000;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="280" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="fe1" value="⚛️ React 19&#xa;TypeScript" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#20232a;fontSize=12" vertex="1" parent="fe_group">
+          <mxGeometry x="20" y="40" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fe2" value="🎨 Tailwind CSS&#xa;Vite" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#20232a;fontSize=12" vertex="1" parent="fe_group">
+          <mxGeometry x="150" y="40" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fe3" value="🔐 Clerk Auth" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#20232a;fontSize=12" vertex="1" parent="fe_group">
+          <mxGeometry x="20" y="120" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fe4" value="🎤 Vapi SDK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#20232a;fontSize=12" vertex="1" parent="fe_group">
+          <mxGeometry x="150" y="120" width="110" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Backend Group -->
+        <mxCell id="be_group" value="⚙️ Backend&#xa;Cloudflare Workers" style="swimlane;whiteSpace=wrap;html=1;fillColor=#00d8ff;strokeColor=#20232a;fontColor=#000000;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="380" y="40" width="280" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="be1" value="🚀 Hono&#xa;Bun Runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#20232a;fontSize=12" vertex="1" parent="be_group">
+          <mxGeometry x="20" y="40" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="be2" value="🗄️ Prisma ORM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#20232a;fontSize=12" vertex="1" parent="be_group">
+          <mxGeometry x="150" y="40" width="110" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Database -->
+        <mxCell id="db" value="💾 Database&#xa;Neon PostgreSQL&#xa;&#xa;📊 PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#336791;strokeColor=#ffffff;fontColor=#ffffff;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="720" y="40" width="200" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- Storage -->
+        <mxCell id="storage" value="📦 Storage&#xa;Cloudflare R2&#xa;&#xa;📁 Files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f38020;strokeColor=#ffffff;fontColor=#ffffff;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="980" y="40" width="200" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- AI Services -->
+        <mxCell id="ai_group" value="🤖 AI Services" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ff6b6b;strokeColor=#ffffff;fontColor=#ffffff;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="1140" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ai1" value="🎙️ Vapi.ai" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ff6b6b;fontSize=12" vertex="1" parent="ai_group">
+          <mxGeometry x="20" y="40" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ai2" value="💬 GPT-4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ff6b6b;fontSize=12" vertex="1" parent="ai_group">
+          <mxGeometry x="240" y="40" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ai3" value="🧠 Gemini 2.5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ff6b6b;fontSize=12" vertex="1" parent="ai_group">
+          <mxGeometry x="460" y="40" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ai4" value="🎧 Deepgram" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ff6b6b;fontSize=12" vertex="1" parent="ai_group">
+          <mxGeometry x="680" y="40" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ai5" value="🔊 11Labs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ff6b6b;fontSize=12" vertex="1" parent="ai_group">
+          <mxGeometry x="900" y="40" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Feature 1 -->
+        <mxCell id="f1" value="🎯 Feature 1: Job Matching&#xa;&#xa;📋 Rule-based Algorithm&#xa;Hono + Prisma + DB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#51cf66;strokeColor=#ffffff;fontColor=#000000;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="480" width="360" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- Feature 2 -->
+        <mxCell id="f2" value="🎤 Feature 2: AI Interview&#xa;&#xa;💬 Voice Interview&#xa;Vapi + GPT-4&#xa;Deepgram + 11Labs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#51cf66;strokeColor=#ffffff;fontColor=#000000;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="440" y="480" width="360" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- Feature 3 -->
+        <mxCell id="f3" value="📊 Feature 3: Evaluation&#xa;&#xa;📝 AI Feedback&#xa;Gemini 2.5&#xa;Hono + DB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#51cf66;strokeColor=#ffffff;fontColor=#000000;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="480" width="360" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- Connections -->
+        <mxCell id="edge1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#20232a" edge="1" parent="1" source="fe1" target="be1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#20232a" edge="1" parent="1" source="fe4" target="ai1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#20232a" edge="1" parent="1" source="be2" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#20232a" edge="1" parent="1" source="be1" target="storage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#ff6b6b" edge="1" parent="1" source="ai1" target="ai2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#ff6b6b" edge="1" parent="1" source="ai1" target="ai4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#ff6b6b" edge="1" parent="1" source="ai1" target="ai5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#51cf66" edge="1" parent="1" source="be1" target="f1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#51cf66" edge="1" parent="1" source="f1" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#51cf66" edge="1" parent="1" source="fe4" target="f2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#51cf66" edge="1" parent="1" source="f2" target="ai1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#51cf66" edge="1" parent="1" source="be1" target="f3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#51cf66" edge="1" parent="1" source="f3" target="ai3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#51cf66" edge="1" parent="1" source="f3" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
+

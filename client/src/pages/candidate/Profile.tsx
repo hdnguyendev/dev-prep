@@ -364,11 +364,17 @@ export default function Profile({ embedded }: { embedded?: boolean }) {
         body: form,
       });
       const json = await res.json().catch(() => null);
+      console.log('[Upload CV] Response:', json);
       if (!json?.success || !json?.data?.url) {
         setCvUploadError(json?.message || "Failed to upload CV.");
         return null;
       }
-      return String(json.data.url);
+      const fileUrl = String(json.data.url);
+      console.log('[Upload CV] File URL from server:', fileUrl);
+      // Clean up URL if it contains frontend paths
+      const cleanedUrl = fileUrl.replace(/http:\/\/localhost:5173\/[^\/]+\//, '').replace(/\/candidate\/|\/recruiter\//, '');
+      console.log('[Upload CV] Cleaned URL:', cleanedUrl);
+      return cleanedUrl;
     } catch {
       setCvUploadError("Failed to upload CV.");
       return null;

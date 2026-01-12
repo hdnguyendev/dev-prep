@@ -2,13 +2,66 @@ import { appJobs } from "@server/app/jobs";
 import { Hono } from "hono";
 import { getOrCreateClerkUser } from "@server/utils/clerkAuth";
 import prisma from "@server/app/db/prisma";
+import { canRecruiterPostJob, getActiveMembership } from "@server/app/services/membership";
 
 
 const jobRoutes = new Hono();
 
 jobRoutes.get("/", async (c) => {
-  const jobs = await appJobs.getJobs();
+  const query = c.req.query();
+  const searchQuery = (query.q || query.search || "").trim() || undefined;
+  const page = query.page ? Number(query.page) : undefined;
+  const pageSize = query.pageSize ? Number(query.pageSize) : undefined;
+  
+  const jobs = await appJobs.getJobs(searchQuery, page, pageSize);
   return c.json({ success: true, data: jobs });
+});
+
+/**
+ * Get job title suggestions for autocomplete
+ * GET /jobs/suggestions?q=backend
+ * Returns lowercase job titles from database only
+ */
+jobRoutes.get("/suggestions", async (c) => {
+  try {
+    const query = c.req.query();
+    const searchQuery = (query.q || query.search || "").trim();
+    
+    if (!searchQuery || searchQuery.length < 2) {
+      return c.json({ success: true, data: [] });
+    }
+
+    // Get distinct job titles that match the search query
+    // Only from published jobs
+    const jobs = await prisma.job.findMany({
+      where: {
+        status: "PUBLISHED",
+        title: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        title: true,
+      },
+      distinct: ["title"],
+      take: 10, // Limit to 10 suggestions
+      orderBy: {
+        createdAt: "desc", // Most recent first
+      },
+    });
+
+    // Extract unique titles and convert to lowercase
+    const suggestions = [...new Set(jobs.map(job => job.title.toLowerCase()))];
+
+    return c.json({ success: true, data: suggestions });
+  } catch (error: any) {
+    console.error("Error fetching job suggestions:", error);
+    return c.json(
+      { success: false, message: error.message || "Failed to fetch suggestions" },
+      500
+    );
+  }
 });
 
 // Get job by ID or slug
@@ -34,7 +87,93 @@ jobRoutes.get("/:id", async (c) => {
       console.log(`[Jobs Route] Job not found: ${id} (isUUID: ${isUUID})`);
       return c.json({ success: false, message: "Job not found" }, 404);
     }
-    
+
+    // --- Visibility rules for interviewQuestions ---
+    // Goal:
+    // - Recruiter/Admin: see full interviewQuestions
+    // - Candidate VIP: see only the first question
+    // - Candidate FREE / Guest: see no interviewQuestions at all
+
+    type UserViewRole = "GUEST" | "CANDIDATE" | "RECRUITER" | "ADMIN";
+    let viewRole: UserViewRole = "GUEST";
+    let userId: string | null = null;
+
+    const authHeader = c.req.header("Authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (token) {
+      // Heuristic: if token looks like a UUID, treat it as internal userId (recruiter/admin),
+      // otherwise treat it as a Clerk JWT for candidates.
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const looksLikeUserId = uuidRegex.test(token);
+
+      if (!looksLikeUserId) {
+        // Try Clerk (candidates) first
+        const clerkResult = await getOrCreateClerkUser(c);
+        if (clerkResult.success && clerkResult.user) {
+          const user = await prisma.user.findUnique({
+            where: { id: clerkResult.user.id },
+            include: { candidateProfile: true, recruiterProfile: true },
+          });
+
+          if (user) {
+            userId = user.id;
+            if (user.role === "ADMIN") {
+              viewRole = "ADMIN";
+            } else if (user.recruiterProfile) {
+              viewRole = "RECRUITER";
+            } else if (user.candidateProfile) {
+              viewRole = "CANDIDATE";
+            }
+          }
+        }
+      }
+
+      // Fallback / recruiter path: custom auth (Recruiter/Admin using userId as token)
+      if (!userId) {
+        const user = await prisma.user.findUnique({
+          where: { id: token },
+          include: { candidateProfile: true, recruiterProfile: true },
+        });
+        if (user) {
+          userId = user.id;
+          if (user.role === "ADMIN") {
+            viewRole = "ADMIN";
+          } else if (user.recruiterProfile) {
+            viewRole = "RECRUITER";
+          } else if (user.candidateProfile) {
+            viewRole = "CANDIDATE";
+          }
+        }
+      }
+    }
+
+    // Sanitize interviewQuestions based on role + membership
+    if (job) {
+      // Normalize questions (remove empty)
+      const allQuestions = (job.interviewQuestions || []).filter(
+        (q) => typeof q === "string" && q.trim().length > 0
+      );
+
+      if (viewRole === "RECRUITER" || viewRole === "ADMIN") {
+        // Recruiters/Admins: keep full list
+        job.interviewQuestions = allQuestions;
+      } else if (viewRole === "CANDIDATE" && userId) {
+        // Candidates: check VIP membership
+        const membership = await getActiveMembership(userId, "CANDIDATE");
+        if (membership) {
+          // VIP candidate: can only see the FIRST question in API response
+          job.interviewQuestions = allQuestions.slice(0, 1);
+        } else {
+          // FREE candidate: cannot see any interviewQuestions in API
+          job.interviewQuestions = [];
+        }
+      } else {
+        // Guest (not signed in): no interviewQuestions
+        job.interviewQuestions = [];
+      }
+    }
+
     console.log(`[Jobs Route] Job found: ${job.id} - ${job.title}`);
     return c.json({ success: true, data: job });
   } catch (error: any) {
@@ -231,7 +370,6 @@ jobRoutes.post("/", async (c) => {
     }
 
     // Get authenticated user
-    const { getOrCreateClerkUser } = await import("../utils/clerkAuth");
     let user = await prisma.user.findUnique({
       where: { id: token },
       include: { recruiterProfile: true },
@@ -261,7 +399,6 @@ jobRoutes.post("/", async (c) => {
     const recruiterId = user.recruiterProfile.id;
 
     // Check membership limit for job postings
-    const { canRecruiterPostJob } = await import("../app/services/membership");
     const canPost = await canRecruiterPostJob(user.id, recruiterId);
 
     if (!canPost.allowed) {

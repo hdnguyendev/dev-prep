@@ -86,7 +86,12 @@ const Interview = () => {
       setLoadingInterview(true);
       setInterviewError(null);
       try {
-        const res = await fetch(`${apiBase}/interviews/access-code/${encodeURIComponent(accessCodeFromUrl)}`);
+        const token = await getToken();
+        const res = await fetch(`${apiBase}/interviews/access-code/${encodeURIComponent(accessCodeFromUrl)}`, {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
         const data = await res.json();
         
         if (!data.success) {
@@ -456,6 +461,7 @@ const Interview = () => {
               jobId={effectiveJobId}
               initialTechstack={jobTechstack}
               interviewId={interviewData?.id} // Pass existing interview ID when joining via access code
+              isVIP={isVIP} // Pass VIP status for practice question visibility
             />
           </>
         )}

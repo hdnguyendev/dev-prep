@@ -1,0 +1,105 @@
+graph TB
+    subgraph INPUT_DATA["📥 INPUT DATA"]
+        IN1["Full Transcript<br/>━━━━━━━━━━━━━━━━<br/>Complete conversation text<br/>User: 'I have 5 years...'<br/>AI: 'That's great! Can you...'<br/>User: 'I worked on a project...'"]
+        
+        IN2["Structured Q&A Pairs<br/>━━━━━━━━━━━━━━━━<br/>Turns = [<br/>  {<br/>    orderIndex: 1,<br/>    questionText: 'Tell me about yourself',<br/>    answerText: 'I have 5 years...',<br/>    questionCategory: 'BEHAVIORAL'<br/>  },<br/>  {orderIndex: 2, ...},<br/>  ...<br/>]"]
+        
+        IN3["Evaluation Options<br/>━━━━━━━━━━━━━━━━<br/>• seniority: 'SENIOR'<br/>• mustHaveKeywords: ['React', 'TypeScript']<br/>• niceToHaveKeywords: ['Node.js']<br/>• language: 'en'"]
+    end
+    
+    subgraph EVAL_MODE["🔀 EVALUATION MODE SELECTION"]
+        MODE{"INTERVIEW_EVALUATOR_MODE<br/>Environment Variable"}
+        MODE_GEMINI["Mode: GEMINI<br/>━━━━━━━━━━━━━━━━<br/>Use Google Gemini 2.5 Flash<br/>AI-powered analysis"]
+        MODE_RULE["Mode: RULE_BASED<br/>━━━━━━━━━━━━━━━━<br/>Use Rule-based heuristics<br/>Offline processing"]
+    end
+    
+    subgraph GEMINI_FLOW["🧠 GEMINI EVALUATION FLOW"]
+        G1["Build Analysis Prompt<br/>━━━━━━━━━━━━━━━━<br/>Include:<br/>• Full transcript<br/>• Structured Q&A<br/>• Evaluation criteria<br/>• Scoring instructions"]
+        
+        G2["Call Gemini API<br/>━━━━━━━━━━━━━━━━<br/>Model: gemini-2.5-flash<br/>Input: Analysis prompt<br/>Output: JSON response"]
+        
+        G3["Parse JSON Response<br/>━━━━━━━━━━━━━━━━<br/>Extract structured data:<br/>• overallScore<br/>• recommendation<br/>• categoryScores<br/>• perQuestion"]
+        
+        G4["Validate Schema<br/>━━━━━━━━━━━━━━━━<br/>Zod validation:<br/>• overallScore: 0-100<br/>• recommendation: enum<br/>• Arrays validation"]
+    end
+    
+    subgraph RULE_FLOW["📋 RULE-BASED EVALUATION FLOW"]
+        R1["For Each Question<br/>━━━━━━━━━━━━━━━━<br/>Process each turn:<br/>• Extract answer text<br/>• Detect question category<br/>• Apply scoring rules"]
+        
+        R2["Score 6 Criteria<br/>━━━━━━━━━━━━━━━━<br/>1. Length: Count words<br/>2. Structure: STAR detection<br/>3. Examples: Metrics detection<br/>4. Confidence: Filler words<br/>5. Keyword Match: Count hits<br/>6. Relevance: Jaccard similarity"]
+        
+        R3["Apply Question Type Weights<br/>━━━━━━━━━━━━━━━━<br/>Technical: +keywordMatch<br/>Behavioral: +structure<br/>General: Default"]
+        
+        R4["Calculate Per-Question Score<br/>━━━━━━━━━━━━━━━━<br/>Weighted sum of 6 criteria<br/>Normalize to 0-10"]
+        
+        R5["Aggregate Scores<br/>━━━━━━━━━━━━━━━━<br/>• Overall = avg(perQuestion) × 10<br/>• Category scores<br/>• Recommendation logic"]
+    end
+    
+    subgraph CRITERIA["📏 6 EVALUATION CRITERIA"]
+        C1["1. LENGTH (25%)<br/>━━━━━━━━━━━━━━━━<br/>Minimum words:<br/>• Junior: 18<br/>• Mid: 25<br/>• Senior: 35<br/>Scoring:<br/>0 (no answer)<br/>4 (too short)<br/>7 (adequate)<br/>8 (optimal)"]
+        
+        C2["2. STRUCTURE (20%)<br/>━━━━━━━━━━━━━━━━<br/>Detect STAR method:<br/>• Situation<br/>• Task<br/>• Action<br/>• Result<br/>Scoring:<br/>4 (unstructured)<br/>10 (well-structured)"]
+        
+        C3["3. EXAMPLES (20%)<br/>━━━━━━━━━━━━━━━━<br/>Detect concrete evidence:<br/>• Numbers: 10%, 1000 users<br/>• Metrics: KPI, latency<br/>• Explicit examples<br/>Scoring:<br/>4 (no examples)<br/>10 (clear examples)"]
+        
+        C4["4. CONFIDENCE (10%)<br/>━━━━━━━━━━━━━━━━<br/>Detect filler words:<br/>• 'uh', 'um', 'maybe'<br/>• 'probably', 'I think'<br/>Scoring:<br/>4 (≥4 fillers)<br/>8 (confident)"]
+        
+        C5["5. KEYWORD MATCH (15%)<br/>━━━━━━━━━━━━━━━━<br/>Count role keywords:<br/>• Must-have (×3 weight)<br/>• Nice-to-have (×1 weight)<br/>Scoring:<br/>0 (no keywords)<br/>10 (comprehensive)"]
+        
+        C6["6. RELEVANCE (10%)<br/>━━━━━━━━━━━━━━━━<br/>Jaccard similarity:<br/>• Question tokens<br/>• Answer tokens<br/>• Common / Union<br/>Scoring:<br/>0 (irrelevant)<br/>10 (directly addresses)"]
+    end
+    
+    subgraph OUTPUT_RESULT["✅ OUTPUT RESULT"]
+        OUT1["Structured Feedback<br/>━━━━━━━━━━━━━━━━<br/>{<br/>  overallScore: 85,<br/>  recommendation: 'HIRE',<br/>  summary: 'Strong candidate...',<br/>  strengths: [...],<br/>  areasForImprovement: [...],<br/>  categoryScores: [<br/>    {name: 'Clarity', score: 9},<br/>    {name: 'Structure', score: 8},<br/>    {name: 'Depth & Evidence', score: 9},<br/>    {name: 'Relevance', score: 8},<br/>    {name: 'Keyword Match', score: 9}<br/>  ],<br/>  perQuestion: [<br/>    {orderIndex: 1, score: 8, feedback: '...'},<br/>    {orderIndex: 2, score: 9, feedback: '...'},<br/>    ...<br/>  ]<br/>}"]
+        
+        OUT2["Recommendation Logic<br/>━━━━━━━━━━━━━━━━<br/>• HIRE: ≥80 points<br/>• CONSIDER: 60-79 points<br/>• REJECT: <60 points"]
+    end
+    
+    %% Input Flow
+    IN1 --> MODE
+    IN2 --> MODE
+    IN3 --> MODE
+    
+    %% Mode Selection
+    MODE -->|GEMINI| MODE_GEMINI
+    MODE -->|RULE_BASED| MODE_RULE
+    
+    %% Gemini Flow
+    MODE_GEMINI --> G1 --> G2 --> G3 --> G4 --> OUT1
+    
+    %% Rule-based Flow
+    MODE_RULE --> R1 --> R2
+    R2 --> C1
+    R2 --> C2
+    R2 --> C3
+    R2 --> C4
+    R2 --> C5
+    R2 --> C6
+    C1 --> R3
+    C2 --> R3
+    C3 --> R3
+    C4 --> R3
+    C5 --> R3
+    C6 --> R3
+    R3 --> R4 --> R5 --> OUT1
+    
+    %% Output
+    OUT1 --> OUT2
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef mode fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef gemini fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef rule fill:#fffde7,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef criteria fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef output fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef decision fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class IN1,IN2,IN3,INPUT_DATA input
+    class MODE,MODE_GEMINI,MODE_RULE,EVAL_MODE mode
+    class G1,G2,G3,G4,GEMINI_FLOW gemini
+    class R1,R2,R3,R4,R5,RULE_FLOW rule
+    class C1,C2,C3,C4,C5,C6,CRITERIA criteria
+    class OUT1,OUT2,OUTPUT_RESULT output
+    class MODE decision
+

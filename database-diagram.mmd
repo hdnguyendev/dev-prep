@@ -1,0 +1,424 @@
+erDiagram
+    %% User Management
+    User ||--o| CandidateProfile : "has"
+    User ||--o| RecruiterProfile : "has"
+    User ||--o{ Message : "sends"
+    User ||--o{ Message : "receives"
+    User ||--o{ Notification : "has"
+    User ||--o{ UserMembership : "has"
+    User ||--o{ PaymentTransaction : "has"
+    
+    CandidateProfile ||--o{ Experience : "has"
+    CandidateProfile ||--o{ Education : "has"
+    CandidateProfile ||--o{ Project : "has"
+    CandidateProfile ||--o{ CandidateSkill : "has"
+    CandidateProfile ||--o{ Application : "makes"
+    CandidateProfile ||--o{ SavedJob : "saves"
+    CandidateProfile ||--o{ CompanyReview : "writes"
+    CandidateProfile }o--o{ Interview : "takes"
+    CandidateProfile ||--o{ CompanyFollow : "follows"
+    
+    RecruiterProfile }o--|| Company : "belongs to"
+    RecruiterProfile ||--o{ Job : "posts"
+    
+    %% Skills
+    Skill ||--o{ CandidateSkill : "has"
+    Skill ||--o{ JobSkill : "required for"
+    
+    %% Company & Jobs
+    Company ||--o{ RecruiterProfile : "has"
+    Company ||--o{ Job : "posts"
+    Company ||--o{ CompanyReview : "has"
+    Company ||--o{ CompanyFollow : "followed by"
+    
+    Job }o--|| Company : "belongs to"
+    Job }o--|| RecruiterProfile : "posted by"
+    Job ||--o{ JobSkill : "requires"
+    Job ||--o{ JobCategory : "has"
+    Job ||--o{ Application : "receives"
+    Job ||--o{ SavedJob : "saved in"
+    Job }o--o{ Interview : "has"
+    
+    Category ||--o{ JobCategory : "has"
+    
+    %% Application
+    Application }o--|| Job : "for"
+    Application }o--|| CandidateProfile : "by"
+    Application ||--o{ ApplicationHistory : "has"
+    Application ||--o{ ApplicationNote : "has"
+    Application ||--o{ Offer : "receives"
+    Application }o--o{ Interview : "has"
+    
+    %% Interview
+    Interview ||--o{ InterviewExchange : "has"
+    
+    %% Membership
+    MembershipPlan ||--o{ UserMembership : "used in"
+    MembershipPlan ||--o{ PaymentTransaction : "purchased as"
+    UserMembership }o--|| MembershipPlan : "plan"
+    UserMembership ||--o{ PaymentTransaction : "activated by"
+    
+    %% Entity Definitions
+    User {
+        uuid id PK
+        string email UK
+        string passwordHash
+        string firstName
+        string lastName
+        string phone
+        string avatarUrl
+        string notificationEmail
+        enum role
+        boolean isVerified
+        boolean isActive
+        timestamp lastLoginAt
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    CandidateProfile {
+        uuid id PK
+        uuid userId FK
+        string headline
+        text bio
+        string website
+        string linkedin
+        string github
+        string address
+        string cvUrl
+        boolean isPublic
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    RecruiterProfile {
+        uuid id PK
+        uuid userId FK
+        uuid companyId FK
+        string position
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    Experience {
+        uuid id PK
+        uuid candidateId FK
+        string companyName
+        string position
+        string location
+        timestamp startDate
+        timestamp endDate
+        boolean isCurrent
+        text description
+        timestamp createdAt
+    }
+    
+    Education {
+        uuid id PK
+        uuid candidateId FK
+        string institution
+        string degree
+        string fieldOfStudy
+        timestamp startDate
+        timestamp endDate
+        string grade
+        timestamp createdAt
+    }
+    
+    Project {
+        uuid id PK
+        uuid candidateId FK
+        string name
+        text description
+        string url
+        timestamp startDate
+        timestamp endDate
+        boolean isCurrent
+        array technologies
+        timestamp createdAt
+    }
+    
+    Skill {
+        uuid id PK
+        string name UK
+        string iconUrl
+    }
+    
+    CandidateSkill {
+        uuid id PK
+        uuid candidateId FK
+        uuid skillId FK
+        string level
+    }
+    
+    Company {
+        uuid id PK
+        string name
+        string slug UK
+        string logoUrl
+        string coverUrl
+        string website
+        text description
+        string industry
+        string companySize
+        int foundedYear
+        string address
+        string city
+        string country
+        boolean isVerified
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    Job {
+        uuid id PK
+        string slug UK
+        string title
+        uuid companyId FK
+        uuid recruiterId FK
+        text description
+        text requirements
+        text benefits
+        array interviewQuestions
+        enum type
+        enum status
+        string location
+        boolean isRemote
+        float salaryMin
+        float salaryMax
+        enum currency
+        boolean isSalaryNegotiable
+        string experienceLevel
+        int quantity
+        int viewsCount
+        int clicksCount
+        timestamp publishedAt
+        timestamp deadline
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    Category {
+        uuid id PK
+        string name UK
+        string iconUrl
+    }
+    
+    JobCategory {
+        uuid jobId PK_FK
+        uuid categoryId PK_FK
+    }
+    
+    JobSkill {
+        uuid jobId PK_FK
+        uuid skillId PK_FK
+        boolean isRequired
+    }
+    
+    SavedJob {
+        uuid id PK
+        uuid candidateId FK
+        uuid jobId FK
+        timestamp savedAt
+    }
+    
+    CompanyReview {
+        uuid id PK
+        uuid companyId FK
+        uuid candidateId FK
+        int rating
+        string title
+        text review
+        text pros
+        text cons
+        boolean isCurrentEmployee
+        boolean wouldRecommend
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    CompanyFollow {
+        uuid id PK
+        uuid candidateId FK
+        uuid companyId FK
+        boolean notifyOnNewJob
+        boolean notifyOnJobUpdate
+        timestamp createdAt
+    }
+    
+    Application {
+        uuid id PK
+        uuid jobId FK
+        uuid candidateId FK
+        string resumeUrl
+        text coverLetter
+        enum status
+        text rejectionReason
+        timestamp appliedAt
+        timestamp updatedAt
+    }
+    
+    ApplicationHistory {
+        uuid id PK
+        uuid applicationId FK
+        enum status
+        string changedBy
+        string note
+        timestamp createdAt
+    }
+    
+    ApplicationNote {
+        uuid id PK
+        uuid applicationId FK
+        string authorId
+        text content
+        timestamp createdAt
+    }
+    
+    Offer {
+        uuid id PK
+        uuid applicationId FK
+        string title
+        float salaryMin
+        float salaryMax
+        enum salaryCurrency
+        string employmentType
+        timestamp startDate
+        timestamp expirationDate
+        string location
+        boolean isRemote
+        text description
+        text benefits
+        text terms
+        enum status
+        text responseNote
+        timestamp respondedAt
+        string sentBy
+        timestamp sentAt
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    Interview {
+        uuid id PK
+        uuid applicationId FK
+        uuid candidateId FK
+        uuid jobId FK
+        string title
+        enum type
+        enum status
+        string accessCode UK
+        string sessionUrl
+        timestamp expiresAt
+        timestamp startedAt
+        timestamp endedAt
+        int durationSeconds
+        float overallScore
+        text summary
+        string recommendation
+        string recordingUrl
+        text fullTranscript
+        json aiAnalysisData
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    InterviewExchange {
+        uuid id PK
+        uuid interviewId FK
+        int orderIndex
+        text questionText
+        string questionCategory
+        text answerText
+        string answerAudioUrl
+        float score
+        text feedback
+        int durationSeconds
+        timestamp createdAt
+    }
+    
+    QuestionBank {
+        uuid id PK
+        text content
+        string category
+        string difficulty
+        array expectedKeywords
+        timestamp createdAt
+    }
+    
+    Message {
+        uuid id PK
+        uuid senderId FK
+        uuid receiverId FK
+        text content
+        boolean isRead
+        string jobId
+        string applicationId
+        timestamp createdAt
+    }
+    
+    Notification {
+        uuid id PK
+        uuid userId FK
+        string title
+        string message
+        string type
+        boolean isRead
+        string link
+        timestamp createdAt
+    }
+    
+    MembershipPlan {
+        uuid id PK
+        string name UK
+        enum planType
+        enum role
+        float price
+        enum currency
+        int duration
+        int maxInterviews
+        int maxMatchingViews
+        int maxJobPostings
+        boolean unlimitedInterviews
+        boolean fullMatchingInsights
+        boolean rankedCandidateList
+        boolean directCandidateContact
+        text description
+        array features
+        boolean isActive
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    UserMembership {
+        uuid id PK
+        uuid userId FK
+        uuid planId FK
+        timestamp startDate
+        timestamp endDate
+        enum status
+        boolean autoRenew
+        text notes
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    PaymentTransaction {
+        uuid id PK
+        uuid userId FK
+        uuid planId FK
+        uuid membershipId FK
+        string orderCode UK
+        float amount
+        enum currency
+        string paymentLinkId
+        string paymentLinkUrl
+        enum status
+        json rawRequest
+        json rawResponse
+        timestamp paidAt
+        timestamp expiredAt
+        text errorMessage
+        timestamp createdAt
+        timestamp updatedAt
+    }

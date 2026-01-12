@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient, type InterviewFeedback } from "@/lib/api";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isRecruiterLoggedIn, isAdminLoggedIn } from "@/lib/auth";
 import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
 import { ArrowLeft, Loader2, Sparkles, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -235,6 +235,9 @@ const InterviewFeedbackPage = () => {
   const improvements = Array.isArray(ai?.areasForImprovement) ? (ai.areasForImprovement as string[]) : [];
   const candidateInfo = (data as any).candidate;
   const jobInfo = (data as any).job;
+  
+  // Check if user is candidate (should not see recommendation)
+  const isCandidate = !isRecruiterLoggedIn() && !isAdminLoggedIn();
 
   return (
     <main className="container mx-auto min-h-dvh px-4 py-8">
@@ -270,7 +273,8 @@ const InterviewFeedbackPage = () => {
           <CardContent className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{data.status}</Badge>
-              {data.recommendation && <Badge variant="success">{String(data.recommendation)}</Badge>}
+              {/* Only show recommendation for recruiters and admins, not candidates */}
+              {!isCandidate && data.recommendation && <Badge variant="success">{String(data.recommendation)}</Badge>}
             </div>
             <div className="text-sm">
               <div className="text-muted-foreground">Score</div>

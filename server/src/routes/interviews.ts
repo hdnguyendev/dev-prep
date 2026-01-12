@@ -87,6 +87,9 @@ interviewsRoutes.get("/interviews/:id/feedback", async (c) => {
     });
     if (!interview) return c.json({ success: false, message: "Interview not found" }, 404);
 
+    // Keep previous overallScore to detect re-runs
+    const previousOverallScore = typeof interview.overallScore === "number" ? interview.overallScore : null;
+
     // Authorization: same as /analyze
     if (user.role !== "ADMIN") {
       if (user.role === "CANDIDATE") {
@@ -94,6 +97,15 @@ interviewsRoutes.get("/interviews/:id/feedback", async (c) => {
         const ownsStandalone = candidateId && interview.candidateId === candidateId;
         const ownsApplication = candidateId && interview.application?.candidateId === candidateId;
         if (!ownsStandalone && !ownsApplication) return c.json({ success: false, message: "Forbidden" }, 403);
+        
+        // Candidates can ONLY view feedback for practice interviews (standalone, no applicationId)
+        // Real interviews (with applicationId) should NOT show feedback to candidates
+        if (interview.applicationId) {
+          return c.json({ 
+            success: false, 
+            message: "Feedback is not available for this interview. Only practice interviews allow feedback viewing for candidates." 
+          }, 403);
+        }
       }
       if (user.role === "RECRUITER") {
         const recruiterId = user.recruiterProfile?.id;
@@ -112,12 +124,16 @@ interviewsRoutes.get("/interviews/:id/feedback", async (c) => {
     }
 
     // Return feedback-related fields with context (candidate, job info for recruiters)
-    const data = {
+    // Candidates should NOT see recommendation (HIRE/CONSIDER/REJECT)
+    const isCandidate = user.role === "CANDIDATE";
+    
+    const data: any = {
       id: interview.id,
       status: interview.status,
       overallScore: interview.overallScore,
       summary: interview.summary,
-      recommendation: interview.recommendation,
+      // Only include recommendation for recruiters and admins, not candidates
+      ...(isCandidate ? {} : { recommendation: interview.recommendation }),
       aiAnalysisData: interview.aiAnalysisData,
       perQuestion: interview.exchanges.map((e) => ({
         orderIndex: e.orderIndex,
@@ -354,14 +370,19 @@ interviewsRoutes.post("/interviews/:id/analyze", async (c) => {
               try {
                 await sendInterviewCompletedEmailToRecruiter({
                   to: targetEmail,
-                  recruiterName: `${recruiterUser.firstName || ''} ${recruiterUser.lastName || ''}`.trim() || "Recruiter",
-                  candidateName: `${updated.application.candidate?.user?.firstName || ''} ${updated.application.candidate?.user?.lastName || ''}`.trim() || updated.application.candidate?.user?.email || "Candidate",
+                  recruiterName: `${recruiterUser.firstName || ""} ${recruiterUser.lastName || ""}`.trim() || "Recruiter",
+                  candidateName:
+                    `${updated.application.candidate?.user?.firstName || ""} ${updated.application.candidate?.user?.lastName || ""}`.trim() ||
+                    updated.application.candidate?.user?.email ||
+                    "Candidate",
                   jobTitle: updated.application.job.title,
                   companyName: updated.application.job.company?.name,
                   interviewId: updated.id,
                   overallScore: feedback.overallScore,
                   recommendation: feedback.recommendation,
                   applicationId: updated.applicationId,
+                  // Only include previousOverallScore when this is a re-run (status already INTERVIEWED)
+                  previousOverallScore: previousOverallScore !== null ? previousOverallScore : undefined,
                 });
               } catch (emailError) {
                 console.error("Failed to send interview completed email to recruiter:", emailError);
@@ -391,6 +412,12 @@ interviewsRoutes.get("/interviews/access-code/:accessCode", async (c) => {
 
     if (!accessCode || accessCode.trim().length === 0) {
       return c.json({ success: false, message: "Access code is required" }, 400);
+    }
+
+    // Require authenticated user (candidate) to prevent other users from reusing access codes
+    const user = await resolveAuthedUser(c);
+    if (!user) {
+      return c.json({ success: false, message: "Not authenticated" }, 401);
     }
 
     const interview = await prisma.interview.findUnique({
@@ -442,6 +469,32 @@ interviewsRoutes.get("/interviews/access-code/:accessCode", async (c) => {
 
     if (!interview) {
       return c.json({ success: false, message: "Interview not found" }, 404);
+    }
+
+    // Only the correct candidate (owner of this interview/application) can use the access code
+    if (user.role === "CANDIDATE") {
+      const candidateId = user.candidateProfile?.id;
+      const ownsStandalone = candidateId && interview.candidateId === candidateId;
+      const ownsApplication = candidateId && interview.application?.candidateId === candidateId;
+
+      if (!ownsStandalone && !ownsApplication) {
+        return c.json(
+          {
+            success: false,
+            message: "You are not allowed to access this interview with this access code.",
+          },
+          403
+        );
+      }
+    } else if (user.role !== "ADMIN") {
+      // Recruiters and other roles should NOT join interviews using candidate access codes
+      return c.json(
+        {
+          success: false,
+          message: "Only the scheduled candidate can join this interview.",
+        },
+        403
+      );
     }
 
     // Check if application status is already INTERVIEWED (prevent re-interviewing)

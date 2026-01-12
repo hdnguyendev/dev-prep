@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -13,20 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { APPLICATION_STATUS_META } from "@/constants/applications";
 import { useAuth } from "@clerk/clerk-react";
-import { Briefcase, Building2, Calendar, Check, CheckCircle2, Clock, ExternalLink, Eye, Gift, Loader2, MapPin, Search, TrendingUp, X } from "lucide-react";
+import { Award, Briefcase, Building2, Calendar, Check, CheckCircle2, Clock, ExternalLink, Eye, Gift, Loader2, MapPin, Search, Video, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import {
-  Area,
-  AreaChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { apiClient } from "@/lib/api";
 
@@ -89,60 +78,6 @@ const getCompanyColor = (index: number) => {
   return colors[index % colors.length];
 };
 
-const chartColors = [
-  "#6366f1", // indigo
-  "#22c55e", // green
-  "#f97316", // orange
-  "#06b6d4", // cyan
-  "#a855f7", // purple
-  "#ef4444", // red
-  "#0ea5e9", // sky
-  "#16a34a", // emerald
-  "#f59e0b", // amber
-  "#ec4899", // pink
-];
-
-const statusColors: Record<string, string> = {
-  APPLIED: "#6366f1",
-  REVIEWING: "#f59e0b",
-  SHORTLISTED: "#a855f7",
-  INTERVIEW_SCHEDULED: "#06b6d4",
-  INTERVIEWED: "#0ea5e9",
-  OFFER_SENT: "#22c55e",
-  OFFER_ACCEPTED: "#10b981",
-  OFFER_REJECTED: "#f97316",
-  HIRED: "#16a34a",
-  REJECTED: "#ef4444",
-  WITHDRAWN: "#94a3b8",
-};
-
-const countBy = (rows: ApplicationRow[], field: string) => {
-  const counts: Record<string, number> = {};
-  rows.forEach((r) => {
-    const key = String((r as Record<string, unknown>)?.[field] ?? "Unknown");
-    counts[key] = (counts[key] ?? 0) + 1;
-  });
-  return Object.entries(counts).map(([name, value]) => ({ name, value }));
-};
-
-const startOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
-
-const dayKey = (d: Date) => startOfDay(d).toISOString().slice(0, 10);
-
-const lastNDays = (n: number) => {
-  const out: string[] = [];
-  const today = startOfDay(new Date());
-  for (let i = n - 1; i >= 0; i -= 1) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    out.push(dayKey(d));
-  }
-  return out;
-};
 
 export default function CandidateApplications() {
   const navigate = useNavigate();
@@ -158,6 +93,63 @@ export default function CandidateApplications() {
   const [respondingToOffer, setRespondingToOffer] = useState(false);
   const [responseNote, setResponseNote] = useState("");
   const [responseAction, setResponseAction] = useState<"accept" | "reject" | null>(null);
+  const [withdrawingApplicationId, setWithdrawingApplicationId] = useState<string | null>(null);
+  
+  // Application detail modal
+  const [selectedApplication, setSelectedApplication] = useState<ApplicationRow | null>(null);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [fullApplicationData, setFullApplicationData] = useState<{
+    id: string;
+    status: string;
+    appliedAt: string;
+    updatedAt: string;
+    resumeUrl?: string | null;
+    coverLetter?: string | null;
+    rejectionReason?: string | null;
+    history?: Array<{
+      id: string;
+      status: string;
+      changedBy?: string | null;
+      note?: string | null;
+      createdAt: string;
+    }>;
+    interviews?: Array<{
+      id: string;
+      title: string;
+      type: string;
+      status: string;
+      accessCode: string;
+      sessionUrl?: string | null;
+      expiresAt: string;
+      startedAt?: string | null;
+      endedAt?: string | null;
+      overallScore?: number | null;
+      summary?: string | null;
+      recommendation?: string | null;
+      createdAt: string;
+    }>;
+    offers?: Array<{
+      id: string;
+      title: string;
+      salaryMin?: number | null;
+      salaryMax?: number | null;
+      salaryCurrency: string;
+      employmentType?: string | null;
+      startDate?: string | null;
+      expirationDate: string;
+      location?: string | null;
+      isRemote: boolean;
+      description?: string | null;
+      benefits?: string | null;
+      terms?: string | null;
+      status: string;
+      responseNote?: string | null;
+      respondedAt?: string | null;
+      sentAt: string;
+      createdAt: string;
+    }>;
+  } | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const handleSearch = () => {
     setQ(qInput);
@@ -166,6 +158,392 @@ export default function CandidateApplications() {
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearch();
+    }
+  };
+
+  const handleWithdrawApplication = async (applicationId: string) => {
+    if (!confirm("Are you sure you want to withdraw this application? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setWithdrawingApplicationId(applicationId);
+      const token = await getToken();
+      if (!token) return;
+
+      const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+      const response = await fetch(`${API_BASE}/applications/${applicationId}/withdraw`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Update local state
+        setRows((prev) =>
+          prev.map((app) =>
+            app.id === applicationId ? { ...app, status: "WITHDRAWN" } : app
+          )
+        );
+        // If modal is open, update it too
+        if (selectedApplication?.id === applicationId) {
+          setSelectedApplication({ ...selectedApplication, status: "WITHDRAWN" });
+        }
+      } else {
+        alert(data.message || "Failed to withdraw application");
+      }
+    } catch (error) {
+      console.error("Failed to withdraw application:", error);
+      alert("Failed to withdraw application");
+    } finally {
+      setWithdrawingApplicationId(null);
+    }
+  };
+
+  // Handle viewing application detail
+  const handleViewApplication = async (application: ApplicationRow) => {
+    setSelectedApplication(application);
+    setShowApplicationModal(true);
+    setLoadingHistory(true);
+    
+    try {
+      const token = await getToken();
+      if (!token) return;
+      
+      const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+      
+      // Fetch application from CRUD endpoint (which includes history, interviews, offers via include)
+      // CRUD endpoint: /applications/:id
+      const appRes = await fetch(`${API_BASE}/applications/${application.id}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!appRes.ok) {
+        throw new Error(`Failed to fetch application: ${appRes.status} ${appRes.statusText}`);
+      }
+      
+      const appResponse = await appRes.json();
+      
+      // Extract application from response
+      let extractedAppData: {
+        id: string;
+        status: string;
+        appliedAt: string;
+        updatedAt: string;
+        resumeUrl?: string | null;
+        coverLetter?: string | null;
+        rejectionReason?: string | null;
+        history?: Array<{
+          id: string;
+          status: string;
+          changedBy?: string | null;
+          note?: string | null;
+          createdAt: string;
+        }>;
+        interviews?: Array<{
+          id: string;
+          title: string;
+          type: string;
+          status: string;
+          accessCode: string;
+          sessionUrl?: string | null;
+          expiresAt: string;
+          startedAt?: string | null;
+          endedAt?: string | null;
+          overallScore?: number | null;
+          summary?: string | null;
+          recommendation?: string | null;
+          createdAt: string;
+        }>;
+        offers?: Array<{
+          id: string;
+          title: string;
+          salaryMin?: number | null;
+          salaryMax?: number | null;
+          salaryCurrency: string;
+          employmentType?: string | null;
+          startDate?: string | null;
+          expirationDate: string;
+          location?: string | null;
+          isRemote: boolean;
+          description?: string | null;
+          benefits?: string | null;
+          terms?: string | null;
+          status: string;
+          responseNote?: string | null;
+          respondedAt?: string | null;
+          sentAt: string;
+          createdAt: string;
+        }>;
+      } | null = null;
+      
+      if (appResponse?.success && appResponse.data && Array.isArray(appResponse.data)) {
+        extractedAppData = appResponse.data.find((app: { id: string }) => app.id === application.id) || appResponse.data[0];
+      } else if (appResponse?.success && appResponse.data && !Array.isArray(appResponse.data)) {
+        extractedAppData = appResponse.data;
+      } else if (appResponse?.data && !Array.isArray(appResponse.data)) {
+        extractedAppData = appResponse.data;
+      }
+      
+      if (!extractedAppData) {
+        console.error("Application not found in response:", appResponse);
+        throw new Error("Application not found");
+      }
+      
+      // History should already be included in appData.history from the filtered endpoint
+      // But fetch separately as fallback if needed
+      let historyResponse: {
+        success?: boolean;
+        data?: Array<{
+          id: string;
+          applicationId?: string;
+          status: string;
+          changedBy?: string | null;
+          note?: string | null;
+          createdAt: string;
+        }>;
+      } | Array<{
+        id: string;
+        applicationId?: string;
+        status: string;
+        changedBy?: string | null;
+        note?: string | null;
+        createdAt: string;
+      }> | null = null;
+      
+      try {
+        // Try CRUD endpoint with applicationId filter
+        const historyRes = await fetch(`${API_BASE}/application-histories?applicationId=${application.id}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (historyRes.ok) {
+          historyResponse = await historyRes.json();
+        } else {
+          console.warn("History endpoint returned error:", historyRes.status, historyRes.statusText);
+        }
+      } catch (error) {
+        console.warn("Failed to fetch application history separately:", error);
+        // Not critical - we can use history from appData
+      }
+      
+      // Use extracted data
+      const appData = extractedAppData;
+      
+      let history: Array<{
+        id: string;
+        status: string;
+        changedBy?: string | null;
+        note?: string | null;
+        createdAt: string;
+      }> = [];
+      
+      // Get history from application data if available
+      if (appData && typeof appData === 'object' && 'history' in appData && Array.isArray(appData.history)) {
+        history = appData.history;
+        console.log("History from application endpoint:", {
+          count: history.length,
+          statuses: history.map(h => h.status),
+        });
+      }
+      
+      // Also try to get from separate history endpoint and merge
+      if (historyResponse) {
+        let historyFromEndpoint: Array<{
+          id: string;
+          status: string;
+          changedBy?: string | null;
+          note?: string | null;
+          createdAt: string;
+        }> = [];
+        
+        if (Array.isArray(historyResponse)) {
+          historyFromEndpoint = historyResponse;
+        } else if (historyResponse?.success && Array.isArray(historyResponse.data)) {
+          historyFromEndpoint = historyResponse.data;
+        } else if (historyResponse && typeof historyResponse === 'object' && 'data' in historyResponse && Array.isArray(historyResponse.data)) {
+          historyFromEndpoint = historyResponse.data;
+        }
+        
+        console.log("History from separate endpoint:", {
+          count: historyFromEndpoint.length,
+          statuses: historyFromEndpoint.map(h => h.status),
+        });
+        
+        // Merge with existing history - use Set to track IDs to avoid duplicates
+        const existingIds = new Set(history.map(h => h.id));
+        const newHistory = historyFromEndpoint.filter(h => !existingIds.has(h.id));
+        history = [...history, ...newHistory];
+        
+        console.log("Merged history:", {
+          total: history.length,
+          statuses: history.map(h => h.status),
+          sequence: history.map(h => h.status).join(' -> '),
+        });
+      }
+      
+      // Remove duplicates by ID and sort by date
+      // IMPORTANT: Keep ALL status changes, even if same status appears multiple times
+      // Use a combination of status + createdAt as key to preserve all status transitions
+      const historyMap = new Map<string, {
+        id: string;
+        status: string;
+        changedBy?: string | null;
+        note?: string | null;
+        createdAt: string;
+      }>();
+      
+      history.forEach((h) => {
+        // Use id as primary key to avoid true duplicates (same record)
+        // But keep all records even if they have the same status (different timestamps)
+        if (!historyMap.has(h.id)) {
+          historyMap.set(h.id, h);
+        } else {
+          // If duplicate id, keep the one with earlier date (first occurrence)
+          const existing = historyMap.get(h.id);
+          if (existing && new Date(h.createdAt) < new Date(existing.createdAt)) {
+            historyMap.set(h.id, h);
+          }
+        }
+      });
+      
+      // Sort by date to ensure chronological order
+      const uniqueHistory = Array.from(historyMap.values()).sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      // CRITICAL: Verify we have all status transitions
+      const statuses = uniqueHistory.map(h => h.status);
+      const statusSequence = statuses.join(' -> ');
+      console.log("History status sequence:", statusSequence);
+      
+      // Check for missing intermediate statuses
+      const hasReviewing = statuses.includes('REVIEWING');
+      const hasShortlisted = statuses.includes('SHORTLISTED');
+      const hasInterviewScheduled = statuses.includes('INTERVIEW_SCHEDULED');
+      
+      if (hasShortlisted && !hasReviewing) {
+        console.warn("⚠️ WARNING: Found SHORTLISTED but missing REVIEWING in history!");
+        console.warn("This might indicate a missing history record in the database.");
+        console.warn("Current application status:", appData?.status || application.status);
+      }
+      
+      if (hasInterviewScheduled && !hasShortlisted && !hasReviewing) {
+        console.warn("⚠️ WARNING: Found INTERVIEW_SCHEDULED but missing intermediate statuses!");
+      }
+      
+      // Debug: Log to verify all history records are captured
+      console.log("Final History Data:", {
+        totalRecords: uniqueHistory.length,
+        allStatuses: uniqueHistory.map(h => ({
+          id: h.id,
+          status: h.status,
+          date: h.createdAt,
+          note: h.note,
+        })),
+        statusSequence: uniqueHistory.map(h => h.status).join(' -> '),
+      });
+      
+      // Combine all data - ensure we have all required fields
+      const fullData: {
+        id: string;
+        status: string;
+        appliedAt: string;
+        updatedAt: string;
+        resumeUrl?: string | null;
+        coverLetter?: string | null;
+        rejectionReason?: string | null;
+        history?: Array<{
+          id: string;
+          status: string;
+          changedBy?: string | null;
+          note?: string | null;
+          createdAt: string;
+        }>;
+        interviews?: Array<{
+          id: string;
+          title: string;
+          type: string;
+          status: string;
+          accessCode: string;
+          sessionUrl?: string | null;
+          expiresAt: string;
+          startedAt?: string | null;
+          endedAt?: string | null;
+          overallScore?: number | null;
+          summary?: string | null;
+          recommendation?: string | null;
+          createdAt: string;
+        }>;
+        offers?: Array<{
+          id: string;
+          title: string;
+          salaryMin?: number | null;
+          salaryMax?: number | null;
+          salaryCurrency: string;
+          employmentType?: string | null;
+          startDate?: string | null;
+          expirationDate: string;
+          location?: string | null;
+          isRemote: boolean;
+          description?: string | null;
+          benefits?: string | null;
+          terms?: string | null;
+          status: string;
+          responseNote?: string | null;
+          respondedAt?: string | null;
+          sentAt: string;
+          createdAt: string;
+        }>;
+      } = {
+        id: appData?.id || application.id,
+        status: appData?.status || application.status,
+        appliedAt: appData?.appliedAt || application.appliedAt,
+        updatedAt: appData?.updatedAt || application.appliedAt,
+        resumeUrl: appData?.resumeUrl || null,
+        coverLetter: appData?.coverLetter || null,
+        rejectionReason: appData?.rejectionReason || null,
+        history: uniqueHistory,
+        interviews: appData?.interviews || [],
+        offers: appData?.offers || application.offers || [],
+      };
+      
+      // Debug: Log history to console to verify data
+      console.log("Application History Data:", {
+        applicationId: application.id,
+        currentStatus: fullData.status,
+        historyCount: uniqueHistory.length,
+        history: uniqueHistory,
+        allStatuses: uniqueHistory.map(h => h.status),
+        statusSequence: uniqueHistory.map(h => h.status).join(' -> '),
+      });
+      
+      setFullApplicationData(fullData);
+    } catch (error) {
+      console.error("Failed to load application details:", error);
+      // Fallback to basic data
+      setFullApplicationData({
+        id: application.id,
+        status: application.status,
+        appliedAt: application.appliedAt,
+        updatedAt: application.appliedAt,
+        history: [],
+        interviews: [],
+        offers: application.offers || [],
+      });
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -206,27 +584,6 @@ export default function CandidateApplications() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [dateFrom, setDateFrom] = useState("");
 
-  // Recently applied (last 6 applications)
-  const recentApplications = useMemo(() => {
-    return [...rows]
-      .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
-      .slice(0, 6);
-  }, [rows]);
-
-  // Application outcome data for pie chart
-  const appsByOutcome = useMemo(() => {
-    const successful = rows.filter((r) => r.status === "HIRED" || r.status === "OFFER_ACCEPTED" || r.status === "OFFER_SENT").length;
-    const inProgress = rows.filter((r) => 
-      r.status !== "HIRED" && r.status !== "OFFER_ACCEPTED" && r.status !== "OFFER_SENT" && r.status !== "REJECTED" && r.status !== "WITHDRAWN"
-    ).length;
-    const rejected = rows.filter((r) => r.status === "REJECTED" || r.status === "WITHDRAWN").length;
-    return [
-      { name: "Successful", value: successful },
-      { name: "In Progress", value: inProgress },
-      { name: "Rejected", value: rejected },
-    ].filter((item) => item.value > 0);
-  }, [rows]);
-
   // Client-side filtering only for status and date (search is done on server)
   const filtered = useMemo(() => {
     let result = rows;
@@ -264,23 +621,6 @@ export default function CandidateApplications() {
     
     return { total, pending, inProgress, successful, rejected, successRate };
   }, [rows]);
-
-  // Charts data
-  const appsByStatus = useMemo(() => countBy(rows, "status"), [rows]);
-  
-  const trendDays = useMemo(() => lastNDays(30), []);
-  const trend = useMemo(() => {
-    const appsByDay: Record<string, number> = {};
-    rows.forEach((a) => {
-      const k = a.appliedAt ? dayKey(new Date(a.appliedAt)) : null;
-      if (!k) return;
-      appsByDay[k] = (appsByDay[k] ?? 0) + 1;
-    });
-    return trendDays.map((k) => ({
-      day: k.slice(5), // MM-DD
-      applications: appsByDay[k] ?? 0,
-    }));
-  }, [rows, trendDays]);
 
   // const topCompanies = useMemo(() => {
   //   const counts: Record<string, number> = {};
@@ -418,7 +758,6 @@ export default function CandidateApplications() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-cyan-700 dark:text-cyan-400 flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-cyan-500" />
-              <TrendingUp className="h-4 w-4" />
               In Progress
             </CardTitle>
           </CardHeader>
@@ -456,238 +795,6 @@ export default function CandidateApplications() {
         </Card>
       </div>
 
-      {/* Recently Applied Section */}
-      {recentApplications.length > 0 && (
-        <Card className="border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/30 via-background to-background dark:from-indigo-950/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
-              <Clock className="h-5 w-5" />
-              Recently Applied
-            </CardTitle>
-            <CardDescription>Your most recent job applications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {recentApplications.map((app) => {
-                const status = String(app.status);
-                const meta = APPLICATION_STATUS_META[status as keyof typeof APPLICATION_STATUS_META] || APPLICATION_STATUS_META.APPLIED;
-                const Icon = meta.Icon;
-                return (
-                  <Card
-                    key={app.id}
-                    className="group border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50/50 via-background to-background dark:from-slate-950/10 transition-all hover:shadow-lg hover:border-primary/50 cursor-pointer"
-                    onClick={() => app.job?.id && navigate(`/jobs/${app.job.id}`)}
-                  >
-        <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors">
-                            {app.job?.title || "Job"}
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-1 mt-1">
-                            <Building2 className="h-3 w-3" />
-                            {app.job?.company?.name || "Company"}
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <Badge
-                        variant={statusVariant(status)}
-                        className="inline-flex h-7 items-center gap-2 px-3 text-xs font-medium"
-                      >
-                        <Icon className="h-3 w-3" />
-                        <span>{meta.label}</span>
-                      </Badge>
-                      {app.status === "OFFER_SENT" && app.offers && app.offers.length > 0 && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const pendingOffer = app.offers?.find(o => o.status === "PENDING");
-                            if (pendingOffer) {
-                              setSelectedOffer(pendingOffer);
-                              setShowOfferModal(true);
-                            }
-                          }}
-                        >
-                          <Gift className="h-4 w-4 mr-2" />
-                          View Offer
-                        </Button>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(app.appliedAt).toLocaleDateString()}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Charts Section - 2 Pie Charts + 1 Line Chart (Compact) */}
-      <div className="grid gap-3 lg:grid-cols-3">
-        {/* Pie Chart 1: Applications by Status */}
-        <Card className="border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/30 via-background to-background dark:from-indigo-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-indigo-700 dark:text-indigo-400">Applications by Status</CardTitle>
-            <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70">Distribution</p>
-          </CardHeader>
-          <CardContent className="h-56">
-            {appsByStatus.length === 0 ? (
-              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No data</div>
-            ) : (
-              <div className="space-y-2">
-                <ResponsiveContainer width="100%" height={140}>
-                  <PieChart>
-                    <Pie 
-                      dataKey="value" 
-                      data={appsByStatus} 
-                      nameKey="name" 
-                      innerRadius={35} 
-                      outerRadius={55}
-                      paddingAngle={2}
-                    >
-                      {appsByStatus.map((item) => (
-                        <Cell key={item.name} fill={statusColors[item.name] || chartColors[0]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--background))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px"
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="grid grid-cols-2 gap-1 text-xs">
-                  {appsByStatus.slice(0, 4).map((item) => (
-                    <div key={item.name} className="flex items-center gap-1">
-                      <div 
-                        className="h-2 w-2 rounded-full" 
-                        style={{ backgroundColor: statusColors[item.name] || chartColors[0] }}
-                      />
-                      <span className="text-muted-foreground truncate">{item.name}:</span>
-                      <span className="font-medium">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Pie Chart 2: Application Outcome */}
-        <Card className="border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50/30 via-background to-background dark:from-teal-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-teal-700 dark:text-teal-400">Application Outcome</CardTitle>
-            <p className="text-xs text-teal-600/70 dark:text-teal-400/70">Result summary</p>
-          </CardHeader>
-          <CardContent className="h-56">
-            {appsByOutcome.length === 0 ? (
-              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No data</div>
-            ) : (
-              <div className="space-y-2">
-                <ResponsiveContainer width="100%" height={140}>
-                  <PieChart>
-                    <Pie 
-                      dataKey="value" 
-                      data={appsByOutcome} 
-                      nameKey="name" 
-                      innerRadius={35} 
-                      outerRadius={55}
-                      paddingAngle={2}
-                    >
-                      {appsByOutcome.map((_, idx) => (
-                        <Cell key={idx} fill={chartColors[idx % chartColors.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--background))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px"
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="grid grid-cols-1 gap-1 text-xs">
-                  {appsByOutcome.map((item, idx) => (
-                    <div key={item.name} className="flex items-center gap-1">
-                      <div 
-                        className="h-2 w-2 rounded-full" 
-                        style={{ backgroundColor: chartColors[idx % chartColors.length] }}
-                      />
-                      <span className="text-muted-foreground">{item.name}:</span>
-                      <span className="font-medium">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Line Chart: Application Trend */}
-        <Card className="border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/30 via-background to-background dark:from-cyan-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-cyan-700 dark:text-cyan-400">Application Trend</CardTitle>
-            <p className="text-xs text-cyan-600/70 dark:text-cyan-400/70">Last 30 days</p>
-          </CardHeader>
-          <CardContent className="h-56">
-            {trend.every((t) => t.applications === 0) ? (
-              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No recent activity</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={224}>
-                <AreaChart data={trend}>
-                  <defs>
-                    <linearGradient id="colorApplications" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="day" 
-                    tick={{ fontSize: 10 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis 
-                    allowDecimals={false}
-                    tick={{ fontSize: 10 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    width={30}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px"
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="applications" 
-                    stroke="#06b6d4" 
-                    strokeWidth={2}
-                    fill="url(#colorApplications)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Applications Table */}
       <Card className="border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-50/20 via-background to-background dark:from-slate-950/5">
         <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -696,7 +803,7 @@ export default function CandidateApplications() {
             <div className="text-sm text-slate-600 dark:text-slate-400">{filtered.length} items</div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 my-2">
           {/* Search and Filters */}
           <div className="grid gap-3 md:grid-cols-3">
             <div className="relative flex gap-2">
@@ -777,7 +884,7 @@ export default function CandidateApplications() {
                     <tr 
                       key={r.id} 
                       className="group hover:bg-gradient-to-r hover:from-primary/5 hover:via-primary/3 hover:to-transparent transition-all cursor-pointer border-b border-border/30"
-                      onClick={() => r.job?.id && navigate(`/jobs/${r.job.id}`)}
+                      onClick={() => handleViewApplication(r)}
                     >
                       <td className="px-4 py-4">
                         <div className="flex items-start gap-3">
@@ -871,23 +978,25 @@ export default function CandidateApplications() {
                                 className="gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/jobs/${r.job?.id}`);
+                                  handleViewApplication(r);
                                 }}
                               >
                                 <Eye className="h-3.5 w-3.5" />
                           View
                         </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="gap-1.5"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/jobs/${r.job?.id}`);
-                                }}
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </Button>
+                              {r.job?.id && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="gap-1.5"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/jobs/${r.job?.id}`);
+                                  }}
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </>
                       ) : null}
                         </div>
@@ -910,6 +1019,546 @@ export default function CandidateApplications() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Application Detail Modal */}
+      <Dialog open={showApplicationModal} onOpenChange={setShowApplicationModal}>
+        <DialogContent className="max-w-7xl w-[95vw] min-w-[1200px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-primary" />
+              Application Details
+            </DialogTitle>
+            <DialogDescription>
+              View the timeline and status of your application
+            </DialogDescription>
+          </DialogHeader>
+          {selectedApplication && (
+            <div className="space-y-6">
+              {/* Job Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Job Title</div>
+                  <div className="text-lg font-semibold">{selectedApplication.job?.title || "Unknown"}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Company</div>
+                  <div className="text-lg font-semibold flex items-center gap-2">
+                    {selectedApplication.job?.company?.logoUrl && (
+                      <img 
+                        src={selectedApplication.job.company.logoUrl} 
+                        alt={selectedApplication.job.company.name || "Company"}
+                        className="h-6 w-6 rounded"
+                      />
+                    )}
+                    {selectedApplication.job?.company?.name || "Unknown"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Current Status</div>
+                  <Badge variant={statusVariant(selectedApplication.status)} className="text-sm">
+                    {APPLICATION_STATUS_META[selectedApplication.status as keyof typeof APPLICATION_STATUS_META]?.label || selectedApplication.status}
+                  </Badge>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Applied Date</div>
+                  <div className="text-sm">{new Date(selectedApplication.appliedAt).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}</div>
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div>
+                <div className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Application Timeline
+                </div>
+                {loadingHistory ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {/* Timeline line */}
+                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+                    
+                    {/* Build complete timeline with all events */}
+                    {fullApplicationData && (() => {
+                      const timelineEvents: Array<{
+                        id: string;
+                        type: 'application' | 'history' | 'interview' | 'offer';
+                        title: string;
+                        description?: string;
+                        status?: string;
+                        date: string;
+                        icon: React.ReactNode;
+                        color: string;
+                        note?: string;
+                        metadata?: {
+                          id?: string;
+                          title?: string;
+                          type?: string;
+                          status?: string;
+                          overallScore?: number | null;
+                          recommendation?: string | null;
+                          expirationDate?: string;
+                          [key: string]: unknown;
+                        };
+                      }> = [];
+
+                      // Helper function to get status color
+                      const getStatusColor = (status: string): string => {
+                        if (status === "HIRED" || status === "OFFER_ACCEPTED") {
+                          return 'bg-green-500 text-white';
+                        } else if (status === "REJECTED" || status === "OFFER_REJECTED") {
+                          return 'bg-red-500 text-white';
+                        } else if (status === "REVIEWING") {
+                          return 'bg-amber-500 text-white';
+                        } else if (status === "SHORTLISTED") {
+                          return 'bg-purple-500 text-white';
+                        } else if (status === "INTERVIEW_SCHEDULED" || status === "INTERVIEWED") {
+                          return 'bg-cyan-500 text-white';
+                        } else if (status === "OFFER_SENT") {
+                          return 'bg-yellow-500 text-white';
+                        }
+                        return 'bg-primary text-primary-foreground';
+                      };
+
+                      // 1. Application submitted - Always show this first
+                      timelineEvents.push({
+                        id: 'application-submitted',
+                        type: 'application',
+                        title: 'Application Submitted',
+                        status: 'APPLIED',
+                        date: fullApplicationData.appliedAt,
+                        icon: <CheckCircle2 className="h-4 w-4" />,
+                        color: 'bg-primary text-primary-foreground',
+                      });
+
+                      // 2. Add ALL status changes from history (keep all, don't deduplicate)
+                      // This ensures we show: Applied -> Reviewing -> Shortlisted -> Interview Scheduled, etc.
+                      if (fullApplicationData.history && fullApplicationData.history.length > 0) {
+                        // Sort history by date to ensure chronological order
+                        const sortedHistory = [...fullApplicationData.history].sort(
+                          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                        );
+                        
+                        console.log("Processing history for timeline:", {
+                          totalRecords: sortedHistory.length,
+                          records: sortedHistory.map(h => ({
+                            id: h.id,
+                            status: h.status,
+                            date: h.createdAt,
+                            note: h.note,
+                          })),
+                          statusSequence: sortedHistory.map(h => h.status).join(' -> '),
+                        });
+                        
+                        sortedHistory.forEach((history, index) => {
+                          // Skip if status is APPLIED and date is same as initial application
+                          if (history.status === 'APPLIED') {
+                            const appliedDate = new Date(fullApplicationData.appliedAt).getTime();
+                            const historyDate = new Date(history.createdAt).getTime();
+                            // Only skip if it's the same date as initial application (within 1 second)
+                            if (Math.abs(appliedDate - historyDate) < 1000) {
+                              console.log(`Skipping duplicate APPLIED at index ${index}:`, history);
+                              return;
+                            }
+                          }
+                          
+                          const meta = APPLICATION_STATUS_META[history.status as keyof typeof APPLICATION_STATUS_META] || APPLICATION_STATUS_META.APPLIED;
+                          const StatusIcon = meta.Icon;
+                          
+                          console.log(`Adding timeline event ${index + 1}/${sortedHistory.length}:`, {
+                            id: history.id,
+                            status: history.status,
+                            date: history.createdAt,
+                            title: meta.label,
+                          });
+                          
+                          timelineEvents.push({
+                            id: history.id,
+                            type: 'history',
+                            title: meta.label,
+                            status: history.status,
+                            date: history.createdAt,
+                            icon: <StatusIcon className="h-4 w-4" />,
+                            color: getStatusColor(history.status),
+                            note: history.note || undefined,
+                          });
+                        });
+                        
+                        // Debug: Log timeline events after adding history
+                        console.log("Timeline Events after adding history:", {
+                          totalEvents: timelineEvents.length,
+                          events: timelineEvents.map(e => ({
+                            id: e.id,
+                            type: e.type,
+                            status: e.status,
+                            title: e.title,
+                            date: e.date,
+                          })),
+                          statusSequence: timelineEvents.map(e => e.status).join(' -> '),
+                        });
+                      }
+                      
+                      // 3. Check if current status is missing from timeline
+                      // This handles cases where status was updated but no history record was created
+                      const statusesInTimeline = new Set(timelineEvents.map(e => e.status).filter(Boolean));
+                      const currentStatus = fullApplicationData.status;
+                      
+                      if (currentStatus && currentStatus !== 'APPLIED' && !statusesInTimeline.has(currentStatus)) {
+                        const meta = APPLICATION_STATUS_META[currentStatus as keyof typeof APPLICATION_STATUS_META] || APPLICATION_STATUS_META.APPLIED;
+                        const StatusIcon = meta.Icon;
+                        
+                        // Use updatedAt as date, or if that's before the last event, use last event date + 1ms
+                        let statusDate = fullApplicationData.updatedAt || fullApplicationData.appliedAt;
+                        if (timelineEvents.length > 0) {
+                          const lastEventDate = new Date(timelineEvents[timelineEvents.length - 1].date).getTime();
+                          const updatedAtTime = new Date(statusDate).getTime();
+                          if (updatedAtTime <= lastEventDate) {
+                            statusDate = new Date(lastEventDate + 1).toISOString();
+                          }
+                        }
+                        
+                        timelineEvents.push({
+                          id: `current-status-${currentStatus}-${Date.now()}`,
+                          type: 'history',
+                          title: meta.label,
+                          status: currentStatus,
+                          date: statusDate,
+                          icon: <StatusIcon className="h-4 w-4" />,
+                          color: getStatusColor(currentStatus),
+                        });
+                      }
+
+                      // 3. Interview events
+                      if (fullApplicationData.interviews && fullApplicationData.interviews.length > 0) {
+                        fullApplicationData.interviews.forEach((interview) => {
+                          timelineEvents.push({
+                            id: interview.id,
+                            type: 'interview',
+                            title: interview.title || 'Interview',
+                            description: `${interview.type} - ${interview.status}`,
+                            date: interview.createdAt,
+                            icon: <Video className="h-4 w-4" />,
+                            color: interview.status === 'COMPLETED' ? 'bg-blue-500 text-white' : 'bg-cyan-500 text-white',
+                            metadata: interview,
+                          });
+                        });
+                      }
+
+                      // 4. Offer events
+                      if (fullApplicationData.offers && fullApplicationData.offers.length > 0) {
+                        fullApplicationData.offers.forEach((offer) => {
+                          timelineEvents.push({
+                            id: offer.id,
+                            type: 'offer',
+                            title: offer.title || 'Job Offer',
+                            description: offer.salaryMin && offer.salaryMax 
+                              ? `${offer.salaryCurrency} ${offer.salaryMin.toLocaleString()} - ${offer.salaryMax.toLocaleString()}`
+                              : undefined,
+                            status: offer.status,
+                            date: offer.sentAt,
+                            icon: <Gift className="h-4 w-4" />,
+                            color: offer.status === 'ACCEPTED' ? 'bg-green-500 text-white' : offer.status === 'REJECTED' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white',
+                            note: offer.responseNote || undefined,
+                            metadata: offer,
+                          });
+                        });
+                      }
+
+                      // Sort by date
+                      timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                      return (
+                        <div className="space-y-6">
+                          {timelineEvents.map((event, index) => {
+                            const isLast = index === timelineEvents.length - 1;
+                            return (
+                              <div key={event.id} className="relative flex gap-4">
+                                <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${event.color}`}>
+                                  {event.icon}
+                                </div>
+                                <div className={`flex-1 space-y-1 ${!isLast ? 'pb-6' : ''}`}>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-semibold">{event.title}</span>
+                                    {event.status && (
+                                      <Badge variant={statusVariant(event.status)} className="text-xs">
+                                        {APPLICATION_STATUS_META[event.status as keyof typeof APPLICATION_STATUS_META]?.label || event.status}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {event.description && (
+                                    <div className="text-sm text-muted-foreground">{event.description}</div>
+                                  )}
+                                  <div className="text-sm text-muted-foreground">
+                                    {new Date(event.date).toLocaleDateString('en-US', { 
+                                      year: 'numeric', 
+                                      month: 'long', 
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </div>
+                                  {event.note && (
+                                    <div className="text-sm text-muted-foreground/80 mt-1 p-2 bg-muted rounded">
+                                      {event.note}
+                                    </div>
+                                  )}
+                                  {event.type === 'interview' && event.metadata && (
+                                    <div className="mt-2 space-y-1">
+                                      {event.metadata.overallScore !== null && event.metadata.overallScore !== undefined && (
+                                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                          <Award className="h-3 w-3" />
+                                          Score: {event.metadata.overallScore}/100
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  {event.type === 'offer' && event.metadata && (
+                                    <div className="mt-2 text-xs text-muted-foreground">
+                                      {event.metadata.expirationDate && (
+                                        <div>Expires: {new Date(event.metadata.expirationDate).toLocaleDateString()}</div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {timelineEvents.length === 0 && (
+                            <div className="text-sm text-muted-foreground pl-12">
+                              No timeline events yet. Your application is being reviewed.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Active Offers Section */}
+              {fullApplicationData && fullApplicationData.offers && fullApplicationData.offers.length > 0 && (
+                <div>
+                  <div className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Gift className="h-5 w-5 text-yellow-600" />
+                    Job Offers
+                  </div>
+                  <div className="space-y-4">
+                    {fullApplicationData.offers.map((offer) => {
+                      const isPending = offer.status === "PENDING";
+                      const isAccepted = offer.status === "ACCEPTED";
+                      const isRejected = offer.status === "REJECTED";
+                      
+                      return (
+                        <Card 
+                          key={offer.id} 
+                          className={`border-2 transition-all ${
+                            isPending 
+                              ? "border-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/10 hover:border-yellow-600" 
+                              : isAccepted
+                              ? "border-green-500 bg-green-50/50 dark:bg-green-950/10"
+                              : isRejected
+                              ? "border-red-500 bg-red-50/50 dark:bg-red-950/10 opacity-60"
+                              : "border-gray-300 dark:border-gray-700 opacity-60"
+                          }`}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 space-y-3">
+                                <div className="flex items-center gap-3">
+                                  <h3 className="text-lg font-semibold">{offer.title}</h3>
+                                  <Badge 
+                                    variant={
+                                      isPending ? "default" : 
+                                      isAccepted ? "success" : 
+                                      "outline"
+                                    }
+                                  >
+                                    {offer.status}
+                                  </Badge>
+                                </div>
+                                
+                                {offer.salaryMin !== null && offer.salaryMin !== undefined && 
+                                 offer.salaryMax !== null && offer.salaryMax !== undefined && (
+                                  <div>
+                                    <div className="text-sm font-medium text-muted-foreground mb-1">Salary</div>
+                                    <div className="text-xl font-bold text-green-600">
+                                      {offer.salaryCurrency} {offer.salaryMin.toLocaleString()} - {offer.salaryMax.toLocaleString()}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  {offer.employmentType && (
+                                    <div>
+                                      <div className="text-muted-foreground">Employment Type</div>
+                                      <div className="font-medium">{offer.employmentType}</div>
+                                    </div>
+                                  )}
+                                  {offer.location && (
+                                    <div>
+                                      <div className="text-muted-foreground">Location</div>
+                                      <div className="font-medium flex items-center gap-1">
+                                        {offer.isRemote && <span className="text-xs">🌐 Remote</span>}
+                                        {offer.location}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {offer.startDate && (
+                                    <div>
+                                      <div className="text-muted-foreground">Start Date</div>
+                                      <div className="font-medium">
+                                        {new Date(offer.startDate).toLocaleDateString('en-US', {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric'
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {offer.expirationDate && (
+                                    <div>
+                                      <div className="text-muted-foreground">Expires</div>
+                                      <div className={`font-medium ${
+                                        new Date(offer.expirationDate) < new Date() 
+                                          ? "text-red-600" 
+                                          : "text-orange-600"
+                                      }`}>
+                                        {new Date(offer.expirationDate).toLocaleDateString('en-US', {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric'
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {offer.description && (
+                                  <div>
+                                    <div className="text-sm font-medium text-muted-foreground mb-1">Description</div>
+                                    <div className="text-sm text-muted-foreground line-clamp-3">{offer.description}</div>
+                                  </div>
+                                )}
+                                
+                                {offer.benefits && (
+                                  <div>
+                                    <div className="text-sm font-medium text-muted-foreground mb-1">Benefits</div>
+                                    <div className="text-sm text-muted-foreground line-clamp-2">{offer.benefits}</div>
+                                  </div>
+                                )}
+                                
+                                {offer.responseNote && (
+                                  <div className="mt-2 p-2 bg-muted rounded">
+                                    <div className="text-xs font-medium text-muted-foreground mb-1">Your Response</div>
+                                    <div className="text-sm">{offer.responseNote}</div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex flex-col gap-2">
+                                {isPending && (
+                                  <Button
+                                    variant="default"
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => {
+                                      setSelectedOffer(offer);
+                                      setResponseAction("accept");
+                                      setShowOfferModal(true);
+                                    }}
+                                  >
+                                    <Check className="h-4 w-4 mr-2" />
+                                    Accept
+                                  </Button>
+                                )}
+                                {isPending && (
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedOffer(offer);
+                                      setResponseAction("reject");
+                                      setShowOfferModal(true);
+                                    }}
+                                  >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Reject
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedOffer(offer);
+                                    setShowOfferModal(true);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div>
+                  {selectedApplication.status !== "WITHDRAWN" && 
+                   selectedApplication.status !== "HIRED" && 
+                   selectedApplication.status !== "OFFER_ACCEPTED" && 
+                   selectedApplication.status !== "REJECTED" && (
+                    <Button
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950/20"
+                      onClick={() => handleWithdrawApplication(selectedApplication.id)}
+                      disabled={withdrawingApplicationId === selectedApplication.id}
+                    >
+                      {withdrawingApplicationId === selectedApplication.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Withdrawing...
+                        </>
+                      ) : (
+                        <>
+                          <X className="h-4 w-4 mr-2" />
+                          Withdraw Application
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {selectedApplication.job?.id && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowApplicationModal(false);
+                        navigate(`/jobs/${selectedApplication.job?.id}`);
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Job Details
+                    </Button>
+                  )}
+                  <Button onClick={() => setShowApplicationModal(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Offer Detail Modal */}
       <Dialog open={showOfferModal} onOpenChange={setShowOfferModal}>

@@ -1,0 +1,105 @@
+<mxGraphModel dx="2000" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0" adaptiveColors="auto">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <!-- Guest Actor -->
+    <mxCell id="actor-guest" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=middle;html=1;outlineConnect=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;noLabel=0;align=center;horizontal=1;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;" value="Guest" vertex="1">
+      <mxGeometry height="60" width="30" x="80" y="300" as="geometry" />
+    </mxCell>
+    <!-- Recruiter Actor -->
+    <mxCell id="actor-recruiter" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=middle;html=1;outlineConnect=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;noLabel=0;align=center;horizontal=1;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;" value="Recruiter" vertex="1">
+      <mxGeometry height="60" width="30" x="80" y="500" as="geometry" />
+    </mxCell>
+    <!-- System Boundary -->
+    <mxCell id="system-boundary" parent="1" style="swimlane;html=1;startSize=50;horizontal=1;swimlaneLine=0;swimlineWidth=1;swimlineColor=#005e9e;fontSize=23;fontStyle=2;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontFamily=Helvetica;verticalAlign=middle;direction=east;shadow=0;strokeColor=default;snapToPoint=0;strokeWidth=3;" value="Dev Prep System" vertex="1">
+      <mxGeometry height="1200" width="600" x="200" y="50" as="geometry" />
+    </mxCell>
+    
+    <!-- Authentication Use Cases -->
+    <mxCell id="uc-staff-login" parent="system-boundary" style="ellipse;html=1;fontSize=23;fontStyle=2;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#fff2cc;strokeColor=#d6b656;" value="Staff Login" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="80" as="geometry" />
+    </mxCell>
+    
+    <!-- Recruiter-Specific Use Cases -->
+    <mxCell id="uc-view-dashboard" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="View Dashboard" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="180" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-manage-jobs" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Manage Jobs" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="280" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-manage-applications" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Manage Applications" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="380" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-manage-company" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Manage Company" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="480" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-manage-membership" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Manage Membership" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="580" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-view-candidates" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="View Candidates" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="680" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-view-candidate-profile" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="View Candidate Profile" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="780" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-manage-job-applications" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Manage Job Applications" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="880" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-register" parent="system-boundary" style="ellipse;html=1;fontSize=23;fontStyle=2;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#fff2cc;strokeColor=#d6b656;" value="Register" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="980" as="geometry" />
+    </mxCell>
+    
+    <!-- Relationships: Recruiter to Authentication -->
+    <mxCell id="rel-recruiter-login" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-staff-login" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-register" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.9;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-register" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    
+    <!-- Generalization Relationship: Recruiter inherits from Guest -->
+    <mxCell id="rel-recruiter-generalization" edge="1" parent="1" source="actor-recruiter" style="endArrow=block;endFill=0;endSize=12;html=1;rounded=0;strokeWidth=2;strokeColor=#666666;" target="actor-guest" value="">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="95" y="530" as="sourcePoint" />
+        <mxPoint x="95" y="330" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- Relationships: Recruiter to Specific Use Cases -->
+    <mxCell id="rel-recruiter-view-dashboard" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-dashboard" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-manage-jobs" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-manage-jobs" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-manage-applications" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-manage-applications" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-manage-company" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-manage-company" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-manage-membership" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-manage-membership" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-view-candidates" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-candidates" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-view-candidate-profile" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-candidate-profile" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-recruiter-manage-job-applications" edge="1" parent="1" source="actor-recruiter" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-manage-job-applications" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    
+    <!-- Include Relationships -->
+    <mxCell id="rel-include-candidate-profile-candidates" edge="1" parent="1" source="uc-view-candidate-profile" style="endArrow=open;dashed=1;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=20;labelBackgroundColor=#ffffff;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-candidates" value="&lt;&lt;include&gt;&gt;">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-include-job-applications-jobs" edge="1" parent="1" source="uc-manage-job-applications" style="endArrow=open;dashed=1;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=20;labelBackgroundColor=#ffffff;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-manage-jobs" value="&lt;&lt;include&gt;&gt;">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    
+  </root>
+</mxGraphModel>
+
+

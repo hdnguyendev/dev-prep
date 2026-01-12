@@ -1,0 +1,162 @@
+flowchart TB
+    subgraph INPUT["📥 INPUT - AI EVALUATION"]
+        IN1["Full Transcript<br/>━━━━━━━━━━━━━━━━<br/>Complete conversation text<br/>Example:<br/>User: 'I have 5 years of experience<br/>working with React and TypeScript...'<br/>AI: 'That's great! Can you tell me<br/>about a challenging project?'<br/>User: 'I worked on a project where...'"]
+        
+        IN2["Structured Q&A Pairs<br/>━━━━━━━━━━━━━━━━<br/>Turns = [<br/>  {<br/>    orderIndex: 1,<br/>    questionText: 'Tell me about yourself',<br/>    answerText: 'I have 5 years...',<br/>    questionCategory: 'BEHAVIORAL'<br/>  },<br/>  {<br/>    orderIndex: 2,<br/>    questionText: 'Why this role?',<br/>    answerText: 'I'm interested because...',<br/>    questionCategory: 'GENERAL'<br/>  },<br/>  ...<br/>]"]
+        
+        IN3["Evaluation Options<br/>━━━━━━━━━━━━━━━━<br/>• seniority: 'SENIOR'<br/>• mustHaveKeywords: ['React', 'TypeScript', 'Node.js']<br/>• niceToHaveKeywords: ['AWS', 'Docker']<br/>• language: 'en'<br/>• weights: {...} (optional)"]
+    end
+    
+    subgraph MODE_SELECT["🔀 MODE SELECTION"]
+        ENV["Check Environment Variable<br/>INTERVIEW_EVALUATOR_MODE"]
+        MODE{"Mode Value?"}
+        GEMINI_MODE["Mode: GEMINI<br/>━━━━━━━━━━━━━━━━<br/>Use Google Gemini 2.5 Flash<br/>AI-powered analysis<br/>More sophisticated"]
+        RULE_MODE["Mode: RULE_BASED<br/>━━━━━━━━━━━━━━━━<br/>Use Rule-based heuristics<br/>Offline processing<br/>Deterministic"]
+    end
+    
+    subgraph GEMINI_PATH["🧠 GEMINI 2.5 FLASH PATH"]
+        G1["Build Analysis Prompt<br/>━━━━━━━━━━━━━━━━<br/>Combine:<br/>• Full transcript<br/>• Structured Q&A turns<br/>• Evaluation instructions<br/>• 6 criteria with weights<br/>• Question type adjustments"]
+        
+        G2["Create Prompt Template<br/>━━━━━━━━━━━━━━━━<br/>Include:<br/>• Evaluation criteria (6)<br/>• Scoring guidelines<br/>• Question type rules<br/>• Category definitions<br/>• Output format (JSON)"]
+        
+        G3["Call Gemini API<br/>━━━━━━━━━━━━━━━━<br/>Model: gemini-2.5-flash<br/>(with fallbacks)<br/>Input: Analysis prompt<br/>Method: generateContent()"]
+        
+        G4["Parse JSON Response<br/>━━━━━━━━━━━━━━━━<br/>Extract from response.text:<br/>• Remove markdown if any<br/>• Parse JSON string<br/>• Extract structured data"]
+        
+        G5["Validate with Zod Schema<br/>━━━━━━━━━━━━━━━━<br/>Validate:<br/>• overallScore: 0-100 int<br/>• recommendation: enum<br/>• categoryScores: array<br/>• perQuestion: array<br/>• All required fields"]
+        
+        G6["Return Validated Feedback<br/>━━━━━━━━━━━━━━━━<br/>Type-safe GeminiInterviewFeedback"]
+    end
+    
+    subgraph RULE_PATH["📋 RULE-BASED PATH"]
+        R1["Process Each Question<br/>━━━━━━━━━━━━━━━━<br/>For each turn in turns array:<br/>• Extract answerText<br/>• Get questionCategory<br/>• Apply scoring function"]
+        
+        R2["Score Answer Function<br/>━━━━━━━━━━━━━━━━<br/>scoreAnswer0to10()<br/>Input:<br/>• answerText<br/>• questionText<br/>• questionCategory<br/>• seniority<br/>• keywords<br/>• weights"]
+        
+        subgraph CRITERIA_SCORING["6 Criteria Scoring"]
+            CR1["1. LENGTH (25% weight)<br/>━━━━━━━━━━━━━━━━<br/>Count words in answer<br/>Check minimum by seniority:<br/>• Junior: 18 words min<br/>• Mid: 25 words min<br/>• Senior: 35 words min<br/>Scoring:<br/>0 (no answer)<br/>4 (too short)<br/>7 (adequate)<br/>8 (optimal)"]
+            
+            CR2["2. STRUCTURE (20% weight)<br/>━━━━━━━━━━━━━━━━<br/>Detect STAR method keywords:<br/>• situation, task, action, result<br/>Or: problem, approach, outcome<br/>Scoring:<br/>4 (unstructured)<br/>10 (well-structured)"]
+            
+            CR3["3. EXAMPLES (20% weight)<br/>━━━━━━━━━━━━━━━━<br/>Detect concrete evidence:<br/>• Numbers: '10%', '1000 users'<br/>• Metrics: 'KPI', 'latency'<br/>• Example markers: 'for example'<br/>Scoring:<br/>4 (no examples)<br/>10 (clear examples)"]
+            
+            CR4["4. CONFIDENCE (10% weight)<br/>━━━━━━━━━━━━━━━━<br/>Count filler words:<br/>• 'uh', 'um', 'maybe'<br/>• 'probably', 'I think'<br/>• 'kind of', 'not sure'<br/>Scoring:<br/>4 (≥4 fillers)<br/>8 (confident)"]
+            
+            CR5["5. KEYWORD MATCH (15% weight)<br/>━━━━━━━━━━━━━━━━<br/>Count keyword hits:<br/>• mustHaveKeywords (×3)<br/>• niceToHaveKeywords (×1)<br/>Scoring:<br/>0 (no keywords)<br/>10 (comprehensive)"]
+            
+            CR6["6. RELEVANCE (10% weight)<br/>━━━━━━━━━━━━━━━━<br/>Jaccard similarity:<br/>• Tokenize question & answer<br/>• Remove stopwords<br/>• Calculate: intersection / union<br/>Scoring:<br/>0 (irrelevant)<br/>10 (directly addresses)"]
+        end
+        
+        R3["Apply Question Type Weights<br/>━━━━━━━━━━━━━━━━<br/>Adjust weights by category:<br/>• TECHNICAL:<br/>  +keywordMatch (+8%)<br/>  +relevance (+5%)<br/>  +examples (+3%)<br/>  -structure (-3%)<br/>• BEHAVIORAL:<br/>  +structure (+8%)<br/>  +examples (+5%)<br/>  +confidence (+3%)<br/>  -keywordMatch (-4%)<br/>• GENERAL: Default"]
+        
+        R4["Calculate Weighted Score<br/>━━━━━━━━━━━━━━━━<br/>weightedScore =<br/>(length × w.length) +<br/>(structure × w.structure) +<br/>(examples × w.examples) +<br/>(confidence × w.confidence) +<br/>(keyword × w.keyword) +<br/>(relevance × w.relevance)<br/><br/>Normalize: score / totalWeight<br/>Clamp: 0-10"]
+        
+        R5["Aggregate All Questions<br/>━━━━━━━━━━━━━━━━<br/>• Calculate average per-question score<br/>• Overall Score = avg × 10 (0-100)<br/>• Calculate category scores<br/>• Generate recommendation"]
+    end
+    
+    subgraph CATEGORY_SCORES["📊 CATEGORY SCORES CALCULATION"]
+        CAT1["1. Clarity Score<br/>━━━━━━━━━━━━━━━━<br/>Percentage of answers<br/>scoring ≥ 6 points<br/>clarityScore =<br/>(answersWithScore >= 6) /<br/>totalAnswers × 10"]
+        
+        CAT2["2. Structure Score<br/>━━━━━━━━━━━━━━━━<br/>Percentage of answers<br/>with good structure<br/>structureScore =<br/>(structuredAnswers) /<br/>totalAnswers × 10"]
+        
+        CAT3["3. Depth & Evidence Score<br/>━━━━━━━━━━━━━━━━<br/>Average score +<br/>bonus for examples<br/>depthScore =<br/>average(perQuestionScores) +<br/>examplesBonus"]
+        
+        CAT4["4. Relevance Score<br/>━━━━━━━━━━━━━━━━<br/>Average relevance score<br/>across all questions<br/>relevanceScore =<br/>average(relevanceSubScores)"]
+        
+        CAT5["5. Keyword Match Score<br/>━━━━━━━━━━━━━━━━<br/>Keyword coverage<br/>across all answers<br/>keywordScore =<br/>average(keywordSubScores)"]
+    end
+    
+    subgraph RECOMMENDATION["🎯 RECOMMENDATION LOGIC"]
+        REC1["Calculate Overall Score<br/>━━━━━━━━━━━━━━━━<br/>Overall Score =<br/>Average(perQuestionScores) × 10<br/>Range: 0-100"]
+        
+        REC2{"Overall Score?"}
+        
+        REC3["HIRE<br/>━━━━━━━━━━━━━━━━<br/>Score ≥ 80<br/>Excellent candidate<br/>Strong performance"]
+        
+        REC4["CONSIDER<br/>━━━━━━━━━━━━━━━━<br/>Score 60-79<br/>Potential candidate<br/>Needs consideration"]
+        
+        REC5["REJECT<br/>━━━━━━━━━━━━━━━━<br/>Score < 60<br/>Does not meet requirements<br/>Weak performance"]
+    end
+    
+    subgraph OUTPUT["✅ OUTPUT - STRUCTURED FEEDBACK"]
+        OUT1["Interview Feedback Object<br/>━━━━━━━━━━━━━━━━<br/>{<br/>  overallScore: 85,<br/>  recommendation: 'HIRE',<br/>  summary: 'Strong candidate with<br/>    clear communication and<br/>    relevant experience...',<br/>  strengths: [<br/>    'Clear communication',<br/>    'Strong technical knowledge',<br/>    'Good examples provided'<br/>  ],<br/>  areasForImprovement: [<br/>    'Could provide more metrics',<br/>    'Structure answers better'<br/>  ],<br/>  categoryScores: [<br/>    {name: 'Clarity', score: 9, comment: '...'},<br/>    {name: 'Structure', score: 8, comment: '...'},<br/>    {name: 'Depth & Evidence', score: 9, comment: '...'},<br/>    {name: 'Relevance', score: 8, comment: '...'},<br/>    {name: 'Keyword Match', score: 9, comment: '...'}<br/>  ],<br/>  perQuestion: [<br/>    {orderIndex: 1, score: 8, feedback: '...'},<br/>    {orderIndex: 2, score: 9, feedback: '...'},<br/>    {orderIndex: 3, score: 8, feedback: '...'},<br/>    {orderIndex: 4, score: 7, feedback: '...'},<br/>    {orderIndex: 5, score: 9, feedback: '...'}<br/>  ]<br/>}"]
+    end
+    
+    %% Input Flow
+    IN1 --> MODE
+    IN2 --> MODE
+    IN3 --> MODE
+    ENV --> MODE
+    
+    %% Mode Selection
+    MODE -->|GEMINI| GEMINI_MODE
+    MODE -->|RULE_BASED| RULE_MODE
+    
+    %% Gemini Path
+    GEMINI_MODE --> G1
+    G1 --> G2 --> G3 --> G4 --> G5 --> G6 --> OUT1
+    
+    %% Rule-based Path
+    RULE_MODE --> R1
+    R1 --> R2
+    R2 --> CR1
+    R2 --> CR2
+    R2 --> CR3
+    R2 --> CR4
+    R2 --> CR5
+    R2 --> CR6
+    CR1 --> R3
+    CR2 --> R3
+    CR3 --> R3
+    CR4 --> R3
+    CR5 --> R3
+    CR6 --> R3
+    R3 --> R4 --> R5
+    
+    %% Category Scores
+    R5 --> CAT1
+    R5 --> CAT2
+    R5 --> CAT3
+    R5 --> CAT4
+    R5 --> CAT5
+    G6 --> CAT1
+    G6 --> CAT2
+    G6 --> CAT3
+    G6 --> CAT4
+    G6 --> CAT5
+    
+    %% Recommendation
+    R5 --> REC1
+    G6 --> REC1
+    REC1 --> REC2
+    REC2 -->|≥80| REC3 --> OUT1
+    REC2 -->|60-79| REC4 --> OUT1
+    REC2 -->|<60| REC5 --> OUT1
+    
+    CAT1 --> OUT1
+    CAT2 --> OUT1
+    CAT3 --> OUT1
+    CAT4 --> OUT1
+    CAT5 --> OUT1
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef mode fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    classDef gemini fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef rule fill:#fffde7,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef criteria fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef category fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    classDef recommendation fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    classDef output fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef decision fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class IN1,IN2,IN3,INPUT input
+    class ENV,MODE,GEMINI_MODE,RULE_MODE,MODE_SELECT mode
+    class G1,G2,G3,G4,G5,G6,GEMINI_PATH gemini
+    class R1,R2,R3,R4,R5,RULE_PATH rule
+    class CR1,CR2,CR3,CR4,CR5,CR6,CRITERIA_SCORING criteria
+    class CAT1,CAT2,CAT3,CAT4,CAT5,CATEGORY_SCORES category
+    class REC1,REC2,REC3,REC4,REC5,RECOMMENDATION recommendation
+    class OUT1,OUTPUT output
+    class MODE,REC2 decision
+

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient, type Job, type Application } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
 import { getCurrentUser } from "@/lib/auth";
+import { useMembership } from "@/hooks/useMembership";
 import {
   MapPin,
   Briefcase,
@@ -49,6 +50,9 @@ const JobDetail = () => {
   // Check if user is recruiter or admin
   const currentUser = getCurrentUser();
   const isRecruiterOrAdmin = currentUser?.role === "RECRUITER" || currentUser?.role === "ADMIN";
+  
+  // Check VIP membership for candidates
+  const { isVIP, loading: membershipLoading } = useMembership();
   
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
@@ -534,7 +538,7 @@ const JobDetail = () => {
   };
 
   return (
-    <main className="min-h-dvh bg-gradient-to-b from-blue-50/30 via-purple-50/20 to-pink-50/30 dark:from-background dark:via-primary/5 dark:to-background">
+    <main className="min-h-dvh bg-gradient-to-b from-blue-50/30 via-purple-50/20 to-pink-50/30 dark:from-background dark:via-primary/5 dark:to-background my-8">
 
       {/* Success Message */}
       {applicationSuccess && (
@@ -857,7 +861,7 @@ const JobDetail = () => {
               </Card>
             )}
 
-            {/* Interview Questions */}
+            {/* Interview Questions - VIP preview logic */}
             {practiceQuestions.length > 0 && (
               <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white via-violet-50/30 to-purple-50/30 dark:from-card dark:via-card dark:to-card">
                 <CardHeader className="border-b pb-4 bg-gradient-to-r from-violet-100/50 via-purple-100/30 to-indigo-100/50 dark:from-primary/5 dark:via-transparent dark:to-primary/5">
@@ -874,22 +878,108 @@ const JobDetail = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
-                  {practiceQuestions.map((question, index) => (
-                    <div key={index} className="flex gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <div className="mt-0.5 h-7 w-7 shrink-0 rounded-md bg-purple-500 text-white flex items-center justify-center text-xs font-semibold">
-                        {index + 1}
+                  {/* Recruiters/Admins: xem full. VIP chỉ xem được câu 1. FREE không xem được nội dung câu hỏi. */}
+                  {isRecruiterOrAdmin ? (
+                    <>
+                      {practiceQuestions.map((question, index) => (
+                        <div
+                          key={index}
+                          className="flex gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="mt-0.5 h-7 w-7 shrink-0 rounded-md bg-purple-500 text-white flex items-center justify-center text-xs font-semibold">
+                            {index + 1}
+                          </div>
+                          <p className="text-sm text-foreground leading-6 flex-1">
+                            {question}
+                          </p>
+                        </div>
+                      ))}
+                      <Button onClick={handlePracticeInterview} className="w-full gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Start Practice Interview
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : isSignedIn && !membershipLoading && isVIP ? (
+                    // VIP candidate: chỉ xem được câu 1 (các câu còn lại mờ)
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        {practiceQuestions.map((question, index) => {
+                          const locked = index > 0;
+                          return (
+                            <div
+                              key={index}
+                              className={`flex gap-3 p-3 rounded-lg border transition-colors ${
+                                locked
+                                  ? "border-dashed border-muted-foreground/30 bg-muted/40 text-muted-foreground/80"
+                                  : "border bg-muted/40 hover:bg-muted/60"
+                              }`}
+                            >
+                              <div className="mt-0.5 h-7 w-7 shrink-0 rounded-md bg-purple-500 text-white flex items-center justify-center text-xs font-semibold">
+                                {index + 1}
+                              </div>
+                              <p
+                                className={`text-sm leading-6 flex-1 ${
+                                  locked ? "blur-[1px] opacity-80" : ""
+                                }`}
+                              >
+                                {question}
+                              </p>
+                              {locked && (
+                                <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+                                  Locked
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                      <p className="text-sm text-foreground leading-6 flex-1">{question}</p>
+                      <p className="text-xs text-muted-foreground">
+                        As a VIP member, you can preview the first practice question. Start the AI practice interview to experience the full question flow in a live session.
+                      </p>
+                      <Button onClick={handlePracticeInterview} className="w-full gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Start Practice Interview
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
-                  <Button 
-                    onClick={handlePracticeInterview}
-                    className="w-full gap-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Start Practice Interview
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  ) : (
+                    // FREE candidate (hoặc chưa đăng nhập): không thấy nội dung câu hỏi, chỉ thấy lock + CTA
+                    <div className="space-y-4 py-4">
+                      <div className="flex items-center justify-center p-6 rounded-lg border-2 border-dashed bg-muted/30">
+                        <div className="flex flex-col items-center gap-3 text-center">
+                          <div className="p-3 rounded-full bg-primary/10">
+                            <Lock className="h-8 w-8 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg mb-1">VIP Feature</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Interview practice questions are available exclusively during VIP AI practice interviews.
+                            </p>
+                            <Button
+                              onClick={() => navigate("/membership")}
+                              className="gap-2 w-full sm:w-auto"
+                            >
+                              <Award className="h-4 w-4" />
+                              Upgrade to VIP
+                              <ArrowRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      {!isSignedIn && (
+                        <div className="text-center text-sm text-muted-foreground">
+                          <Button
+                            variant="link"
+                            onClick={() => navigate("/login")}
+                            className="text-primary"
+                          >
+                            Sign in to view membership options
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

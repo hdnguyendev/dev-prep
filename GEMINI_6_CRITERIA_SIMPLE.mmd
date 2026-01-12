@@ -1,0 +1,56 @@
+flowchart TB
+    subgraph INPUT["📥 INPUT"]
+        I1["Transcript + Q&A Pairs"]
+    end
+    
+    subgraph CRITERIA["📏 6 EVALUATION CRITERIA"]
+        C1["1. LENGTH<br/>━━━━━━━━━━━━━━━━<br/>Weight: 25%<br/>• Junior: 18-70 words<br/>• Mid: 25-90 words<br/>• Senior: 35-120 words<br/>Score: 0 → 4 → 7 → 8"]
+        
+        C2["2. STRUCTURE<br/>━━━━━━━━━━━━━━━━<br/>Weight: 20%<br/>• STAR method<br/>• Problem → Outcome<br/>Score: 4 → 10"]
+        
+        C3["3. EXAMPLES<br/>━━━━━━━━━━━━━━━━<br/>Weight: 20%<br/>• Numbers: 10%, 1000 users<br/>• Metrics: KPI, latency<br/>• Time: 6 months<br/>Score: 4 → 10"]
+        
+        C4["4. CONFIDENCE<br/>━━━━━━━━━━━━━━━━<br/>Weight: 10%<br/>• Penalize: uh, um, maybe<br/>• Avoid hedging<br/>Score: 4 → 8"]
+        
+        C5["5. KEYWORD MATCH<br/>━━━━━━━━━━━━━━━━<br/>Weight: 15%<br/>• Must-have (×3)<br/>• Nice-to-have (×1)<br/>Score: 0 → 10"]
+        
+        C6["6. RELEVANCE<br/>━━━━━━━━━━━━━━━━<br/>Weight: 10%<br/>• Question vs Answer<br/>• Topic alignment<br/>Score: 0 → 10"]
+    end
+    
+    subgraph GEMINI["🧠 GEMINI 2.5 FLASH"]
+        G1["Build Prompt<br/>Include 6 Criteria"]
+        G2["Call API<br/>Analyze Answers"]
+        G3["Return JSON<br/>Scores + Feedback"]
+    end
+    
+    subgraph OUTPUT["✅ OUTPUT"]
+        O1["Per-Question Score<br/>0-10 (weighted sum)"]
+        O2["Overall Score<br/>0-100 (average × 10)"]
+        O3["Recommendation<br/>HIRE ≥80 | CONSIDER 60-79 | REJECT <60"]
+    end
+    
+    I1 --> G1
+    C1 --> G1
+    C2 --> G1
+    C3 --> G1
+    C4 --> G1
+    C5 --> G1
+    C6 --> G1
+    
+    G1 --> G2 --> G3
+    
+    G3 --> O1
+    G3 --> O2
+    G3 --> O3
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef criteria fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef gemini fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    classDef output fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    
+    class I1,INPUT input
+    class C1,C2,C3,C4,C5,C6,CRITERIA criteria
+    class G1,G2,G3,GEMINI gemini
+    class O1,O2,O3,OUTPUT output
+

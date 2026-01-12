@@ -1,0 +1,112 @@
+flowchart TB
+    Start([Bắt đầu: Candidate Profile + Job Requirements]) --> Extract[Trích xuất dữ liệu]
+    
+    Extract --> SkillsData[Skills Data<br/>Candidate Skills vs Job Required/Optional]
+    Extract --> ExpData[Experience Data<br/>Years of Experience vs Required Level]
+    Extract --> TitleData[Title Data<br/>Candidate Position vs Job Title]
+    Extract --> EduData[Education Data<br/>Degree, Field, Institution]
+    Extract --> SoftSkillsData[Soft Skills Data<br/>Candidate Soft Skills vs Job Requirements]
+    Extract --> TechData[Technology Data<br/>Frontend, Backend, DB, Cloud, Tools]
+    Extract --> LocationData[Location Data<br/>Address vs Job Location/Remote]
+    
+    %% Dimension 1: Skills Score (30%)
+    SkillsData --> SkillsNorm[Chuẩn hóa tên kỹ năng<br/>js → JavaScript, react.js → React]
+    SkillsNorm --> SkillsCompare[So sánh kỹ năng<br/>Matched, Missing, Extra]
+    SkillsCompare --> SkillsCalc[Skills Score Calculation<br/>Required Match % + Optional Bonus]
+    SkillsCalc --> SkillsFormula[Skills Score =<br/>Matched Required / Total Required × 100<br/>+ min Optional Match × 20, 20]
+    SkillsFormula --> SkillsWeight[Weighted Skills Score<br/>Skills Score × 0.30<br/>30% weight]
+    
+    %% Dimension 2: Experience Score (18%)
+    ExpData --> ExpYears[Tính tổng số năm kinh nghiệm<br/>Sum all experience durations]
+    ExpYears --> ExpMap[Map Years to Level<br/>< 1y: Intern, 1-2y: Junior<br/>2-5y: Mid, 5-8y: Senior<br/>8-12y: Lead, 12+y: Principal]
+    ExpMap --> ExpCompare[So sánh với Job Requirement<br/>Candidate Level vs Required Level]
+    ExpCompare --> ExpCalc[Experience Score Calculation]
+    ExpCalc --> ExpFormula{Level Match?}
+    ExpFormula -->|Meet/Exceed| Exp100[Score = 100]
+    ExpFormula -->|Below| ExpPenalty[Score = 100 - Level Gap × 25<br/>Min: 0]
+    Exp100 --> ExpWeight[Weighted Experience Score<br/>Experience Score × 0.18<br/>18% weight]
+    ExpPenalty --> ExpWeight
+    
+    %% Dimension 3: Title Score (12%)
+    TitleData --> TitleNorm[Normalize Titles<br/>Lowercase, Remove Special Chars]
+    TitleNorm --> TitleWords[Extract Keywords<br/>Words > 2 characters]
+    TitleWords --> TitleJaccard[Calculate Jaccard Similarity<br/>Common Words / Total Unique Words]
+    TitleJaccard --> TitleFormula[Title Score =<br/>Similarity × 100<br/>Max: 100]
+    TitleFormula --> TitleWeight[Weighted Title Score<br/>Title Score × 0.12<br/>12% weight]
+    
+    %% Dimension 4: Education Score (12%)
+    EduData --> EduCheck{Check Requirements}
+    EduCheck -->|Required Degree Match| Edu100[Score = 100]
+    EduCheck -->|Preferred Degree Match| Edu70[Score = 70]
+    EduCheck -->|Field Match Only| Edu50[Score = 50]
+    EduCheck -->|No Match| Edu0[Score = 0]
+    Edu100 --> EduWeight[Weighted Education Score<br/>Education Score × 0.12<br/>12% weight]
+    Edu70 --> EduWeight
+    Edu50 --> EduWeight
+    Edu0 --> EduWeight
+    
+    %% Dimension 5: Soft Skills Score (12%)
+    SoftSkillsData --> SoftCheck{Candidate có<br/>Soft Skills Data?}
+    SoftCheck -->|Không có| SoftNeutral[Score = 50<br/>Neutral: không thưởng, không phạt]
+    SoftCheck -->|Có| SoftExtract[Extract Soft Skills từ Job Description<br/>Communication, Leadership, etc.]
+    SoftExtract --> SoftCompare[So sánh với Candidate<br/>Candidate Level / Job Importance × 100]
+    SoftCompare --> SoftAvg[Average across all soft skills]
+    SoftAvg --> SoftFormula[Soft Skills Score =<br/>Average Match Percentage]
+    SoftNeutral --> SoftWeight[Weighted Soft Skills Score<br/>Soft Skills Score × 0.12<br/>12% weight]
+    SoftFormula --> SoftWeight
+    
+    %% Dimension 6: Technology Score (8%)
+    TechData --> TechExtract[Extract Technologies từ Job Description<br/>Frontend, Backend, DB, Cloud, Tools]
+    TechExtract --> TechCompare[So sánh theo từng category<br/>Intersection / Union × 100]
+    TechCompare --> TechAvg[Average across all categories]
+    TechAvg --> TechFormula[Technology Score =<br/>Average Category Match]
+    TechFormula --> TechWeight[Weighted Technology Score<br/>Technology Score × 0.08<br/>8% weight]
+    
+    %% Dimension 7: Location Score (8%)
+    LocationData --> LocCheck{Job Remote?}
+    LocCheck -->|Yes| Loc100[Score = 100<br/>Remote = Perfect Match]
+    LocCheck -->|No| LocHasInfo{Has Location<br/>Info?}
+    LocHasInfo -->|No Info| LocNeutral[Score = 50<br/>Neutral - No Info]
+    LocHasInfo -->|Has Info| LocExact{Exact Match?}
+    LocExact -->|Yes| LocExactScore[Score = 100<br/>Exact Location]
+    LocExact -->|No| LocCity{Same City?}
+    LocCity -->|Yes| LocCityScore[Score = 90<br/>Same City]
+    LocCity -->|No| LocPartial{Partial Match?<br/>Common Keywords}
+    LocPartial -->|Yes| LocPartialScore[Score = 60<br/>Partial Match]
+    LocPartial -->|No| LocNoMatch[Score = 20<br/>No Match - Relocate]
+    Loc100 --> LocWeight[Weighted Location Score<br/>Location Score × 0.08<br/>8% weight]
+    LocNeutral --> LocWeight
+    LocExactScore --> LocWeight
+    LocCityScore --> LocWeight
+    LocPartialScore --> LocWeight
+    LocNoMatch --> LocWeight
+    
+    %% Final Calculation
+    SkillsWeight --> Total[Total Score Calculation]
+    ExpWeight --> Total
+    TitleWeight --> Total
+    EduWeight --> Total
+    SoftWeight --> Total
+    TechWeight --> Total
+    LocWeight --> Total
+    
+    Total --> TotalFormula[Total Score =<br/>Weighted Skills + Weighted Experience +<br/>Weighted Title + Weighted Education +<br/>Weighted Soft Skills + Weighted Technology +<br/>Weighted Location]
+    
+    TotalFormula --> Round[Round to 2 decimal places]
+    Round --> Output([Output: Match Score 0-100<br/>+ Detailed Breakdown<br/>+ Matched/Missing Skills<br/>+ Suggestions])
+    
+    %% Styling
+    classDef input fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef process fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef calculation fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef dimension fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef output fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef decision fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    
+    class Start,Extract,SkillsData,ExpData,TitleData,EduData,SoftSkillsData,TechData,LocationData input
+    class SkillsNorm,SkillsCompare,ExpYears,ExpMap,TitleNorm,TitleWords,TechExtract,LocCompare process
+    class SkillsCalc,SkillsFormula,ExpCalc,ExpFormula,TitleJaccard,TitleFormula,TechCompare,TechAvg,LocFormula calculation
+    class SkillsWeight,ExpWeight,TitleWeight,EduWeight,SoftWeight,TechWeight,LocWeight dimension
+    class Total,TotalFormula,Round,Output output
+    class SoftCheck,LocCheck,LocHasInfo,LocExact,LocCity,LocPartial,EduCheck,ExpFormula decision
+

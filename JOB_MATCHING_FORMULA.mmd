@@ -1,0 +1,138 @@
+graph TB
+    subgraph FORMULA["📐 CÔNG THỨC TỔNG QUÁT"]
+        F1["Total Match Score =<br/>Σ Weighted Dimension Scores"]
+        F2["Total Score =<br/>(S × 0.30) + (E × 0.18) + (T × 0.12) +<br/>(ED × 0.12) + (SS × 0.12) + (TE × 0.08) + (L × 0.08)"]
+        F1 --> F2
+    end
+    
+    subgraph S["S = Skills Score (30%)"]
+        S1["S = Required Match % + Optional Bonus"]
+        S2["Required Match % =<br/>(Matched Required Skills / Total Required Skills) × 100"]
+        S3["Optional Bonus =<br/>min((Matched Optional / Total Optional) × 20, 20)"]
+        S4["S = min(Required Match % + Optional Bonus, 100)"]
+        S1 --> S2
+        S1 --> S3
+        S2 --> S4
+        S3 --> S4
+    end
+    
+    subgraph E["E = Experience Score (18%)"]
+        E1["Years = Σ(Experience Durations)"]
+        E2["Level Mapping:<br/>Years < 1 → Level 0 (Intern)<br/>1 ≤ Years < 2 → Level 1 (Junior)<br/>2 ≤ Years < 5 → Level 2 (Mid)<br/>5 ≤ Years < 8 → Level 3 (Senior)<br/>8 ≤ Years < 12 → Level 4 (Lead)<br/>Years ≥ 12 → Level 5 (Principal)"]
+        E3["If Candidate Level ≥ Required Level:<br/>E = 100"]
+        E4["If Candidate Level < Required Level:<br/>E = max(0, 100 - (Gap × 25))"]
+        E1 --> E2
+        E2 --> E3
+        E2 --> E4
+    end
+    
+    subgraph T["T = Title Score (12%)"]
+        T1["Normalize: lowercase, remove special chars"]
+        T2["Extract keywords: words length > 2"]
+        T3["Jaccard Similarity =<br/>|Common Words| / |Union of All Words|"]
+        T4["T = Similarity × 100<br/>Max: 100"]
+        T1 --> T2 --> T3 --> T4
+    end
+    
+    subgraph ED["ED = Education Score (12%)"]
+        ED1{"Required Degree<br/>Match?"}
+        ED2["ED = 100"]
+        ED3{"Preferred Degree<br/>Match?"}
+        ED4["ED = 70"]
+        ED5{"Field of Study<br/>Match?"}
+        ED6["ED = 50"]
+        ED7["ED = 0"]
+        ED1 -->|Yes| ED2
+        ED1 -->|No| ED3
+        ED3 -->|Yes| ED4
+        ED3 -->|No| ED5
+        ED5 -->|Yes| ED6
+        ED5 -->|No| ED7
+    end
+    
+    subgraph SS["SS = Soft Skills Score (12%)"]
+        SS1{"Candidate có<br/>Soft Skills Data?"}
+        SS2["SS = 50<br/>(Neutral Score)"]
+        SS3["For each soft skill:<br/>Skill Score = (Candidate Level / Job Importance) × 100"]
+        SS4["SS = Average of all Skill Scores"]
+        SS1 -->|No| SS2
+        SS1 -->|Yes| SS3 --> SS4
+    end
+    
+    subgraph TE["TE = Technology Score (8%)"]
+        TE1["For each category (Frontend, Backend, DB, Cloud, Tools):<br/>Category Match % =<br/>(Intersection / Union) × 100"]
+        TE2["TE = Average of all Category Match %"]
+        TE1 --> TE2
+    end
+    
+    subgraph L["L = Location Score (8%)"]
+        L1{"Job is Remote?"}
+        L2["L = 100<br/>(Remote = Perfect Match)"]
+        L3{"Has Location Info?"}
+        L4["L = 50<br/>(Neutral - No Info)"]
+        L5{"Exact Match?"}
+        L6["L = 100<br/>(Exact Location)"]
+        L7{"Same City?"}
+        L8["L = 90<br/>(Same City)"]
+        L9{"Partial Match?"}
+        L10["L = 60<br/>(Common Keywords)"]
+        L11["L = 20<br/>(No Match - Relocate)"]
+        L1 -->|Yes| L2
+        L1 -->|No| L3
+        L3 -->|No Info| L4
+        L3 -->|Has Info| L5
+        L5 -->|Yes| L6
+        L5 -->|No| L7
+        L7 -->|Yes| L8
+        L7 -->|No| L9
+        L9 -->|Yes| L10
+        L9 -->|No| L11
+    end
+    
+    subgraph FINAL["🎯 FINAL CALCULATION"]
+        FIN1["Weighted Scores:<br/>WS = S × 0.30<br/>WE = E × 0.18<br/>WT = T × 0.12<br/>WED = ED × 0.12<br/>WSS = SS × 0.12<br/>WTE = TE × 0.08<br/>WL = L × 0.08"]
+        FIN2["Total Score =<br/>WS + WE + WT + WED + WSS + WTE + WL"]
+        FIN3["Final Score =<br/>Round(Total Score, 2 decimals)"]
+        FIN1 --> FIN2 --> FIN3
+    end
+    
+    S4 --> FIN1
+    E3 --> FIN1
+    E4 --> FIN1
+    T4 --> FIN1
+    ED2 --> FIN1
+    ED4 --> FIN1
+    ED6 --> FIN1
+    ED7 --> FIN1
+    SS2 --> FIN1
+    SS4 --> FIN1
+    TE2 --> FIN1
+    L2 --> FIN1
+    L4 --> FIN1
+    L6 --> FIN1
+    L8 --> FIN1
+    L9 --> FIN1
+    
+    %% Styling
+    classDef formula fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef skills fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef exp fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef title fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef edu fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef soft fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    classDef tech fill:#e0f2f1,stroke:#004d40,stroke-width:2px,color:#000
+    classDef loc fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    classDef final fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
+    classDef decision fill:#fffde7,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class F1,F2,FORMULA formula
+    class S1,S2,S3,S4,S skills
+    class E1,E2,E3,E4,E exp
+    class T1,T2,T3,T4,T title
+    class ED1,ED2,ED3,ED4,ED5,ED6,ED7,ED edu
+    class SS1,SS2,SS3,SS4,SS soft
+    class TE1,TE2,TE tech
+    class L1,L2,L3,L4,L5,L6,L7,L8,L9,L loc
+    class FIN1,FIN2,FIN3,FINAL final
+    class SS1,L1,ED1,ED3,ED5,L3,L5,L7 decision
+

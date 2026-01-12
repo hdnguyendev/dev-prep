@@ -1,0 +1,91 @@
+graph LR
+    subgraph INPUT["📥 INPUT"]
+        I1["Interview Config<br/>━━━━━━━━━━━━━━━━<br/>• Role, Level, Tech Stack<br/>• Questions (5 questions)<br/>• Company Info"]
+        I2["Candidate Voice<br/>━━━━━━━━━━━━━━━━<br/>Real-time voice stream<br/>via WebRTC"]
+    end
+    
+    subgraph AI_SERVICES["🤖 AI SERVICES"]
+        VAPI["🎛️ Vapi.ai<br/>Orchestration"]
+        DEEPGRAM["🎤 Deepgram<br/>Speech-to-Text<br/>Nova-2 Model"]
+        GPT4["💬 GPT-4<br/>Conversation Engine"]
+        ELEVENLABS["🔊 11Labs<br/>Text-to-Speech<br/>Voice: Sarah"]
+    end
+    
+    subgraph PROCESSING["⚙️ PROCESSING"]
+        P1["1. Voice Input<br/>Candidate speaks"]
+        P2["2. Speech Recognition<br/>Deepgram transcribes"]
+        P3["3. AI Processing<br/>GPT-4 generates response"]
+        P4["4. Voice Synthesis<br/>11Labs converts to speech"]
+        P5["5. Real-time Loop<br/>Repeat for all questions"]
+        P6["6. Collect Data<br/>Transcript + Q&A pairs"]
+    end
+    
+    subgraph INTERMEDIATE["💾 INTERMEDIATE OUTPUT"]
+        INT1["Full Transcript<br/>━━━━━━━━━━━━━━━━<br/>Complete conversation<br/>User: ...<br/>AI: ..."]
+        INT2["Structured Turns<br/>━━━━━━━━━━━━━━━━<br/>[{<br/>  orderIndex: 1,<br/>  questionText: '...',<br/>  answerText: '...'<br/>}]"]
+    end
+    
+    subgraph EVALUATION["📊 AI EVALUATION"]
+        E1{"Evaluation Mode?"}
+        E2["🧠 Gemini 2.5 Flash<br/>━━━━━━━━━━━━━━━━<br/>Analyze transcript<br/>6 Criteria Scoring<br/>Generate JSON feedback"]
+        E3["📋 Rule-based<br/>━━━━━━━━━━━━━━━━<br/>Heuristic scoring<br/>Same 6 criteria<br/>Offline processing"]
+    end
+    
+    subgraph OUTPUT["✅ OUTPUT"]
+        O1["Interview Feedback<br/>━━━━━━━━━━━━━━━━<br/>• Overall Score: 85/100<br/>• Recommendation: HIRE<br/>• Summary<br/>• Strengths<br/>• Areas for Improvement<br/>• Category Scores (5)<br/>• Per-question Scores"]
+        O2["Database Updates<br/>━━━━━━━━━━━━━━━━<br/>• Interview.status = COMPLETED<br/>• Interview.overallScore = 85<br/>• Interview.recommendation = HIRE<br/>• InterviewExchange scores"]
+        O3["Notifications<br/>━━━━━━━━━━━━━━━━<br/>• Email to Recruiter<br/>• Interview completed<br/>• View feedback link"]
+    end
+    
+    %% Input to Processing
+    I1 --> VAPI
+    I2 --> P1
+    
+    %% AI Services Flow
+    P1 --> DEEPGRAM
+    DEEPGRAM --> P2
+    P2 --> GPT4
+    GPT4 --> P3
+    P3 --> ELEVENLABS
+    ELEVENLABS --> P4
+    P4 --> P5
+    P5 -->|Loop| P1
+    P5 -->|End| P6
+    
+    VAPI --> DEEPGRAM
+    VAPI --> GPT4
+    VAPI --> ELEVENLABS
+    
+    %% Processing to Intermediate
+    P6 --> INT1
+    P6 --> INT2
+    
+    %% Intermediate to Evaluation
+    INT1 --> E1
+    INT2 --> E1
+    E1 -->|GEMINI| E2
+    E1 -->|RULE_BASED| E3
+    
+    %% Evaluation to Output
+    E2 --> O1
+    E3 --> O1
+    O1 --> O2
+    O2 --> O3
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef ai fill:#ff6b6b,stroke:#fff,stroke-width:3px,color:#fff
+    classDef processing fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef intermediate fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef evaluation fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef output fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef decision fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class I1,I2,INPUT input
+    class VAPI,DEEPGRAM,GPT4,ELEVENLABS,AI_SERVICES ai
+    class P1,P2,P3,P4,P5,P6,PROCESSING processing
+    class INT1,INT2,INTERMEDIATE intermediate
+    class E1,E2,E3,EVALUATION evaluation
+    class O1,O2,O3,OUTPUT output
+    class E1 decision
+

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import prisma from "../app/db/prisma";
-import { sendOfferEmail, sendOfferAcceptedEmailToRecruiter, sendOfferRejectedEmailToRecruiter } from "../app/services/email";
+import { sendOfferEmail, sendOfferAcceptedEmailToRecruiter, sendOfferRejectedEmailToRecruiter, sendApplicationStatusEmail } from "../app/services/email";
 
 const offerRoutes = new Hono();
 
@@ -418,14 +418,14 @@ offerRoutes.post("/offers/:id/accept", async (c) => {
       },
     });
 
-    // Update application status to OFFER_ACCEPTED (candidate accepted, recruiter can later confirm as HIRED)
+    // Update application status to OFFER_ACCEPTED (candidate accepted the offer)
     try {
       await prisma.application.update({
         where: { id: offer.applicationId },
         data: { status: "OFFER_ACCEPTED" },
       });
 
-      // Log history
+      // Log history for OFFER_ACCEPTED
       await prisma.applicationHistory.create({
         data: {
           applicationId: offer.applicationId,
@@ -434,6 +434,64 @@ offerRoutes.post("/offers/:id/accept", async (c) => {
           changedBy: "CANDIDATE",
         },
       });
+
+      // Automatically set status to HIRED after candidate accepts offer
+      await prisma.application.update({
+        where: { id: offer.applicationId },
+        data: { status: "HIRED" },
+      });
+
+      // Log history for HIRED (final status)
+      await prisma.applicationHistory.create({
+        data: {
+          applicationId: offer.applicationId,
+          status: "HIRED",
+          note: "Automatically set to HIRED after candidate accepted the offer",
+          changedBy: "SYSTEM",
+        },
+      });
+
+      // Send email to candidate about HIRED status
+      try {
+        const applicationWithCandidate = await prisma.application.findUnique({
+          where: { id: offer.applicationId },
+          include: {
+            candidate: {
+              include: {
+                user: {
+                  select: {
+                    email: true,
+                    notificationEmail: true,
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
+            job: {
+              select: {
+                title: true,
+              },
+            },
+          },
+        });
+
+        if (applicationWithCandidate?.candidate?.user) {
+          const candidateUser = applicationWithCandidate.candidate.user;
+          const targetEmail = candidateUser.notificationEmail || candidateUser.email;
+          if (targetEmail) {
+            await sendApplicationStatusEmail({
+              to: targetEmail,
+              candidateName: `${candidateUser.firstName || ""} ${candidateUser.lastName || ""}`.trim(),
+              jobTitle: applicationWithCandidate.job?.title || undefined,
+              newStatus: "HIRED" as const,
+            });
+          }
+        }
+      } catch (emailError) {
+        // Don't fail the request if email fails
+        console.error("Failed to send HIRED status email to candidate:", emailError);
+      }
     } catch (err) {
       console.error("Failed to update application status:", err);
     }

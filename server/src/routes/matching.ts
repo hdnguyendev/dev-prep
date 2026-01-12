@@ -18,6 +18,7 @@ import {
   findMatchingCandidatesForJob,
   calculateCandidateJobMatch,
 } from "../app/services/matching";
+import { recommendJobsForCandidate } from "../app/services/matching/recommendation";
 
 const matchingRoutes = new Hono();
 
@@ -82,9 +83,21 @@ matchingRoutes.get("/matching/candidate/:candidateId/jobs", async (c) => {
     const freeLimit = freePlan.maxMatchingViews || 3;
     const effectiveLimit = isVIP ? requestedLimit : Math.min(requestedLimit, freeLimit);
 
-    // Get all matches first to know total count (for FREE members to see how many they're missing)
-    const allMatches = await findMatchingJobsForCandidate(candidateId, isVIP ? requestedLimit : 50);
-    const totalMatches = allMatches.length;
+    // Use enhanced recommendation system
+    const allMatchesRaw = await recommendJobsForCandidate(candidateId, isVIP ? requestedLimit : 50);
+    const totalMatches = allMatchesRaw.length;
+    
+    // Convert to MatchResult format (remove extra fields for compatibility)
+    const allMatches = allMatchesRaw.map(match => ({
+      jobId: match.jobId,
+      jobTitle: match.jobTitle,
+      jobIsRemote: match.jobIsRemote,
+      matchScore: match.matchScore, // Use base matchScore for compatibility
+      breakdown: match.breakdown,
+      details: match.details,
+      suggestions: match.suggestions,
+      candidateProjects: match.candidateProjects,
+    }));
     
     // Limit results for FREE members
     const matches = isVIP ? allMatches : allMatches.slice(0, effectiveLimit);

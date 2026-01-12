@@ -31,7 +31,7 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation, useSearchParams } from "react-router";
 import {
   Area,
   AreaChart,
@@ -557,7 +557,18 @@ const AdminDashboard = ({
 };
 
 const Admin = ({ embedded }: { embedded?: boolean }) => {
-  const [resource, setResource] = useState<AdminResource>(adminResources[0]);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize showDashboard and resource based on query params
+  const initialResourceParam = searchParams.get("resource");
+  const initialResource = initialResourceParam 
+    ? adminResources.find((r) => r.key === initialResourceParam || r.path === initialResourceParam) || adminResources[0]
+    : adminResources[0];
+  const initialShowDashboard = !initialResourceParam;
+  
+  const [resource, setResource] = useState<AdminResource>(initialResource);
   const [state, setState] = useState<AdminState>({ loading: true, error: null, data: [] });
   const [page, setPage] = useState(1);
   const [selectedRow, setSelectedRow] = useState<AdminRow | null>(null);
@@ -575,11 +586,11 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
   const [filterValue, setFilterValue] = useState<string>("");
   const [showFilters, setShowFilters] = useState(true);
   const [pageSize, setPageSize] = useState(10);
-  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(true); // Start with dashboard view
-  const [companyTab, setCompanyTab] = useState<"unverified" | "verified">("unverified"); // For companies tab
+  const [showDashboard, setShowDashboard] = useState(initialShowDashboard); // Start with dashboard view unless resource param exists
+  const [companyTab, setCompanyTab] = useState<"unverified" | "verified">("verified"); // For companies tab - default to verified
   const [companyCounts, setCompanyCounts] = useState<{ unverified: number; verified: number }>({ unverified: 0, verified: 0 });
+
 
   useEffect(() => {
     if (embedded) return;
@@ -1627,33 +1638,15 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                 {resource.key === "companies" ? (
                   <Tabs value={companyTab} onValueChange={(v) => setCompanyTab(v as "unverified" | "verified")}>
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="unverified">
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Unverified ({companyCounts.unverified})
-                      </TabsTrigger>
                       <TabsTrigger value="verified">
                         <CheckCircle2 className="h-4 w-4 mr-2" />
                         Verified ({companyCounts.verified})
                       </TabsTrigger>
+                      <TabsTrigger value="unverified">
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Unverified ({companyCounts.unverified})
+                      </TabsTrigger>
                     </TabsList>
-                    <TabsContent value="unverified" className="mt-4">
-                      <Card className="overflow-hidden">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <XCircle className="h-5 w-5 text-amber-600" />
-                            Unverified Companies
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {state.loading && <div className="text-sm text-muted-foreground">Loading...</div>}
-                          {state.error && <div className="text-sm text-red-600">{state.error}</div>}
-                          {!state.loading && !state.error && filteredRows.length === 0 && (
-                            <div className="text-sm text-muted-foreground">No unverified companies.</div>
-                          )}
-                          {!state.loading && !state.error && filteredRows.length > 0 && renderTable(filteredRows)}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
                     <TabsContent value="verified" className="mt-4">
                       <Card className="overflow-hidden">
                         <CardHeader className="pb-2">
@@ -1667,6 +1660,24 @@ const Admin = ({ embedded }: { embedded?: boolean }) => {
                           {state.error && <div className="text-sm text-red-600">{state.error}</div>}
                           {!state.loading && !state.error && filteredRows.length === 0 && (
                             <div className="text-sm text-muted-foreground">No verified companies.</div>
+                          )}
+                          {!state.loading && !state.error && filteredRows.length > 0 && renderTable(filteredRows)}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="unverified" className="mt-4">
+                      <Card className="overflow-hidden">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <XCircle className="h-5 w-5 text-amber-600" />
+                            Unverified Companies
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {state.loading && <div className="text-sm text-muted-foreground">Loading...</div>}
+                          {state.error && <div className="text-sm text-red-600">{state.error}</div>}
+                          {!state.loading && !state.error && filteredRows.length === 0 && (
+                            <div className="text-sm text-muted-foreground">No unverified companies.</div>
                           )}
                           {!state.loading && !state.error && filteredRows.length > 0 && renderTable(filteredRows)}
                         </CardContent>

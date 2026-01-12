@@ -65,9 +65,38 @@ uploadRoutes.post("/resume", async (c) => {
     const buffer = Buffer.from(arrayBuffer);
     await Bun.write(filepath, buffer);
 
-    // Return public URL
-    const baseUrl = process.env.VITE_API_URL || "http://localhost:9999";
+    // Return public URL - ALWAYS use environment variable for consistency
+    // This ensures the URL is correct regardless of how the request was made
+    let baseUrl: string = process.env.VITE_API_URL || "http://localhost:9999";
+    
+    // Clean up baseUrl: remove trailing slash and any path segments
+    baseUrl = baseUrl.trim().replace(/\/+$/, '');
+    
+    // Parse and extract only protocol + host (no path)
+    try {
+      const urlObj = new URL(baseUrl);
+      baseUrl = `${urlObj.protocol}//${urlObj.host}`;
+    } catch {
+      // If parsing fails, try to extract manually
+      const match = baseUrl.match(/^(https?:\/\/[^\/]+)/);
+      if (match) {
+        baseUrl = match[1];
+      } else {
+        // Last resort: use default
+        baseUrl = "http://localhost:9999";
+      }
+    }
+    
+    // Log for debugging
+    console.log('[Upload CV] Base URL:', baseUrl);
+    console.log('[Upload CV] Request URL:', c.req.url);
+    console.log('[Upload CV] Request Host:', c.req.header('host'));
+    console.log('[Upload CV] Request Origin:', c.req.header('origin'));
+    console.log('[Upload CV] Env VITE_API_URL:', process.env.VITE_API_URL);
+    
     const fileUrl = `${baseUrl}/uploads/resumes/${filename}`;
+    
+    console.log('[Upload CV] Final fileUrl:', fileUrl);
 
     return c.json({
       success: true,
@@ -126,8 +155,28 @@ uploadRoutes.post("/image", async (c) => {
     const buffer = Buffer.from(arrayBuffer);
     await Bun.write(filepath, buffer);
 
-    // Return public URL
-    const baseUrl = process.env.VITE_API_URL || "http://localhost:9999";
+    // Return public URL - ALWAYS use environment variable for consistency
+    // This ensures the URL is correct regardless of how the request was made
+    let baseUrl: string = process.env.VITE_API_URL || "http://localhost:9999";
+    
+    // Clean up baseUrl: remove trailing slash and any path segments
+    baseUrl = baseUrl.trim().replace(/\/+$/, '');
+    
+    // Parse and extract only protocol + host (no path)
+    try {
+      const urlObj = new URL(baseUrl);
+      baseUrl = `${urlObj.protocol}//${urlObj.host}`;
+    } catch {
+      // If parsing fails, try to extract manually
+      const match = baseUrl.match(/^(https?:\/\/[^\/]+)/);
+      if (match) {
+        baseUrl = match[1];
+      } else {
+        // Last resort: use default
+        baseUrl = "http://localhost:9999";
+      }
+    }
+    
     const fileUrl = `${baseUrl}/uploads/images/${filename}`;
 
     return c.json({

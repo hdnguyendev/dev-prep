@@ -1,0 +1,42 @@
+flowchart TB
+    START([START: Job Matching]) --> INPUT[INPUT DATA<br/>Candidate Profile + Job Requirements]
+    
+    INPUT --> D1["DIMENSION 1: SKILLS<br/>Weight: 30%<br/>Compare candidate skills<br/>vs job required skills"]
+    INPUT --> D2["DIMENSION 2: EXPERIENCE<br/>Weight: 18%<br/>Compare years & level<br/>Intern → Principal"]
+    INPUT --> D3["DIMENSION 3: TITLE<br/>Weight: 12%<br/>Keyword similarity<br/>between titles"]
+    INPUT --> D4["DIMENSION 4: EDUCATION<br/>Weight: 12%<br/>Degree level & field<br/>of study match"]
+    INPUT --> D5["DIMENSION 5: SOFT SKILLS<br/>Weight: 12%<br/>NLP extraction from<br/>job description"]
+    INPUT --> D6["DIMENSION 6: TECHNOLOGY<br/>Weight: 8%<br/>Framework & tools<br/>alignment"]
+    INPUT --> D7["DIMENSION 7: LOCATION<br/>Weight: 8%<br/>Remote check or<br/>location match"]
+    
+    D1 --> S1["Score₁ = 0-100<br/>× 0.30"]
+    D2 --> S2["Score₂ = 0-100<br/>× 0.18"]
+    D3 --> S3["Score₃ = 0-100<br/>× 0.12"]
+    D4 --> S4["Score₄ = 0-100<br/>× 0.12"]
+    D5 --> S5["Score₅ = 0-100<br/>× 0.12"]
+    D6 --> S6["Score₆ = 0-100<br/>× 0.08"]
+    D7 --> S7["Score₇ = 0-100<br/>× 0.08"]
+    
+    S1 --> CALC[Calculate Weighted Sum]
+    S2 --> CALC
+    S3 --> CALC
+    S4 --> CALC
+    S5 --> CALC
+    S6 --> CALC
+    S7 --> CALC
+    
+    CALC --> FORMULA["Total Score =<br/>Score₁×0.30 + Score₂×0.18 +<br/>Score₃×0.12 + Score₄×0.12 +<br/>Score₅×0.12 + Score₆×0.08 +<br/>Score₇×0.08"]
+    
+    FORMULA --> OUTPUT([OUTPUT: Match Score 0-100])
+    
+    style START fill:#e1f5ff
+    style OUTPUT fill:#d4edda
+    style D1 fill:#fff3cd
+    style D2 fill:#fff3cd
+    style D3 fill:#fff3cd
+    style D4 fill:#fff3cd
+    style D5 fill:#fff3cd
+    style D6 fill:#fff3cd
+    style D7 fill:#fff3cd
+    style CALC fill:#f8d7da
+    style FORMULA fill:#d1ecf1

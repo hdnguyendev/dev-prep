@@ -22,6 +22,9 @@ import { calculateMatchScore } from "./scoring";
 import { generateSuggestions, generateMatchExplanation } from "./suggestions";
 import type { MatchResult, CandidateMatchData, JobMatchData } from "./types";
 
+// Export recommendation service
+export { recommendJobsForCandidate } from "./recommendation";
+
 /**
  * Finds top matching jobs for a given candidate
  * 
@@ -58,10 +61,21 @@ export async function findMatchingJobsForCandidate(
     throw new Error("Candidate not found");
   }
 
-  // Fetch published jobs
+  // Get applied job IDs to exclude
+  const appliedJobIds = (candidate.applications || [])
+    .map(app => app.jobId)
+    .filter(Boolean) as string[];
+
+  // Fetch published jobs (exclude already applied)
   const jobs = await prisma.job.findMany({
     where: {
       status: "PUBLISHED",
+      deadline: {
+        gte: new Date(), // Only active jobs
+      },
+      id: {
+        notIn: appliedJobIds, // Exclude already applied jobs
+      },
     },
     include: {
       skills: {
@@ -71,32 +85,43 @@ export async function findMatchingJobsForCandidate(
         select: { name: true },
       },
     },
-    take: 100, // Limit initial fetch for performance
+    orderBy: {
+      publishedAt: "desc", // Most recent first
+    },
+    take: 200, // Fetch more to filter and rank
   });
 
   // Calculate matches
   const matches: MatchResult[] = [];
 
   for (const job of jobs) {
+    // Prepare education data
+    const educationData = (candidate.educations || []).map(edu => ({
+      degree: edu.degree,
+      fieldOfStudy: edu.fieldOfStudy,
+      institution: edu.institution,
+      graduationYear: edu.endDate ? new Date(edu.endDate).getFullYear() : null,
+    }));
+
     const matchResult = calculateMatchScore(
       {
         skills: candidate.skills,
         experiences: candidate.experiences,
-        education: (candidate as any).education || [],
+        education: educationData,
         headline: candidate.headline,
         address: candidate.address,
         projects: candidate.projects,
-        softSkills: (candidate as any).softSkills || {},
-        technologies: (candidate as any).technologies || {},
+        softSkills: {}, // Not stored in DB currently
+        technologies: {}, // Extract from projects if needed
       },
       {
         title: job.title,
         description: job.description || "",
         requirements: job.requirements || "",
-        responsibilities: (job as any).responsibilities || "",
+        responsibilities: "",
         skills: job.skills,
         experienceLevel: job.experienceLevel,
-        requiredDegree: job.experienceLevel || undefined,
+        requiredDegree: null,
         preferredDegree: null,
         requiredField: null,
         preferredSchools: [],

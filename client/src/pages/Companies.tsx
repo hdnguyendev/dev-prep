@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SmartSearchInput } from "@/components/SmartSearchInput";
 import { COMPANY_FILTER_TEXT } from "@/constants/companies";
 import illCompanies from "@/assets/illustration-companies.svg";
 import {
@@ -69,15 +70,24 @@ const Companies = () => {
   };
 
   const fetcher = useCallback(
-    (token?: string) => apiClient.listCompanies({ 
-      page, 
-      pageSize,
-      q: searchQuery.trim() || undefined,
-    }, token),
-    [page, pageSize, searchQuery]
+    (token?: string) =>
+      apiClient.listCompanies(
+        {
+          page,
+          pageSize,
+          q: searchQuery.trim() || undefined,
+          // Server-side filter: only fetch verified companies when toggled
+          isVerified: verifiedOnly || undefined,
+        },
+        token
+      ),
+    [page, pageSize, searchQuery, verifiedOnly]
   );
 
-  const { data: companies, loading, error, meta } = useApiList<Company>(fetcher, [page, pageSize, searchQuery]);
+  const { data: companies, loading, error, meta } = useApiList<Company>(
+    fetcher,
+    [page, pageSize, searchQuery, verifiedOnly]
+  );
 
   const getCompanyInitial = (company: Company) => {
     return company.name?.[0]?.toUpperCase() || "C";
@@ -99,7 +109,7 @@ const Companies = () => {
 
   // Client-side filtering only for filters (search is done on server)
   const filteredCompanies = companies.filter((c) => {
-    if (verifiedOnly && !c.isVerified) return false;
+    // verifiedOnly đã filter trên server (isVerified=true), không cần filter lại trên client
     if (hasWebsiteOnly && !c.website) return false;
 
     const minRatingNum = Number(minRating);
@@ -306,13 +316,13 @@ const Companies = () => {
                 >
                   {/* Search Input */}
                   <div className="relative sm:col-span-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search companies by name, industry, location..."
+                    <SmartSearchInput
                       value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
+                      onChange={setSearchInput}
                       onKeyPress={handleKeyPress}
-                      className="h-11 pl-9"
+                      placeholder="Search companies by name, industry, location..."
+                      className="h-11"
+                      suggestionType="company"
                     />
                   </div>
 
@@ -577,7 +587,7 @@ const Companies = () => {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-0">
+      <div className="container mx-auto px-4 py-0 my-16">
         {/* Stats Bar */}
         <div className="mb-8 grid gap-4 md:grid-cols-4">
           <Card className="group relative overflow-hidden border-2 transition-all hover:shadow-xl hover:-translate-y-1">

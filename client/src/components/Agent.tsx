@@ -2,6 +2,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { Loader2, Plus, Sparkles } from "lucide-react";
 
 import logo from "@/assets/logo.svg";
 import clerkFallback from "../assets/clerk.svg";
@@ -36,6 +37,7 @@ import {
 import { vapi } from "@/lib/vapi.sdk";
 import { analyzeInterview, createPracticeInterview, createStandaloneInterview, updatePracticeInterview } from "@/lib/actions/interviews.action";
 import type { Interview } from "@/lib/api";
+import { apiClient } from "@/lib/api";
 import { createInterviewExchange } from "@/lib/actions/interviews.action";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
@@ -280,6 +282,7 @@ interface AgentProps {
   jobId?: string;
   initialTechstack?: string;
   interviewId?: string; // Existing interview ID (when joining via access code)
+  isVIP?: boolean; // Candidate VIP status (for practice interview features)
 }
 
 function Agent({
@@ -289,6 +292,7 @@ function Agent({
   jobId,
   initialTechstack,
   interviewId, // Interview ID if joining via access code
+  isVIP = false,
 }: AgentProps) {
   const navigate = useNavigate();
   const { user } = useUser();
@@ -300,10 +304,16 @@ function Agent({
   const [callSeconds, setCallSeconds] = useState(0);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [companyInfo, setCompanyInfo] = useState<string>("");
 
   const messagesRef = useRef<SavedMessage[]>([]);
   const persistedInterviewRef = useRef<Interview | null>(null);
   const didPersistOnEndRef = useRef(false);
+
+  // If interviewId is provided, this is a scheduled interview joined via access code.
+  // In this case, candidate should NOT see or change the setup (role/type/level/questions),
+  // because everything is pre-configured by the recruiter/job.
+  const isAccessCodeInterview = Boolean(interviewId);
 
   const [workflow, setWorkflow] = useState<InterviewWorkflowValues>(() => ({
     ...DEFAULT_INTERVIEW_WORKFLOW_VALUES,
@@ -319,6 +329,49 @@ function Agent({
       return { ...prev, techstack: initialTechstack };
     });
   }, [initialTechstack]);
+
+  // Fetch company information if jobId is provided
+  useEffect(() => {
+    if (!jobId) return;
+    
+    let cancelled = false;
+    const fetchCompanyInfo = async () => {
+      try {
+        const token = await getToken().catch(() => undefined);
+        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:9999";
+        const res = await fetch(`${apiBase}/jobs/${jobId}?include=company`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json();
+        
+        if (cancelled) return;
+        if (!data?.success || !data.data) return;
+        
+        const job = data.data;
+        const company = job.company;
+        
+        if (company) {
+          const companyDetails = [
+            company.name && `Company: ${company.name}`,
+            company.description && `About: ${company.description}`,
+            company.website && `Website: ${company.website}`,
+            company.location && `Location: ${company.location}`,
+            company.industry && `Industry: ${company.industry}`,
+            company.size && `Company Size: ${company.size}`,
+          ].filter(Boolean).join("\n");
+          
+          setCompanyInfo(companyDetails);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    
+    fetchCompanyInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, getToken]);
 
   const initialTypeChoice = useMemo(() => {
     const match = INTERVIEW_TYPE_OPTIONS.some((o) => o.value === workflow.type);
@@ -357,6 +410,7 @@ function Agent({
   );
   const [questionCount, setQuestionCount] = useState<number>(DEFAULT_QUESTION_COUNT);
   const [isSetupOpen, setIsSetupOpen] = useState<boolean>(false);
+  const [isGeneratingQuestion, setIsGeneratingQuestion] = useState<boolean>(false);
 
   const normalizedQuestions = useMemo(() => {
     return questionsText
@@ -394,6 +448,45 @@ function Agent({
   const formattedQuestions = useMemo(() => {
     return normalizedQuestions.map((q, idx) => `${idx + 1}. ${q}`).join("\n");
   }, [normalizedQuestions]);
+
+  // Generate a new question using AI
+  const handleGenerateQuestion = async () => {
+    if (!isWorkflowValid) {
+      return;
+    }
+
+    try {
+      setIsGeneratingQuestion(true);
+      const token = await getToken().catch(() => undefined);
+      
+      const response = await apiClient.generateQuestion(
+        {
+          role: workflow.role,
+          type: workflow.type,
+          level: workflow.level,
+          techstack: workflow.techstack || undefined,
+          existingQuestions: normalizedQuestions,
+        },
+        token ?? undefined
+      );
+
+      if (response.success && response.data?.question) {
+        // Append the new question to the existing questions
+        const newQuestion = response.data.question.trim();
+        if (newQuestion.length > 0) {
+          const currentQuestions = questionsText.trim();
+          const updatedQuestions = currentQuestions
+            ? `${currentQuestions}\n${newQuestion}`
+            : newQuestion;
+          setQuestionsText(updatedQuestions);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to generate question:", error);
+    } finally {
+      setIsGeneratingQuestion(false);
+    }
+  };
 
   // Lấy tin nhắn cuối cùng để hiển thị
   const lastMessage = useMemo(() => {
@@ -623,8 +716,14 @@ function Agent({
           analyzeInterview(persisted.id, token ?? undefined).catch(() => {
           });
 
-          // Move user to feedback immediately; the page will show a loading state and auto-refresh.
-          navigate(`/interviews/${persisted.id}/feedback`);
+          // If interview is linked to an application (via access code), redirect to thank you page
+          // Otherwise, redirect to feedback page (practice interview)
+          if (persisted.applicationId) {
+            navigate(`/interviews/${persisted.id}/thank-you`);
+          } else {
+            // Move user to feedback immediately; the page will show a loading state and auto-refresh.
+            navigate(`/interviews/${persisted.id}/feedback`);
+          }
         } catch { // Ignore errors
           // Ignore errors
         }
@@ -726,6 +825,7 @@ function Agent({
           questionMode,
           questionCount: effectiveQuestionCount,
           questions: questionMode === "provided" ? formattedQuestions : "",
+          companyInfo: companyInfo || "No company information available.",
         },
       });
     } catch { // Ignore errors
@@ -748,183 +848,261 @@ function Agent({
           {AGENT_UI_TEXT.headings.unified}
         </h2>
 
-        {/* Setup: toggleable modal */}
-        <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border bg-card p-4 shadow-sm">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold">
-              {AGENT_UI_TEXT.workflow.setupSummaryLabel}
+        {/* Setup: chỉ hiển thị cho practice / standalone interviews, ẩn khi join bằng access code */}
+        {!isAccessCodeInterview && (
+          <>
+            <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border bg-card p-4 shadow-sm">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold">
+                  {AGENT_UI_TEXT.workflow.setupSummaryLabel}
+                </div>
+                <div className="text-sm text-muted-foreground truncate">
+                  {setupSummary || AGENT_UI_TEXT.workflow.title}
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsSetupOpen(true)}
+                disabled={isCalling}
+              >
+                {AGENT_UI_TEXT.workflow.setupButton}
+              </Button>
             </div>
-            <div className="text-sm text-muted-foreground truncate">
-              {setupSummary || AGENT_UI_TEXT.workflow.title}
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsSetupOpen(true)}
-            disabled={isCalling}
-          >
-            {AGENT_UI_TEXT.workflow.setupButton}
-          </Button>
-        </div>
 
-        <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
-          <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-[80rem] max-h-[96vh] overflow-y-auto gap-6 p-6 sm:p-10 shadow-2xl sm:rounded-2xl break-words">
-            <DialogHeader>
-              <DialogTitle className="break-words">
-                {AGENT_UI_TEXT.workflow.setupModalTitle}
-              </DialogTitle>
-              <DialogDescription className="break-words">
-                {AGENT_UI_TEXT.workflow.setupModalDescription}
-              </DialogDescription>
-            </DialogHeader>
+            <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
+              <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-[80rem] max-h-[96vh] overflow-y-auto gap-6 p-6 sm:p-10 shadow-2xl sm:rounded-2xl break-words">
+                <DialogHeader>
+                  <DialogTitle className="break-words">
+                    {AGENT_UI_TEXT.workflow.setupModalTitle}
+                  </DialogTitle>
+                  <DialogDescription className="break-words">
+                    {AGENT_UI_TEXT.workflow.setupModalDescription}
+                  </DialogDescription>
+                </DialogHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="agent-role">{AGENT_UI_TEXT.workflow.roleLabel}</Label>
-                <Input
-                  id="agent-role"
-                  value={workflow.role}
-                  onChange={(e) =>
-                    setWorkflow((prev) => ({ ...prev, role: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="agent-type">{AGENT_UI_TEXT.workflow.typeLabel}</Label>
-                <Tabs
-                  value={typeChoice}
-                  onValueChange={(v) => setTypeChoice(v)}
-                >
-                  <TabsList className="w-full justify-start flex-wrap h-auto">
-                    {INTERVIEW_TYPE_OPTIONS.map((o) => (
-                      <TabsTrigger key={o.value} value={o.value}>
-                        {o.label}
-                      </TabsTrigger>
-                    ))}
-                    <TabsTrigger value={OTHER_OPTION_VALUE}>
-                      {AGENT_UI_TEXT.workflow.otherOptionLabel}
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value={OTHER_OPTION_VALUE}>
-                    <div className="mt-2 space-y-2">
-                      <Label htmlFor="agent-custom-type">
-                        {AGENT_UI_TEXT.workflow.customTypeLabel}
-                      </Label>
-                      <Input
-                        id="agent-custom-type"
-                        value={customType}
-                        placeholder={AGENT_UI_TEXT.workflow.customTypePlaceholder}
-                        onChange={(e) => setCustomType(e.target.value)}
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="agent-level">{AGENT_UI_TEXT.workflow.levelLabel}</Label>
-                <Tabs
-                  value={levelChoice}
-                  onValueChange={(v) => setLevelChoice(v)}
-                >
-                  <TabsList className="w-full justify-start flex-wrap h-auto">
-                    {INTERVIEW_LEVEL_OPTIONS.map((o) => (
-                      <TabsTrigger key={o.value} value={o.value}>
-                        {o.label}
-                      </TabsTrigger>
-                    ))}
-                    <TabsTrigger value={OTHER_OPTION_VALUE}>
-                      {AGENT_UI_TEXT.workflow.otherOptionLabel}
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value={OTHER_OPTION_VALUE}>
-                    <div className="mt-2 space-y-2">
-                      <Label htmlFor="agent-custom-level">
-                        {AGENT_UI_TEXT.workflow.customLevelLabel}
-                      </Label>
-                      <Input
-                        id="agent-custom-level"
-                        value={customLevel}
-                        placeholder={AGENT_UI_TEXT.workflow.customLevelPlaceholder}
-                        onChange={(e) => setCustomLevel(e.target.value)}
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="agent-techstack">
-                  {AGENT_UI_TEXT.workflow.techstackLabel}
-                </Label>
-                <Input
-                  id="agent-techstack"
-                  value={workflow.techstack}
-                  onChange={(e) =>
-                    setWorkflow((prev) => ({
-                      ...prev,
-                      techstack: e.target.value,
-                    }))
-                  }
-                />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="agent-role">{AGENT_UI_TEXT.workflow.roleLabel}</Label>
+                    <Input
+                      id="agent-role"
+                      value={workflow.role}
+                      onChange={(e) =>
+                        setWorkflow((prev) => ({ ...prev, role: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="agent-type">{AGENT_UI_TEXT.workflow.typeLabel}</Label>
+                    <Tabs
+                      value={typeChoice}
+                      onValueChange={(v) => setTypeChoice(v)}
+                    >
+                      <TabsList className="w-full justify-start flex-wrap h-auto">
+                        {INTERVIEW_TYPE_OPTIONS.map((o) => (
+                          <TabsTrigger key={o.value} value={o.value}>
+                            {o.label}
+                          </TabsTrigger>
+                        ))}
+                        <TabsTrigger value={OTHER_OPTION_VALUE}>
+                          {AGENT_UI_TEXT.workflow.otherOptionLabel}
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value={OTHER_OPTION_VALUE}>
+                        <div className="mt-2 space-y-2">
+                          <Label htmlFor="agent-custom-type">
+                            {AGENT_UI_TEXT.workflow.customTypeLabel}
+                          </Label>
+                          <Input
+                            id="agent-custom-type"
+                            value={customType}
+                            placeholder={AGENT_UI_TEXT.workflow.customTypePlaceholder}
+                            onChange={(e) => setCustomType(e.target.value)}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="agent-level">{AGENT_UI_TEXT.workflow.levelLabel}</Label>
+                    <Tabs
+                      value={levelChoice}
+                      onValueChange={(v) => setLevelChoice(v)}
+                    >
+                      <TabsList className="w-full justify-start flex-wrap h-auto">
+                        {INTERVIEW_LEVEL_OPTIONS.map((o) => (
+                          <TabsTrigger key={o.value} value={o.value}>
+                            {o.label}
+                          </TabsTrigger>
+                        ))}
+                        <TabsTrigger value={OTHER_OPTION_VALUE}>
+                          {AGENT_UI_TEXT.workflow.otherOptionLabel}
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value={OTHER_OPTION_VALUE}>
+                        <div className="mt-2 space-y-2">
+                          <Label htmlFor="agent-custom-level">
+                            {AGENT_UI_TEXT.workflow.customLevelLabel}
+                          </Label>
+                          <Input
+                            id="agent-custom-level"
+                            value={customLevel}
+                            placeholder={AGENT_UI_TEXT.workflow.customLevelPlaceholder}
+                            onChange={(e) => setCustomLevel(e.target.value)}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="agent-techstack">
+                      {AGENT_UI_TEXT.workflow.techstackLabel}
+                    </Label>
+                    <Input
+                      id="agent-techstack"
+                      value={workflow.techstack}
+                      onChange={(e) =>
+                        setWorkflow((prev) => ({
+                          ...prev,
+                          techstack: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label>{AGENT_UI_TEXT.workflow.questionModeLabel}</Label>
-                <Tabs
-                  value={questionMode}
-                  onValueChange={(v) => setQuestionMode(v as QuestionMode)}
-                >
-                  <TabsList className="w-full justify-start flex-wrap h-auto">
-                    <TabsTrigger value="provided">
-                      {AGENT_UI_TEXT.workflow.questionModeProvided}
-                    </TabsTrigger>
-                    <TabsTrigger value="generated">
-                      {AGENT_UI_TEXT.workflow.questionModeGenerated}
-                    </TabsTrigger>
-                  </TabsList>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>{AGENT_UI_TEXT.workflow.questionModeLabel}</Label>
+                    <Tabs
+                      value={questionMode}
+                      onValueChange={(v) => setQuestionMode(v as QuestionMode)}
+                    >
+                      <TabsList className="w-full justify-start flex-wrap h-auto">
+                        <TabsTrigger value="provided">
+                          {AGENT_UI_TEXT.workflow.questionModeProvided}
+                        </TabsTrigger>
+                        <TabsTrigger value="generated">
+                          {AGENT_UI_TEXT.workflow.questionModeGenerated}
+                        </TabsTrigger>
+                      </TabsList>
 
                   <TabsContent value="provided">
-                    <div className="space-y-2">
-                      <Label htmlFor="agent-questions">
-                        {AGENT_UI_TEXT.workflow.questionsLabel}
-                      </Label>
-                      <div className="text-xs text-muted-foreground">
-                        {AGENT_UI_TEXT.workflow.questionsHelper}
+                    <div className="space-y-4">
+                      {/* Practice Questions Preview (VIP-limited) */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold">
+                          Interview Practice Questions
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Recruiter-provided questions to help you prepare
+                        </p>
+                        {normalizedQuestions.length > 0 && (
+                          <ul className="mt-2 space-y-1.5 text-xs">
+                            {normalizedQuestions.map((q, idx) => {
+                              const locked = idx > 0; // Dù là VIP cũng chỉ xem rõ câu đầu tiên
+                              return (
+                                <li
+                                  key={idx}
+                                  className={`rounded-md px-3 py-2 border text-left ${
+                                    locked
+                                      ? "relative border-dashed border-muted-foreground/30 bg-muted/40 text-muted-foreground/80"
+                                      : "border-muted bg-muted/60"
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block ${
+                                      locked ? "blur-[1px] opacity-70" : ""
+                                    }`}
+                                  >
+                                    <span className="font-medium mr-1">
+                                      Q{idx + 1}:
+                                    </span>
+                                    {q}
+                                  </span>
+                                  {locked && (
+                                    <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+                                      Locked
+                                    </span>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                        {normalizedQuestions.length > 1 && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            You can fully view the first question. Use the AI practice interview to experience the full question set during the session.
+                          </p>
+                        )}
                       </div>
-                      <Textarea
-                        id="agent-questions"
-                        value={questionsText}
-                        placeholder={AGENT_UI_TEXT.workflow.questionsPlaceholder}
-                        onChange={(e) => setQuestionsText(e.target.value)}
-                      />
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="agent-questions">
+                            {AGENT_UI_TEXT.workflow.questionsLabel}
+                          </Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGenerateQuestion}
+                            disabled={isGeneratingQuestion || !isWorkflowValid}
+                            className="gap-2"
+                          >
+                            {isGeneratingQuestion ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="h-3.5 w-3.5" />
+                                <Sparkles className="h-3.5 w-3.5" />
+                                Add Question
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {AGENT_UI_TEXT.workflow.questionsHelper}
+                        </div>
+                        <Textarea
+                          id="agent-questions"
+                          value={questionsText}
+                          placeholder={AGENT_UI_TEXT.workflow.questionsPlaceholder}
+                          onChange={(e) => setQuestionsText(e.target.value)}
+                          rows={8}
+                        />
+                      </div>
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="generated">
-                    <div className="space-y-2">
-                      <Label htmlFor="agent-question-count">
-                        {AGENT_UI_TEXT.workflow.questionCountLabel}
-                      </Label>
-                      <Input
-                        id="agent-question-count"
-                        inputMode="numeric"
-                        value={String(questionCount)}
-                        onChange={(e) =>
-                          setQuestionCount(Number(e.target.value || 0))
-                        }
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" onClick={() => setIsSetupOpen(false)}>
-                {AGENT_UI_TEXT.workflow.setupModalClose}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                      <TabsContent value="generated">
+                        <div className="space-y-2">
+                          <Label htmlFor="agent-question-count">
+                            {AGENT_UI_TEXT.workflow.questionCountLabel}
+                          </Label>
+                          <Input
+                            id="agent-question-count"
+                            inputMode="numeric"
+                            value={String(questionCount)}
+                            onChange={(e) =>
+                              setQuestionCount(Number(e.target.value || 0))
+                            }
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" onClick={() => setIsSetupOpen(false)}>
+                    {AGENT_UI_TEXT.workflow.setupModalClose}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
 
         {/* Participant Cards */}
         <div className="flex flex-col md:flex-row gap-4">

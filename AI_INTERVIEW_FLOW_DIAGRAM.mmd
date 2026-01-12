@@ -1,0 +1,122 @@
+flowchart TB
+    subgraph INPUT["📥 INPUT - AI INTERVIEW"]
+        I1["Interview Configuration<br/>━━━━━━━━━━━━━━━━<br/>• Role: Senior Frontend Developer<br/>• Level: Senior<br/>• Tech Stack: React, TypeScript, Node.js<br/>• Question Mode: Provided/Generated<br/>• Question Count: 5<br/>• Company Info: Optional"]
+        
+        I2["Pre-defined Questions<br/>━━━━━━━━━━━━━━━━<br/>Q1: Tell me about yourself<br/>Q2: Why do you want this role?<br/>Q3: Describe a challenging project<br/>Q4: How do you handle conflicts?<br/>Q5: What are your strengths?"]
+        
+        I3["Candidate Voice Input<br/>━━━━━━━━━━━━━━━━<br/>Real-time voice stream<br/>via WebRTC"]
+    end
+    
+    subgraph ORCHESTRATION["🎛️ VAPI.AI ORCHESTRATION"]
+        VAPI["Vapi.ai SDK<br/>━━━━━━━━━━━━━━━━<br/>• WebRTC Connection<br/>• Real-time Bidirectional Voice<br/>• Event Management<br/>• Message Routing"]
+    end
+    
+    subgraph PROCESSING["⚙️ AI PROCESSING PIPELINE"]
+        subgraph STT["🎤 Speech-to-Text"]
+            DEEPGRAM["Deepgram Nova-2<br/>━━━━━━━━━━━━━━━━<br/>• Real-time Transcription<br/>• Language: English<br/>• Model: nova-2<br/>• Accuracy: High"]
+        end
+        
+        subgraph CONVERSATION["💬 Conversation Engine"]
+            GPT4["OpenAI GPT-4<br/>━━━━━━━━━━━━━━━━<br/>• Natural Interviewer Responses<br/>• Context-aware Questions<br/>• Follow-up Questions<br/>• Professional Tone"]
+        end
+        
+        subgraph TTS["🔊 Text-to-Speech"]
+            ELEVENLABS["11Labs Voice Synthesis<br/>━━━━━━━━━━━━━━━━<br/>• Voice: Sarah<br/>• Stability: 0.4<br/>• Similarity Boost: 0.8<br/>• Speed: 0.9<br/>• Human-like Voice"]
+        end
+        
+        subgraph TRANSCRIPT["📝 Transcript Collection"]
+            COLLECT["Real-time Message Collection<br/>━━━━━━━━━━━━━━━━<br/>• User Messages<br/>• AI Messages<br/>• Final Transcripts<br/>• Q&A Pairs Extraction"]
+        end
+    end
+    
+    subgraph OUTPUT["📤 OUTPUT - INTERVIEW DATA"]
+        O1["Full Transcript<br/>━━━━━━━━━━━━━━━━<br/>Complete conversation text<br/>User: ...<br/>AI: ..."]
+        
+        O2["Structured Q&A Pairs<br/>━━━━━━━━━━━━━━━━<br/>Turns Array:<br/>[{<br/>  orderIndex: 1,<br/>  questionText: '...',<br/>  answerText: '...',<br/>  questionCategory: 'BEHAVIORAL'<br/>}, ...]"]
+        
+        O3["Interview Metadata<br/>━━━━━━━━━━━━━━━━<br/>• Interview ID<br/>• Status: IN_PROGRESS → COMPLETED<br/>• Duration<br/>• Application ID (if linked)"]
+    end
+    
+    subgraph EVALUATION["📊 AI EVALUATION & ANALYSIS"]
+        E1["Evaluation Input<br/>━━━━━━━━━━━━━━━━<br/>• Full Transcript<br/>• Structured Turns (Q&A)<br/>• Seniority Level<br/>• Must-have Keywords<br/>• Nice-to-have Keywords"]
+        
+        E2{"Evaluation Mode?"}
+        
+        subgraph GEMINI["🧠 Google Gemini 2.5 Flash"]
+            G1["Build Analysis Prompt<br/>━━━━━━━━━━━━━━━━<br/>6 Evaluation Criteria:<br/>1. Length (25%)<br/>2. Structure (20%)<br/>3. Examples (20%)<br/>4. Confidence (10%)<br/>5. Keyword Match (15%)<br/>6. Relevance (10%)"]
+            
+            G2["Question Type Adjustments<br/>━━━━━━━━━━━━━━━━<br/>• Technical: +keywordMatch, +relevance<br/>• Behavioral: +structure, +examples<br/>• General: Default weights"]
+            
+            G3["Generate Structured JSON<br/>━━━━━━━━━━━━━━━━<br/>• Overall Score (0-100)<br/>• Recommendation (HIRE/CONSIDER/REJECT)<br/>• Category Scores (5 categories)<br/>• Per-question Scores & Feedback"]
+        end
+        
+        subgraph RULE_BASED["📋 Rule-based Fallback"]
+            R1["Heuristic Scoring<br/>━━━━━━━━━━━━━━━━<br/>• Word count analysis<br/>• Structure detection (STAR method)<br/>• Example detection<br/>• Filler word counting<br/>• Keyword matching<br/>• Relevance (Jaccard similarity)"]
+            
+            R2["Calculate Scores<br/>━━━━━━━━━━━━━━━━<br/>Same 6 criteria as Gemini<br/>but using rule-based logic"]
+        end
+    end
+    
+    subgraph RESULT["✅ FINAL RESULT"]
+        R3["Interview Feedback<br/>━━━━━━━━━━━━━━━━<br/>{<br/>  overallScore: 85,<br/>  recommendation: 'HIRE',<br/>  summary: '...',<br/>  strengths: [...],<br/>  areasForImprovement: [...],<br/>  categoryScores: [...],<br/>  perQuestion: [...]<br/>}"]
+        
+        R4["Database Updates<br/>━━━━━━━━━━━━━━━━<br/>• Interview.status = COMPLETED<br/>• Interview.overallScore = 85<br/>• Interview.recommendation = 'HIRE'<br/>• InterviewExchange scores updated<br/>• Application.status = INTERVIEWED"]
+        
+        R5["Notifications<br/>━━━━━━━━━━━━━━━━<br/>• Email to Recruiter<br/>• Interview completed notification<br/>• Feedback available"]
+    end
+    
+    %% Input Flow
+    I1 --> VAPI
+    I2 --> VAPI
+    I3 --> VAPI
+    
+    %% Processing Flow
+    VAPI -->|Voice Stream| DEEPGRAM
+    VAPI -->|Text| GPT4
+    GPT4 -->|Response Text| ELEVENLABS
+    ELEVENLABS -->|Voice Output| VAPI
+    DEEPGRAM -->|Transcription| COLLECT
+    GPT4 -->|Messages| COLLECT
+    COLLECT --> O1
+    COLLECT --> O2
+    
+    %% Evaluation Flow
+    O1 --> E1
+    O2 --> E1
+    E1 --> E2
+    E2 -->|GEMINI Mode| G1
+    E2 -->|RULE_BASED Mode| R1
+    G1 --> G2 --> G3 --> R3
+    R1 --> R2 --> R3
+    
+    %% Result Flow
+    R3 --> R4
+    R4 --> R5
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef orchestration fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    classDef stt fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef conversation fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef tts fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef transcript fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    classDef output fill:#e0f2f1,stroke:#004d40,stroke-width:2px,color:#000
+    classDef evaluation fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    classDef gemini fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef rule fill:#fffde7,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef result fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef decision fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class I1,I2,I3,INPUT input
+    class VAPI,ORCHESTRATION orchestration
+    class DEEPGRAM,STT stt
+    class GPT4,CONVERSATION conversation
+    class ELEVENLABS,TTS tts
+    class COLLECT,TRANSCRIPT transcript
+    class O1,O2,O3,OUTPUT output
+    class E1,E2,EVALUATION evaluation
+    class G1,G2,G3,GEMINI gemini
+    class R1,R2,RULE_BASED rule
+    class R3,R4,R5,RESULT result
+    class E2 decision
+

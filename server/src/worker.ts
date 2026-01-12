@@ -176,10 +176,10 @@ app.route("/company-follows", companyFollowRoutes);
 app.route("/notifications", notificationRoutes);
 app.route("/matching", matchingRoutes);
 app.route("/jobs", jobRoutes);
-app.route("/membership", membershipRoutes);
-app.route("/candidate-profiles", candidateProfileRoutes);
-app.route("/ai", aiRoutes);
-app.route("/offers", offerRoutes);
+app.route("/", membershipRoutes);
+app.route("/", candidateProfileRoutes);
+app.route("/", aiRoutes);
+app.route("/", offerRoutes);
 app.route("/", crudRoutes);
 app.route("/", swaggerRoutes);
 
@@ -248,16 +248,34 @@ app.post("/upload/resume", async (c) => {
     // Option 1: If R2 bucket is public, use: https://<account-id>.r2.cloudflarestorage.com/<bucket-name>/<filename>
     // Option 2: Use custom domain if configured
     // For now, return a proxy URL through the Worker
-    const baseUrl = c.req.url.split('/upload')[0]; // Get base API URL
+    // Get base URL correctly - extract origin from request URL
+    let baseUrl: string;
+    try {
+      const requestUrl = new URL(c.req.url);
+      // Get origin (protocol + host) without path
+      baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    } catch {
+      // Fallback: try to get from headers
+      const host = c.req.header('host') || c.req.header('x-forwarded-host');
+      const protocol = c.req.header('x-forwarded-proto') || 'https';
+      if (host) {
+        baseUrl = `${protocol}://${host}`;
+      } else {
+        // Last resort: use environment variable or default
+        baseUrl = process.env.VITE_API_URL || "https://dev-prep-api.hdnguyen-dev.workers.dev";
+      }
+    }
+    
     const fileUrl = `${baseUrl}/files/${filename}`;
 
     return c.json({
       success: true,
-      url: fileUrl,
-      filename,
-      key: filename, // R2 key for reference
-      size: file.size,
-      type: file.type,
+      data: {
+        url: fileUrl,
+        filename,
+        size: file.size,
+        type: file.type,
+      },
     });
   } catch (error) {
     console.error("Upload error:", error);

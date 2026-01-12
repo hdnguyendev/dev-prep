@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { isRecruiterLoggedIn, logout } from "@/lib/auth";
 import { Briefcase, Building2, ClipboardList, Crown, LayoutPanelLeft, LogOut, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import logo from "@/assets/logo.svg";
 
 const NavItem = ({ to, label, icon, onNavigate, mobileMenuOpen }: { to: string; label: string; icon: React.ReactNode; onNavigate?: () => void; mobileMenuOpen?: boolean }) => {
   const location = useLocation();
@@ -68,10 +69,13 @@ export default function RecruiterLayout() {
           }`}>
             {mobileMenuOpen && (
               <div className="flex items-center justify-between mb-4 lg:hidden">
-                <div>
-                  <div className="text-lg font-semibold">Recruiter</div>
-                  <div className="text-sm text-muted-foreground">Dashboard</div>
-                </div>
+                <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition">
+                  <img src={logo} alt="Logo" className="h-7 w-7" />
+                  <div>
+                    <div className="text-lg font-semibold">Recruiter</div>
+                    <div className="text-sm text-muted-foreground">Dashboard</div>
+                  </div>
+                </Link>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -83,8 +87,13 @@ export default function RecruiterLayout() {
               </div>
             )}
             <Card className={`${mobileMenuOpen ? "p-4" : "p-3"}`}>
-              <div className={`${mobileMenuOpen ? "text-base" : "text-sm"} font-semibold`}>Recruiter</div>
-              <div className={`${mobileMenuOpen ? "text-sm" : "text-xs"} text-muted-foreground`}>Dashboard</div>
+              <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition">
+                <img src={logo} alt="Logo" className={`${mobileMenuOpen ? "h-8 w-8" : "h-6 w-6"} shrink-0`} />
+                <div>
+                  <div className={`${mobileMenuOpen ? "text-base" : "text-sm"} font-semibold`}>Recruiter</div>
+                  <div className={`${mobileMenuOpen ? "text-sm" : "text-xs"} text-muted-foreground`}>Dashboard</div>
+                </div>
+              </Link>
             </Card>
 
             <Card className={`${mobileMenuOpen ? "p-4 space-y-3" : "p-2 space-y-1"} flex-1`}>

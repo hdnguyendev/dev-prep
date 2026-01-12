@@ -1,0 +1,63 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                    DEV PREP - TECH STACK ARCHITECTURE                        ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          🌐 FRONTEND (Cloudflare Pages)                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ⚛️ React 19 + TypeScript    🎨 Tailwind CSS + Vite                        │
+│  🔐 Clerk Authentication     🎤 Vapi.ai SDK                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTP/REST API
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      ⚙️ BACKEND (Cloudflare Workers)                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  🚀 Hono Framework + Bun Runtime    🗄️ Prisma ORM                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+         │                              │
+         │                              │
+         ▼                              ▼
+┌──────────────────────┐      ┌──────────────────────┐
+│  💾 DATABASE         │      │  📦 STORAGE          │
+│  Neon PostgreSQL     │      │  Cloudflare R2       │
+│  📊 PostgreSQL       │      │  📁 Files            │
+└──────────────────────┘      └──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            🤖 AI SERVICES                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  🎙️ Vapi.ai  →  💬 GPT-4  →  🧠 Gemini 2.5  →  🎧 Deepgram  →  🔊 11Labs  │
+│  (Orchestration)   (Chat)      (Analysis)      (STT)          (TTS)         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        3 TÍNH NĂNG CHÍNH                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  🎯 FEATURE 1: Job Discovery & Matching                                    │
+│     └─ Intelligent Recommendation System                                   │
+│        Tech: Hono + Prisma + PostgreSQL                                    │
+│        Algorithm: Rule-based, 7-Dimensional Scoring                        │
+│                                                                             │
+│  🎤 FEATURE 2: Interview Practice & Simulation                              │
+│     └─ AI Interview Assistant                                              │
+│        Tech: Vapi.ai + GPT-4 + Deepgram + 11Labs + React                  │
+│        Flow: Voice Interview → Real-time Transcription → AI Analysis      │
+│                                                                             │
+│  📊 FEATURE 3: Evaluation & Improvement                                    │
+│     └─ Intelligent Feedback System                                         │
+│        Tech: Google Gemini 2.5 Flash + Hono + Prisma                       │
+│        Output: Structured Feedback, Score Breakdown, Suggestions           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  DEPLOYMENT:                                                                   ║
+║  • Frontend: Cloudflare Pages (Static hosting)                                ║
+║  • Backend: Cloudflare Workers (Serverless functions)                         ║
+║  • Database: Neon PostgreSQL (Serverless PostgreSQL)                         ║
+║  • Storage: Cloudflare R2 (Object storage)                                    ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+

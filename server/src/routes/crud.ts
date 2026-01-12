@@ -605,7 +605,8 @@ export const resources: ResourceConfig[] = [
       "createdAt",
       "updatedAt",
     ],
-    searchableFields: ["title", "description", "requirements", "location"],
+    // searchableFields: ["title", "description", "requirements", "location"],
+    searchableFields: ["title"],
     include: {
       company: true,
       recruiter: true,

@@ -1,0 +1,149 @@
+graph TB
+    subgraph INPUT["📥 INPUT DATA"]
+        CANDIDATE["Candidate Profile<br/>━━━━━━━━━━━━━━━━<br/>• Skills: JavaScript, React, Node.js<br/>• Experience: 3 years (Mid-level)<br/>• Title: Senior Frontend Developer<br/>• Education: Bachelor's in CS<br/>• Soft Skills: {communication: 8, leadership: 5}<br/>• Technologies: {frontend: React, Vue}<br/>• Address: Ho Chi Minh City"]
+        JOB["Job Requirements<br/>━━━━━━━━━━━━━━━━<br/>• Required Skills: JavaScript, React<br/>• Optional Skills: TypeScript<br/>• Experience Level: Senior<br/>• Title: Senior Frontend Engineer<br/>• Education: Bachelor's required<br/>• Soft Skills: Communication, Leadership<br/>• Technologies: React, Node.js, PostgreSQL<br/>• Location: Remote"]
+    end
+    
+    subgraph DIM1["🎯 DIMENSION 1: SKILLS (30%)"]
+        S1["1. Normalize Skills<br/>js → JavaScript<br/>react.js → React"]
+        S2["2. Compare Skills<br/>Matched: JavaScript, React<br/>Missing: (none)<br/>Extra: Node.js"]
+        S3["3. Calculate Score<br/>Required: 2/2 = 100%<br/>Optional: 0/1 = 0%<br/>Bonus: 0"]
+        S4["Skills Score = 100<br/>Weighted = 100 × 0.30 = 30.0"]
+        S1 --> S2 --> S3 --> S4
+    end
+    
+    subgraph DIM2["💼 DIMENSION 2: EXPERIENCE (18%)"]
+        E1["1. Calculate Years<br/>Total: 3 years"]
+        E2["2. Map to Level<br/>3 years → Mid-level (Level 2)"]
+        E3["3. Compare with Job<br/>Job requires: Senior (Level 3)<br/>Gap: 1 level"]
+        E4["4. Calculate Score<br/>Score = 100 - (1 × 25) = 75"]
+        E5["Experience Score = 75<br/>Weighted = 75 × 0.18 = 13.5"]
+        E1 --> E2 --> E3 --> E4 --> E5
+    end
+    
+    subgraph DIM3["📋 DIMENSION 3: TITLE (12%)"]
+        T1["1. Normalize Titles<br/>Candidate: 'Senior Frontend Developer'<br/>Job: 'Senior Frontend Engineer'"]
+        T2["2. Extract Keywords<br/>Candidate: {senior, frontend, developer}<br/>Job: {senior, frontend, engineer}"]
+        T3["3. Calculate Jaccard<br/>Common: {senior, frontend} = 2<br/>Total: {senior, frontend, developer, engineer} = 4<br/>Similarity = 2/4 = 0.5"]
+        T4["Title Score = 50<br/>Weighted = 50 × 0.12 = 6.0"]
+        T1 --> T2 --> T3 --> T4
+    end
+    
+    subgraph DIM4["🎓 DIMENSION 4: EDUCATION (12%)"]
+        ED1["1. Check Requirements<br/>Job: Bachelor's required<br/>Candidate: Bachelor's in CS"]
+        ED2["2. Calculate Score<br/>Required Degree Match = 100"]
+        ED3["Education Score = 100<br/>Weighted = 100 × 0.12 = 12.0"]
+        ED1 --> ED2 --> ED3
+    end
+    
+    subgraph DIM5["🤝 DIMENSION 5: SOFT SKILLS (12%)"]
+        SS1{"Candidate có<br/>Soft Skills Data?"}
+        SS2["1. Extract from Job<br/>Communication: 8<br/>Leadership: 6"]
+        SS3["2. Compare with Candidate<br/>Communication: 8/8 = 100%<br/>Leadership: 5/6 = 83%"]
+        SS4["3. Average Score<br/>Score = (100 + 83) / 2 = 91.5"]
+        SS5["Soft Skills Score = 91.5<br/>Weighted = 91.5 × 0.12 = 10.98"]
+        SS6["Soft Skills Score = 50<br/>(Neutral - No Data)<br/>Weighted = 50 × 0.12 = 6.0"]
+        SS1 -->|Có| SS2 --> SS3 --> SS4 --> SS5
+        SS1 -->|Không| SS6
+    end
+    
+    subgraph DIM6["💻 DIMENSION 6: TECHNOLOGY (8%)"]
+        TE1["1. Extract from Job<br/>Frontend: React<br/>Backend: Node.js<br/>DB: PostgreSQL"]
+        TE2["2. Compare by Category<br/>Frontend: React match = 100%<br/>Backend: No match = 0%<br/>DB: No match = 0%"]
+        TE3["3. Average Score<br/>Score = (100 + 0 + 0) / 3 = 33.3"]
+        TE4["Technology Score = 33.3<br/>Weighted = 33.3 × 0.08 = 2.66"]
+        TE1 --> TE2 --> TE3 --> TE4
+    end
+    
+    subgraph DIM7["📍 DIMENSION 7: LOCATION (8%)"]
+        L1{"Job Remote?"}
+        L2["1. Check Location Info<br/>Candidate: Ho Chi Minh City<br/>Job: Ho Chi Minh City"]
+        L3["Location Score = 100<br/>(Remote = Perfect Match)"]
+        L4["Location Score = 100<br/>Weighted = 100 × 0.08 = 8.0"]
+        L5{"Has Location<br/>Info?"}
+        L6["Location Score = 50<br/>(Neutral - No Info)"]
+        L7{"Exact Match?"}
+        L8["Location Score = 100<br/>(Exact Location Match)"]
+        L9{"Same City?"}
+        L10["Location Score = 90<br/>(Same City Match)"]
+        L11{"Partial Match?"}
+        L12["Location Score = 60<br/>(Common Keywords)"]
+        L13["Location Score = 20<br/>(No Match - Relocate)"]
+        L14["Weighted Location Score<br/>Score × 0.08"]
+        
+        L1 -->|Yes| L3 --> L4
+        L1 -->|No| L5
+        L5 -->|No Info| L6 --> L14
+        L5 -->|Has Info| L7
+        L7 -->|Yes| L8 --> L14
+        L7 -->|No| L9
+        L9 -->|Yes| L10 --> L14
+        L9 -->|No| L11
+        L11 -->|Yes| L12 --> L14
+        L11 -->|No| L13 --> L14
+    end
+    
+    subgraph FINAL["📊 FINAL CALCULATION"]
+        F1["Total Score =<br/>30.0 + 13.5 + 6.0 + 12.0 + 10.98 + 2.66 + 8.0"]
+        F2["Total Score = 83.14"]
+        F3["Round to 2 decimals<br/>Final Match Score = 83.14"]
+        F1 --> F2 --> F3
+    end
+    
+    subgraph OUTPUT["📤 OUTPUT"]
+        RESULT["Match Result<br/>━━━━━━━━━━━━━━━━<br/>• Match Score: 83.14/100<br/>• Breakdown:<br/>  - Skills: 100 (30%)<br/>  - Experience: 75 (18%)<br/>  - Title: 50 (12%)<br/>  - Education: 100 (12%)<br/>  - Soft Skills: 91.5 (12%)<br/>  - Technology: 33.3 (8%)<br/>  - Location: 100 (8%)<br/>• Matched Skills: JavaScript, React<br/>• Missing Skills: (none)<br/>• Suggestions:<br/>  - Gain 1 more year for Senior level<br/>  - Learn Node.js and PostgreSQL"]
+    end
+    
+    CANDIDATE --> DIM1
+    JOB --> DIM1
+    CANDIDATE --> DIM2
+    JOB --> DIM2
+    CANDIDATE --> DIM3
+    JOB --> DIM3
+    CANDIDATE --> DIM4
+    JOB --> DIM4
+    CANDIDATE --> DIM5
+    JOB --> DIM5
+    CANDIDATE --> DIM6
+    JOB --> DIM6
+    CANDIDATE --> DIM7
+    JOB --> DIM7
+    
+    S4 --> FINAL
+    E5 --> FINAL
+    T4 --> FINAL
+    ED3 --> FINAL
+    SS5 --> FINAL
+    SS6 --> FINAL
+    TE4 --> FINAL
+    L4 --> FINAL
+    
+    F3 --> OUTPUT
+    OUTPUT --> RESULT
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef dim1 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef dim2 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef dim3 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef dim4 fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef dim5 fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    classDef dim6 fill:#e0f2f1,stroke:#004d40,stroke-width:2px,color:#000
+    classDef dim7 fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    classDef final fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
+    classDef output fill:#e8eaf6,stroke:#283593,stroke-width:3px,color:#000
+    classDef decision fill:#fffde7,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class CANDIDATE,JOB input
+    class S1,S2,S3,S4 dim1
+    class E1,E2,E3,E4,E5 dim2
+    class T1,T2,T3,T4 dim3
+    class ED1,ED2,ED3 dim4
+    class SS1,SS2,SS3,SS4,SS5,SS6 dim5
+    class TE1,TE2,TE3,TE4 dim6
+    class L1,L2,L3,L4 dim7
+    class F1,F2,F3 final
+    class RESULT,OUTPUT output
+    class SS1,L1 decision
+
+

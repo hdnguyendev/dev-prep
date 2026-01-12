@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { apiClient, type Job } from "@/lib/api";
+import { SmartSearchInput } from "@/components/SmartSearchInput";
+import { apiClient, type Job, type Company } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-react";
 import {
   ArrowRight,
   Briefcase,
   Building2,
+  ExternalLink,
   MapPin,
   Search,
   Shield,
@@ -31,6 +33,8 @@ const Home = () => {
   const { getToken, isSignedIn } = useAuth();
   const [featuredJobs, setFeaturedJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [featuredCompanies, setFeaturedCompanies] = useState<Company[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [heroQuery, setHeroQuery] = useState("");
   const [heroLocation, setHeroLocation] = useState("");
   
@@ -88,9 +92,9 @@ const Home = () => {
       try {
         setLoadingJobs(true);
         const token = await getToken();
-        const response = await apiClient.listJobs({ page: 1, pageSize: 6 }, token ?? undefined);
+        const response = await apiClient.listJobs({ page: 1, pageSize: 9 }, token ?? undefined);
         if (response.success) {
-          setFeaturedJobs(response.data.slice(0, 3));
+          setFeaturedJobs(response.data.slice(0, 6));
         }
       } catch {
       } finally {
@@ -99,6 +103,27 @@ const Home = () => {
     };
 
     fetchJobs();
+  }, [getToken]);
+
+  // Fetch featured companies
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        setLoadingCompanies(true);
+        const token = await getToken();
+        const response = await apiClient.listCompanies({ page: 1, pageSize: 6 }, token ?? undefined);
+        if (response.success) {
+          // Filter for verified companies with good ratings
+          const verified = response.data.filter(c => c.isVerified && (c.averageRating || 0) >= 4);
+          setFeaturedCompanies(verified.slice(0, 6));
+        }
+      } catch {
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+
+    fetchCompanies();
   }, [getToken]);
 
   // Animated counters
@@ -148,6 +173,12 @@ const Home = () => {
     if (job.salaryMin) return `From $${(job.salaryMin / 1000).toFixed(0)}k`;
     if (job.salaryMax) return `Up to $${(job.salaryMax / 1000).toFixed(0)}k`;
     return "Negotiable";
+  };
+
+  // Strip HTML tags from rich-text job descriptions so card preview không hiện thô <p>...</p>
+  const stripHtmlTags = (html: string | null | undefined): string => {
+    if (!html) return "No description available";
+    return html.replace(/<[^>]*>/g, "").trim() || "No description available";
   };
 
   const getSkillTags = (job: Job): string[] =>
@@ -211,15 +242,15 @@ const Home = () => {
                   <CardContent className="p-4">
                     <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
+                        <SmartSearchInput
                           value={heroQuery}
-                          onChange={(e) => setHeroQuery(e.target.value)}
-                          placeholder="Job title, skills, keywords..."
-                          className="h-11 pl-9"
-                          onKeyDown={(e) => {
+                          onChange={setHeroQuery}
+                          onKeyPress={(e) => {
                             if (e.key === "Enter") goToJobsWithSearch();
                           }}
+                          placeholder="Job title, skills, keywords..."
+                          className="h-11"
+                          suggestionType="job"
                         />
                       </div>
                       <div className="relative">
@@ -495,7 +526,7 @@ const Home = () => {
             </Card>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {featuredJobs.map((job, i) => (
+              {featuredJobs.slice(0, 6).map((job, i) => (
                 <Card
                   key={job.id}
                   className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-2xl cursor-pointer h-full flex flex-col"
@@ -537,7 +568,7 @@ const Home = () => {
                   </CardHeader>
                   <CardContent className="relative flex-1 flex flex-col">
                     <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-                      {job.description || "No description available"}
+                      {stripHtmlTags(job.description)}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-1.5 min-h-[1.5rem]">
                       {getSkillTags(job).length > 0 ? (
@@ -564,6 +595,308 @@ const Home = () => {
               ))}
             </div>
           )}
+        </section>
+
+        {/* Featured Companies */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-background via-purple-500/5 to-background reveal">
+          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+          <div className="container relative mx-auto px-4 py-20">
+            <div className="mb-12 flex items-end justify-between">
+              <div>
+                <Badge className="mb-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">Top Companies</Badge>
+                <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
+                  Trusted by Leading Employers
+                </h2>
+                <p className="mt-2 text-lg text-muted-foreground">Verified companies with excellent ratings</p>
+              </div>
+              <Button variant="ghost" onClick={() => navigate("/companies")} className="gap-2 group">
+                View All
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
+
+            {loadingCompanies ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Card key={i} className="border-2">
+                    <CardHeader className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-16 w-16 rounded-xl bg-muted animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                          <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="h-3 w-full bg-muted animate-pulse rounded" />
+                        <div className="h-3 w-3/4 bg-muted animate-pulse rounded" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : featuredCompanies.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Building2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 text-lg font-semibold">No companies available yet</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Check back soon for new companies
+                  </p>
+                  <Button onClick={() => navigate("/companies")}>Browse All Companies</Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {featuredCompanies.map((company, i) => (
+                  <Card
+                    key={company.id}
+                    className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-2xl cursor-pointer h-full flex flex-col"
+                    onClick={() => navigate(`/companies/${company.slug}`)}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 transition-opacity group-hover:opacity-100" />
+                    <CardHeader className="relative">
+                      <div className="mb-4 flex items-center gap-4">
+                        {company.logoUrl ? (
+                          <img
+                            src={company.logoUrl}
+                            alt={company.name}
+                            className="h-16 w-16 rounded-xl object-cover border-2 shadow-lg"
+                          />
+                        ) : (
+                          <div className={`h-16 w-16 rounded-xl bg-gradient-to-br ${getCompanyColor(i)} flex items-center justify-center text-2xl font-bold text-white shadow-lg`}>
+                            {company.name?.[0]?.toUpperCase() || "C"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-xl truncate">{company.name}</CardTitle>
+                          <CardDescription className="text-sm truncate">
+                            {company.industry || "Technology"}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {company.isVerified && (
+                          <Badge variant="outline" className="gap-1 text-xs">
+                            <Shield className="h-3 w-3 text-green-600" />
+                            Verified
+                          </Badge>
+                        )}
+                        {company.averageRating && (
+                          <Badge variant="outline" className="gap-1 text-xs">
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            {company.averageRating.toFixed(1)}
+                          </Badge>
+                        )}
+                        {company.location && (
+                          <Badge variant="outline" className="text-xs">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {company.location}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="relative flex-1 flex flex-col">
+                      <p className="text-sm text-muted-foreground line-clamp-3 min-h-[4rem]">
+                        {company.description || company.about || "No description available"}
+                      </p>
+                      {company.website && (
+                        <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                          <ExternalLink className="h-3 w-3" />
+                          <span className="truncate">{company.website.replace(/^https?:\/\//, "")}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="relative justify-between border-t bg-muted/30">
+                      <span className="text-xs text-muted-foreground">
+                        {company.size || "Unknown size"}
+                      </span>
+                      <Button size="sm" variant="ghost" className="gap-1 group-hover:gap-2 transition-all">
+                        View Details
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Categories Section */}
+        <section className="container mx-auto px-4 py-20 reveal">
+          <div className="mb-12 text-center">
+            <Badge className="mb-4">Browse by Category</Badge>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
+              Explore Opportunities by Field
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Find jobs in your area of expertise
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { name: "Frontend Development", icon: "💻", color: "from-blue-500 to-cyan-500", jobs: "1,200+" },
+              { name: "Backend Development", icon: "⚙️", color: "from-purple-500 to-pink-500", jobs: "980+" },
+              { name: "Full Stack", icon: "🚀", color: "from-orange-500 to-red-500", jobs: "1,500+" },
+              { name: "DevOps & Infrastructure", icon: "🔧", color: "from-green-500 to-emerald-500", jobs: "650+" },
+              { name: "Data Engineering", icon: "📊", color: "from-indigo-500 to-purple-500", jobs: "720+" },
+              { name: "Mobile Development", icon: "📱", color: "from-pink-500 to-rose-500", jobs: "540+" },
+              { name: "Security", icon: "🔒", color: "from-red-500 to-orange-500", jobs: "380+" },
+              { name: "Machine Learning", icon: "🤖", color: "from-cyan-500 to-blue-500", jobs: "420+" },
+            ].map((category, i) => (
+              <Card
+                key={i}
+                className="group relative overflow-hidden border-2 transition-all hover:-translate-y-1 hover:shadow-xl cursor-pointer"
+                onClick={() => navigate(`/jobs?category=${encodeURIComponent(category.name)}`)}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 transition-opacity group-hover:opacity-10`} />
+                <CardHeader>
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-4xl">{category.icon}</span>
+                    <Badge variant="outline" className="text-xs">{category.jobs}</Badge>
+                  </div>
+                  <CardTitle className="text-lg">{category.name}</CardTitle>
+                </CardHeader>
+                <CardFooter className="pt-0">
+                  <Button variant="ghost" size="sm" className="w-full gap-2 group-hover:gap-3 transition-all">
+                    Explore
+                    <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-purple-500/5 reveal">
+          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+          <div className="container relative mx-auto px-4 py-20">
+            <div className="mb-12 text-center">
+              <Badge className="mb-4">Testimonials</Badge>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
+                What Our Users Say
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Real stories from candidates who found success
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  name: "Sarah Chen",
+                  role: "Software Engineer",
+                  company: "Tech Corp",
+                  content: "Found my dream job in just 2 weeks! The AI interview practice was incredibly helpful.",
+                  rating: 5,
+                  avatar: "👩‍💻",
+                },
+                {
+                  name: "Michael Rodriguez",
+                  role: "Full Stack Developer",
+                  company: "StartupXYZ",
+                  content: "The platform made job searching so much easier. Love the smart matching feature!",
+                  rating: 5,
+                  avatar: "👨‍💻",
+                },
+                {
+                  name: "Emily Johnson",
+                  role: "Frontend Developer",
+                  company: "Design Studio",
+                  content: "Best job platform I've used. The interview prep helped me ace my interviews!",
+                  rating: 5,
+                  avatar: "👩‍🎨",
+                },
+              ].map((testimonial, i) => (
+                <Card key={i} className="border-2 hover:shadow-xl transition-all">
+                  <CardHeader>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-2xl">
+                        {testimonial.avatar}
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{testimonial.name}</CardTitle>
+                        <CardDescription className="text-xs">
+                          {testimonial.role} at {testimonial.company}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {Array.from({ length: testimonial.rating }).map((_, j) => (
+                        <Star key={j} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground italic">"{testimonial.content}"</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Why Choose Us Section */}
+        <section className="container mx-auto px-4 py-20 reveal">
+          <div className="mb-12 text-center">
+            <Badge className="mb-4">Why Choose Us</Badge>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
+              Everything You Need to Succeed
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              We're not just another job board
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: <Zap className="h-8 w-8" />,
+                title: "Lightning Fast",
+                description: "Apply to jobs in seconds with our streamlined process",
+                color: "from-yellow-500 to-orange-500",
+              },
+              {
+                icon: <Shield className="h-8 w-8" />,
+                title: "100% Verified",
+                description: "All companies are verified for your safety and security",
+                color: "from-green-500 to-emerald-500",
+              },
+              {
+                icon: <Sparkles className="h-8 w-8" />,
+                title: "AI-Powered",
+                description: "Smart matching and interview prep powered by AI",
+                color: "from-purple-500 to-pink-500",
+              },
+              {
+                icon: <TrendingUp className="h-8 w-8" />,
+                title: "Track Progress",
+                description: "Monitor your applications and improve over time",
+                color: "from-blue-500 to-cyan-500",
+              },
+            ].map((feature, i) => (
+              <Card
+                key={i}
+                className="group relative overflow-hidden border-2 transition-all hover:-translate-y-2 hover:shadow-xl text-center"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 transition-opacity group-hover:opacity-10`} />
+                <CardHeader>
+                  <div className={`mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-lg`}>
+                    {feature.icon}
+                  </div>
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </section>
 
         {/* Proof / Social */}

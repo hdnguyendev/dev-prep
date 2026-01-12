@@ -27,8 +27,11 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationFilter, setNotificationFilter] = useState<"all" | "unread">("all");
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
 
   const isStaff = Boolean(customUser);
+  const isRecruiter = customUser?.role === "RECRUITER";
 
   const handleStaffLogout = () => {
     logout();
@@ -58,6 +61,28 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
     };
     fetchCandidateName();
   }, [isSignedIn, getToken]);
+
+  // Fetch company info for recruiter
+  useEffect(() => {
+    if (!isRecruiter || !customUser?.id) return;
+    const fetchCompanyInfo = async () => {
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:9999";
+        const res = await fetch(`${apiBase}/auth/me`, {
+          headers: { Authorization: `Bearer ${customUser.id}` },
+        });
+        const data = await res.json();
+        if (data?.success && data.recruiterProfile?.company) {
+          const company = data.recruiterProfile.company;
+          setCompanyLogo(company.logoUrl || null);
+          setCompanyName(company.name || null);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    fetchCompanyInfo();
+  }, [isRecruiter, customUser?.id]);
 
   // Fetch notifications (top 10) for candidate
   useEffect(() => {
@@ -162,8 +187,23 @@ export default function DashboardTopbar({ title }: DashboardTopbarProps) {
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition">
-            <img src={logo} alt="Logo" className="h-7 w-7" />
-            <span className="hidden sm:inline font-semibold">DevPrep</span>
+            {companyLogo && isRecruiter ? (
+              <img 
+                src={companyLogo} 
+                alt={companyName || "Company logo"} 
+                className="h-7 w-7 rounded object-cover"
+                onError={(e) => {
+                  // Fallback to DevPrep logo if company logo fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.src = logo;
+                }}
+              />
+            ) : (
+              <img src={logo} alt="Logo" className="h-7 w-7" />
+            )}
+            <span className="hidden sm:inline font-semibold">
+              {companyName && isRecruiter ? companyName : "DevPrep"}
+            </span>
           </Link>
           <span className="hidden sm:inline text-sm text-muted-foreground">/</span>
           <span className="text-sm font-medium">{title}</span>

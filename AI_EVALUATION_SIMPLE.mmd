@@ -1,0 +1,82 @@
+flowchart LR
+    subgraph INPUT["📥 INPUT"]
+        I1["Full Transcript<br/>Complete conversation text"]
+        I2["Q&A Pairs<br/>Structured turns array"]
+        I3["Options<br/>Seniority, Keywords, Weights"]
+    end
+    
+    subgraph MODE["🔀 MODE"]
+        M1{"INTERVIEW_EVALUATOR_MODE"}
+        M2["GEMINI<br/>AI-powered"]
+        M3["RULE_BASED<br/>Heuristic"]
+    end
+    
+    subgraph GEMINI["🧠 GEMINI PATH"]
+        G1["Build Prompt<br/>Include criteria & instructions"]
+        G2["Call API<br/>gemini-2.5-flash"]
+        G3["Parse JSON<br/>Extract feedback"]
+        G4["Validate<br/>Zod schema"]
+    end
+    
+    subgraph RULE["📋 RULE-BASED PATH"]
+        R1["Score Each Answer<br/>6 criteria per question"]
+        R2["Apply Weights<br/>By question type"]
+        R3["Calculate Scores<br/>Weighted sum"]
+        R4["Aggregate<br/>Overall + Categories"]
+    end
+    
+    subgraph CRITERIA["📏 6 CRITERIA"]
+        C1["LENGTH<br/>25%<br/>Word count"]
+        C2["STRUCTURE<br/>20%<br/>STAR method"]
+        C3["EXAMPLES<br/>20%<br/>Metrics/numbers"]
+        C4["CONFIDENCE<br/>10%<br/>Filler words"]
+        C5["KEYWORDS<br/>15%<br/>Must-have/nice-to-have"]
+        C6["RELEVANCE<br/>10%<br/>Jaccard similarity"]
+    end
+    
+    subgraph OUTPUT["✅ OUTPUT"]
+        O1["Feedback Object<br/>━━━━━━━━━━━━━━━━<br/>• overallScore: 85<br/>• recommendation: HIRE<br/>• summary<br/>• strengths<br/>• areasForImprovement<br/>• categoryScores (5)<br/>• perQuestion scores"]
+    end
+    
+    %% Flow
+    I1 --> M1
+    I2 --> M1
+    I3 --> M1
+    
+    M1 -->|GEMINI| M2
+    M1 -->|RULE_BASED| M3
+    
+    M2 --> G1 --> G2 --> G3 --> G4 --> O1
+    
+    M3 --> R1
+    R1 --> C1
+    R1 --> C2
+    R1 --> C3
+    R1 --> C4
+    R1 --> C5
+    R1 --> C6
+    C1 --> R2
+    C2 --> R2
+    C3 --> R2
+    C4 --> R2
+    C5 --> R2
+    C6 --> R2
+    R2 --> R3 --> R4 --> O1
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef mode fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef gemini fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef rule fill:#fffde7,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef criteria fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef output fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef decision fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class I1,I2,I3,INPUT input
+    class M1,M2,M3,MODE mode
+    class G1,G2,G3,G4,GEMINI gemini
+    class R1,R2,R3,R4,RULE rule
+    class C1,C2,C3,C4,C5,C6,CRITERIA criteria
+    class O1,OUTPUT output
+    class M1 decision
+

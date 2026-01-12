@@ -1,0 +1,130 @@
+flowchart TB
+    subgraph INPUT["📥 INPUT - GEMINI EVALUATION"]
+        IN1["Full Transcript<br/>━━━━━━━━━━━━━━━━<br/>Complete conversation text<br/>Example:<br/>User: 'I have 5 years of experience<br/>working with React and TypeScript...'<br/>AI: 'That's great! Can you tell me<br/>about a challenging project?'<br/>User: 'I worked on a project where...'"]
+        
+        IN2["Structured Q&A Pairs<br/>━━━━━━━━━━━━━━━━<br/>Turns = [<br/>  {<br/>    orderIndex: 1,<br/>    questionText: 'Tell me about yourself',<br/>    answerText: 'I have 5 years...',<br/>    questionCategory: 'BEHAVIORAL'<br/>  },<br/>  {<br/>    orderIndex: 2,<br/>    questionText: 'Why this role?',<br/>    answerText: 'I'm interested because...',<br/>    questionCategory: 'GENERAL'<br/>  },<br/>  ...<br/>]"]
+    end
+    
+    subgraph PROMPT_BUILD["📝 BUILD ANALYSIS PROMPT"]
+        P1["Combine Input Data<br/>━━━━━━━━━━━━━━━━<br/>• Full transcript<br/>• Structured Q&A turns<br/>• Format as text"]
+        
+        P2["Add Evaluation Instructions<br/>━━━━━━━━━━━━━━━━<br/>• 6 Evaluation Criteria<br/>• Scoring guidelines<br/>• Question type adjustments<br/>• Category definitions<br/>• Output format (JSON)"]
+        
+        P3["Final Prompt<br/>━━━━━━━━━━━━━━━━<br/>Complete prompt ready<br/>for Gemini API"]
+    end
+    
+    subgraph CRITERIA["📏 6 EVALUATION CRITERIA"]
+        C1["1. LENGTH (Weight: 25%)<br/>━━━━━━━━━━━━━━━━<br/>Assess answer completeness<br/>━━━━━━━━━━━━━━━━<br/>Minimum words:<br/>• Junior: 18 words<br/>• Mid: 25 words<br/>• Senior: 35 words<br/>━━━━━━━━━━━━━━━━<br/>Good length:<br/>• Junior: 25-70 words<br/>• Mid: 40-90 words<br/>• Senior: 60-120 words<br/>━━━━━━━━━━━━━━━━<br/>Scoring:<br/>0 = No answer<br/>4 = Too short<br/>7 = Adequate<br/>8 = Optimal length"]
+        
+        C2["2. STRUCTURE (Weight: 20%)<br/>━━━━━━━━━━━━━━━━<br/>Evaluate organization & flow<br/>━━━━━━━━━━━━━━━━<br/>Look for STAR method:<br/>• Situation<br/>• Task<br/>• Action<br/>• Result<br/>━━━━━━━━━━━━━━━━<br/>Or structured approach:<br/>• Problem → Approach → Outcome<br/>━━━━━━━━━━━━━━━━<br/>Scoring:<br/>4 = Unstructured<br/>10 = Well-structured<br/>with STAR/clear narrative"]
+        
+        C3["3. EXAMPLES (Weight: 20%)<br/>━━━━━━━━━━━━━━━━<br/>Assess concrete evidence<br/>━━━━━━━━━━━━━━━━<br/>Look for:<br/>• Specific numbers: 10%, 1000 users<br/>• Metrics: KPI, latency, throughput<br/>• Time references: 6 months, 2 years<br/>• Revenue/impact: $1M, 50% increase<br/>• Explicit examples: 'for example'<br/>━━━━━━━━━━━━━━━━<br/>Scoring:<br/>4 = No examples<br/>10 = Clear examples<br/>with measurable impact"]
+        
+        C4["4. CONFIDENCE (Weight: 10%)<br/>━━━━━━━━━━━━━━━━<br/>Evaluate assertiveness<br/>━━━━━━━━━━━━━━━━<br/>Penalize filler words:<br/>• 'uh', 'um'<br/>• 'maybe', 'probably'<br/>• 'not sure', 'I think'<br/>• 'kind of', 'sort of'<br/>━━━━━━━━━━━━━━━━<br/>Scoring:<br/>4 = Very hesitant<br/>(≥4 filler words)<br/>8 = Confident and decisive"]
+        
+        C5["5. KEYWORD MATCH (Weight: 15%)<br/>━━━━━━━━━━━━━━━━<br/>Assess role-related keywords<br/>━━━━━━━━━━━━━━━━<br/>Must-have keywords:<br/>• Weight ×3<br/>• Critical for role<br/>━━━━━━━━━━━━━━━━<br/>Nice-to-have keywords:<br/>• Weight ×1<br/>• Bonus points<br/>━━━━━━━━━━━━━━━━<br/>Scoring:<br/>0 = No keywords<br/>10 = Comprehensive<br/>keyword coverage"]
+        
+        C6["6. RELEVANCE (Weight: 10%)<br/>━━━━━━━━━━━━━━━━<br/>Evaluate direct relevance<br/>━━━━━━━━━━━━━━━━<br/>Compare question & answer:<br/>• Token/keyword matching<br/>• Topic alignment<br/>• Direct addressing<br/>━━━━━━━━━━━━━━━━<br/>Penalize off-topic:<br/>• Low relevance but long<br/>→ Max 5/10<br/>━━━━━━━━━━━━━━━━<br/>Scoring:<br/>0 = Completely irrelevant<br/>10 = Directly addresses question"]
+    end
+    
+    subgraph QUESTION_TYPE["🎯 QUESTION TYPE ADJUSTMENTS"]
+        Q1["TECHNICAL Questions<br/>━━━━━━━━━━━━━━━━<br/>Increase weights:<br/>• +keywordMatch (+8%)<br/>• +relevance (+5%)<br/>• +examples (+3%)<br/>━━━━━━━━━━━━━━━━<br/>Decrease weights:<br/>• -structure (-3%)"]
+        
+        Q2["BEHAVIORAL Questions<br/>━━━━━━━━━━━━━━━━<br/>Increase weights:<br/>• +structure (+8%)<br/>• +examples (+5%)<br/>• +confidence (+3%)<br/>━━━━━━━━━━━━━━━━<br/>Decrease weights:<br/>• -keywordMatch (-4%)"]
+        
+        Q3["GENERAL Questions<br/>━━━━━━━━━━━━━━━━<br/>Use default weights<br/>No adjustments"]
+    end
+    
+    subgraph GEMINI_API["🧠 GOOGLE GEMINI 2.5 FLASH"]
+        G1["Call Gemini API<br/>━━━━━━━━━━━━━━━━<br/>Model: gemini-2.5-flash<br/>(with fallbacks to<br/>gemini-1.5-flash)<br/>━━━━━━━━━━━━━━━━<br/>Method: generateContent()<br/>Input: Analysis prompt<br/>Output: JSON response"]
+        
+        G2["Parse JSON Response<br/>━━━━━━━━━━━━━━━━<br/>Extract from response.text:<br/>• Remove markdown if any<br/>• Remove code blocks<br/>• Parse JSON string<br/>• Extract structured data"]
+        
+        G3["Validate with Zod Schema<br/>━━━━━━━━━━━━━━━━<br/>Validate structure:<br/>• overallScore: 0-100 int<br/>• recommendation: enum<br/>• summary: string<br/>• strengths: string[]<br/>• areasForImprovement: string[]<br/>• categoryScores: array<br/>• perQuestion: array"]
+    end
+    
+    subgraph SCORING["📊 SCORING CALCULATION"]
+        S1["Per-Question Score<br/>━━━━━━━━━━━━━━━━<br/>For each question:<br/>Calculate weighted sum:<br/>━━━━━━━━━━━━━━━━<br/>score =<br/>(length × 0.25) +<br/>(structure × 0.20) +<br/>(examples × 0.20) +<br/>(confidence × 0.10) +<br/>(keywordMatch × 0.15) +<br/>(relevance × 0.10)<br/>━━━━━━━━━━━━━━━━<br/>Range: 0-10<br/>Adjust by question type"]
+        
+        S2["Overall Score<br/>━━━━━━━━━━━━━━━━<br/>Overall Score =<br/>(Average per-question score) × 10<br/>━━━━━━━━━━━━━━━━<br/>Range: 0-100<br/>Integer value"]
+        
+        S3["Category Scores<br/>━━━━━━━━━━━━━━━━<br/>5 Categories (0-10 each):<br/>1. Clarity<br/>2. Structure<br/>3. Depth & Evidence<br/>4. Relevance<br/>5. Keyword Match"]
+    end
+    
+    subgraph RECOMMENDATION["🎯 RECOMMENDATION"]
+        R1["Calculate Overall Score<br/>━━━━━━━━━━━━━━━━<br/>From per-question scores"]
+        
+        R2{"Overall Score?"}
+        
+        R3["HIRE<br/>━━━━━━━━━━━━━━━━<br/>Score ≥ 80<br/>Excellent candidate<br/>Strong performance"]
+        
+        R4["CONSIDER<br/>━━━━━━━━━━━━━━━━<br/>Score 60-79<br/>Potential candidate<br/>Needs consideration"]
+        
+        R5["REJECT<br/>━━━━━━━━━━━━━━━━<br/>Score < 60<br/>Does not meet requirements<br/>Weak performance"]
+    end
+    
+    subgraph OUTPUT["✅ OUTPUT - STRUCTURED FEEDBACK"]
+        OUT1["Interview Feedback Object<br/>━━━━━━━━━━━━━━━━<br/>{<br/>  overallScore: 85,<br/>  recommendation: 'HIRE',<br/>  summary: 'Strong candidate with<br/>    clear communication and<br/>    relevant experience...',<br/>  strengths: [<br/>    'Clear communication',<br/>    'Strong technical knowledge',<br/>    'Good examples provided'<br/>  ],<br/>  areasForImprovement: [<br/>    'Could provide more metrics',<br/>    'Structure answers better'<br/>  ],<br/>  categoryScores: [<br/>    {name: 'Clarity', score: 9, comment: '...'},<br/>    {name: 'Structure', score: 8, comment: '...'},<br/>    {name: 'Depth & Evidence', score: 9, comment: '...'},<br/>    {name: 'Relevance', score: 8, comment: '...'},<br/>    {name: 'Keyword Match', score: 9, comment: '...'}<br/>  ],<br/>  perQuestion: [<br/>    {orderIndex: 1, score: 8, feedback: 'Clear answer with good structure...'},<br/>    {orderIndex: 2, score: 9, feedback: 'Excellent response with examples...'},<br/>    {orderIndex: 3, score: 8, feedback: 'Good technical knowledge...'},<br/>    {orderIndex: 4, score: 7, feedback: 'Could provide more details...'},<br/>    {orderIndex: 5, score: 9, feedback: 'Strong closing statement...'}<br/>  ]<br/>}"]
+    end
+    
+    %% Input Flow
+    IN1 --> P1
+    IN2 --> P1
+    
+    %% Prompt Building
+    P1 --> P2
+    P2 --> P3
+    
+    %% Criteria to Prompt
+    C1 --> P2
+    C2 --> P2
+    C3 --> P2
+    C4 --> P2
+    C5 --> P2
+    C6 --> P2
+    
+    %% Question Type to Prompt
+    Q1 --> P2
+    Q2 --> P2
+    Q3 --> P2
+    
+    %% Gemini API Flow
+    P3 --> G1
+    G1 --> G2
+    G2 --> G3
+    
+    %% Scoring
+    G3 --> S1
+    S1 --> S2
+    S1 --> S3
+    
+    %% Recommendation
+    S2 --> R1
+    R1 --> R2
+    R2 -->|≥80| R3 --> OUT1
+    R2 -->|60-79| R4 --> OUT1
+    R2 -->|<60| R5 --> OUT1
+    
+    S3 --> OUT1
+    
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef prompt fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef criteria fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef question fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    classDef gemini fill:#e1bee7,stroke:#4a148c,stroke-width:3px,color:#000
+    classDef scoring fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef recommendation fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    classDef output fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    classDef decision fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+    
+    class IN1,IN2,INPUT input
+    class P1,P2,P3,PROMPT_BUILD prompt
+    class C1,C2,C3,C4,C5,C6,CRITERIA criteria
+    class Q1,Q2,Q3,QUESTION_TYPE question
+    class G1,G2,G3,GEMINI_API gemini
+    class S1,S2,S3,SCORING scoring
+    class R1,R2,R3,R4,R5,RECOMMENDATION recommendation
+    class OUT1,OUTPUT output
+    class R2 decision
+

@@ -26,14 +26,46 @@ type JobInput = {
   currency?: string;
 };
 
-export const getJobs = async () => {
+export const getJobs = async (searchQuery?: string, page?: number, pageSize?: number) => {
+  // Build where clause
+  const baseWhere: any = {
+    status: {
+      notIn: ["DRAFT", "CLOSED"],
+    },
+  };
+
+  // Add search filter if provided
+  let whereClause: any = baseWhere;
+  if (searchQuery && searchQuery.trim()) {
+    const trimmedQuery = searchQuery.trim();
+    const searchConditions = [
+      { title: { contains: trimmedQuery, mode: "insensitive" } },
+      { description: { contains: trimmedQuery, mode: "insensitive" } },
+      { requirements: { contains: trimmedQuery, mode: "insensitive" } },
+      { location: { contains: trimmedQuery, mode: "insensitive" } },
+      { company: { name: { contains: trimmedQuery, mode: "insensitive" } } },
+    ];
+    
+    // Combine status filter with search conditions using AND
+    whereClause = {
+      AND: [
+        baseWhere,
+        { OR: searchConditions },
+      ],
+    };
+  }
+
+  // Parse pagination
+  // If pageSize is provided, use it (max 1000 to prevent abuse)
+  // If not provided, return all jobs (no limit)
+  const take = pageSize ? Math.min(Math.max(pageSize, 1), 1000) : undefined;
+  const skip = page && take ? (page - 1) * take : undefined;
+
   // Public jobs listing should not include DRAFT or CLOSED jobs
   const jobs = await prisma.job.findMany({
-    where: {
-      status: {
-        notIn: ["DRAFT", "CLOSED"],
-      },
-    },
+    where: whereClause,
+    skip,
+    take,
     include: {
       company: true,
       skills: {
@@ -47,6 +79,7 @@ export const getJobs = async () => {
         },
       },
     },
+    orderBy: { createdAt: "desc" },
   });
 
   // Calculate averageRating for each company

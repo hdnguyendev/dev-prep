@@ -1,0 +1,273 @@
+flowchart TB
+    %% ============================================
+    %% USER MANAGEMENT & AUTHENTICATION
+    %% ============================================
+    User[User]
+    CandidateProfile[CandidateProfile]
+    RecruiterProfile[RecruiterProfile]
+    Message[Message]
+    Notification[Notification]
+    UserMembership[UserMembership]
+    PaymentTransaction[PaymentTransaction]
+
+    %% Relationships - User Management (Diamond shapes)
+    R1{has}
+    R2{has}
+    R3{sends}
+    R4{receives}
+    R5{receives}
+    R6{has}
+    R7{makes}
+
+    User --> R1
+    R1 --> CandidateProfile
+    User --> R2
+    R2 --> RecruiterProfile
+    User --> R3
+    R3 --> Message
+    Message --> R4
+    R4 --> User
+    User --> R5
+    R5 --> Notification
+    User --> R6
+    R6 --> UserMembership
+    User --> R7
+    R7 --> PaymentTransaction
+
+    %% ============================================
+    %% STRUCTURED RESUME DATA
+    %% ============================================
+    Experience[Experience]
+    Education[Education]
+    Project[Project]
+    Skill[Skill]
+    CandidateSkill[CandidateSkill]
+
+    %% Relationships - Resume Data
+    R8{has}
+    R9{has}
+    R10{has}
+    R11{has}
+    R12{uses}
+
+    CandidateProfile --> R8
+    R8 --> Experience
+    CandidateProfile --> R9
+    R9 --> Education
+    CandidateProfile --> R10
+    R10 --> Project
+    CandidateProfile --> R11
+    R11 --> CandidateSkill
+    CandidateSkill --> R12
+    R12 --> Skill
+
+    %% ============================================
+    %% COMPANY & JOBS
+    %% ============================================
+    Company[Company]
+    Job[Job]
+    CompanyReview[CompanyReview]
+    CompanyFollow[CompanyFollow]
+    Category[Category]
+    JobCategory[JobCategory]
+    JobSkill[JobSkill]
+    SavedJob[SavedJob]
+
+    %% Relationships - Company & Jobs
+    R13{employs}
+    R14{posts}
+    R15{receives}
+    R16{followed_by}
+    R17{works_for}
+    R18{posts}
+    R19{posted_by}
+    R20{created_by}
+    R21{requires}
+    R22{receives}
+    R23{linked_to}
+    R24{saved_in}
+    R25{categorized_as}
+    R26{required_by}
+    R27{skill_for}
+    R28{used_by}
+    R29{required_by}
+    R30{categorizes}
+    R31{categorizes}
+    R32{category_of}
+    R33{writes}
+    R34{reviews}
+    R35{written_by}
+    R36{follows}
+    R37{followed}
+    R38{follower}
+    R39{saves}
+    R40{saved_by}
+    R41{job_saved}
+
+    Company --> R13
+    R13 --> RecruiterProfile
+    Company --> R14
+    R14 --> Job
+    Company --> R15
+    R15 --> CompanyReview
+    Company --> R16
+    R16 --> CompanyFollow
+    RecruiterProfile --> R17
+    R17 --> Company
+    RecruiterProfile --> R18
+    R18 --> Job
+    Job --> R19
+    R19 --> Company
+    Job --> R20
+    R20 --> RecruiterProfile
+    Job --> R21
+    R21 --> JobSkill
+    Job --> R22
+    R22 --> Application
+    Job --> R23
+    R23 --> Interview
+    Job --> R24
+    R24 --> SavedJob
+    Job --> R25
+    R25 --> JobCategory
+    JobSkill --> R26
+    R26 --> Job
+    JobSkill --> R27
+    R27 --> Skill
+    Skill --> R28
+    R28 --> CandidateSkill
+    Skill --> R29
+    R29 --> JobSkill
+    Category --> R30
+    R30 --> JobCategory
+    JobCategory --> R31
+    R31 --> Job
+    JobCategory --> R32
+    R32 --> Category
+    CandidateProfile --> R33
+    R33 --> CompanyReview
+    CompanyReview --> R34
+    R34 --> Company
+    CompanyReview --> R35
+    R35 --> CandidateProfile
+    CandidateProfile --> R36
+    R36 --> CompanyFollow
+    CompanyFollow --> R37
+    R37 --> Company
+    CompanyFollow --> R38
+    R38 --> CandidateProfile
+    CandidateProfile --> R39
+    R39 --> SavedJob
+    SavedJob --> R40
+    R40 --> CandidateProfile
+    SavedJob --> R41
+    R41 --> Job
+
+    %% ============================================
+    %% APPLICATION & INTERVIEW PROCESS
+    %% ============================================
+    Application[Application]
+    ApplicationHistory[ApplicationHistory]
+    ApplicationNote[ApplicationNote]
+    Interview[Interview]
+    InterviewExchange[InterviewExchange]
+    QuestionBank[QuestionBank]
+
+    %% Relationships - Application & Interview
+    R42{submits}
+    R43{applies_to}
+    R44{submitted_by}
+    R45{has}
+    R46{tracks}
+    R47{has_notes}
+    R48{tracks}
+    R49{notes}
+    R50{takes}
+    R51{linked_to}
+    R52{taken_by}
+    R53{for}
+    R54{contains}
+    R55{part_of}
+
+    CandidateProfile --> R42
+    R42 --> Application
+    Application --> R43
+    R43 --> Job
+    Application --> R44
+    R44 --> CandidateProfile
+    Application --> R45
+    R45 --> Interview
+    Application --> R46
+    R46 --> ApplicationHistory
+    Application --> R47
+    R47 --> ApplicationNote
+    ApplicationHistory --> R48
+    R48 --> Application
+    ApplicationNote --> R49
+    R49 --> Application
+    CandidateProfile --> R50
+    R50 --> Interview
+    Interview --> R51
+    R51 --> Application
+    Interview --> R52
+    R52 --> CandidateProfile
+    Interview --> R53
+    R53 --> Job
+    Interview --> R54
+    R54 --> InterviewExchange
+    InterviewExchange --> R55
+    R55 --> Interview
+
+    %% ============================================
+    %% OFFER MANAGEMENT
+    %% ============================================
+    Offer[Offer]
+
+    %% Relationships - Offer
+    R56{receives}
+    R57{sent_for}
+
+    Application --> R56
+    R56 --> Offer
+    Offer --> R57
+    R57 --> Application
+
+    %% ============================================
+    %% MEMBERSHIP & PAYMENT SYSTEM
+    %% ============================================
+    MembershipPlan[MembershipPlan]
+
+    %% Relationships - Membership & Payment
+    R58{plan}
+    R59{purchased}
+    R60{belongs_to}
+    R61{plan}
+    R62{paid_for}
+    R63{paid_by}
+    R64{for_plan}
+    R65{activates}
+
+    MembershipPlan --> R58
+    R58 --> UserMembership
+    MembershipPlan --> R59
+    R59 --> PaymentTransaction
+    UserMembership --> R60
+    R60 --> User
+    UserMembership --> R61
+    R61 --> MembershipPlan
+    UserMembership --> R62
+    R62 --> PaymentTransaction
+    PaymentTransaction --> R63
+    R63 --> User
+    PaymentTransaction --> R64
+    R64 --> MembershipPlan
+    PaymentTransaction --> R65
+    R65 --> UserMembership
+
+    %% Styling
+    classDef entityStyle fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef relationshipStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px,shape:rhombus
+
+    class User,CandidateProfile,RecruiterProfile,Message,Notification,UserMembership,PaymentTransaction,Experience,Education,Project,Skill,CandidateSkill,Company,Job,CompanyReview,CompanyFollow,Category,JobCategory,JobSkill,SavedJob,Application,ApplicationHistory,ApplicationNote,Interview,InterviewExchange,QuestionBank,Offer,MembershipPlan entityStyle
+
+    class R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15,R16,R17,R18,R19,R20,R21,R22,R23,R24,R25,R26,R27,R28,R29,R30,R31,R32,R33,R34,R35,R36,R37,R38,R39,R40,R41,R42,R43,R44,R45,R46,R47,R48,R49,R50,R51,R52,R53,R54,R55,R56,R57,R58,R59,R60,R61,R62,R63,R64,R65 relationshipStyle

@@ -1,0 +1,77 @@
+flowchart TB
+    subgraph EXAMPLE["📊 VÍ DỤ: MATCH SCORE = 83 ĐIỂM"]
+        E1["Candidate: Senior Frontend Developer<br/>Job: Senior Frontend Developer<br/>━━━━━━━━━━━━━━━━<br/>Match Score: 83/100<br/>━━━━━━━━━━━━━━━━<br/>Đánh giá: EXCELLENT MATCH<br/>Khuyến nghị: Strong Candidate"]
+    end
+    
+    subgraph BREAKDOWN["📋 BREAKDOWN CHI TIẾT (7 Dimensions)"]
+        D1["1. SKILLS (30% weight)<br/>━━━━━━━━━━━━━━━━<br/>Raw Score: 90/100<br/>Weighted: 90 × 0.30 = 27.0<br/>━━━━━━━━━━━━━━━━<br/>Matched: React, TypeScript,<br/>Node.js, HTML, CSS<br/>Missing: GraphQL<br/>Extra: Vue.js, Angular"]
+        
+        D2["2. EXPERIENCE (18% weight)<br/>━━━━━━━━━━━━━━━━<br/>Raw Score: 100/100<br/>Weighted: 100 × 0.18 = 18.0<br/>━━━━━━━━━━━━━━━━<br/>Candidate: 6 years<br/>Required: Senior (5+ years)<br/>Status: Meets requirement"]
+        
+        D3["3. TITLE (12% weight)<br/>━━━━━━━━━━━━━━━━<br/>Raw Score: 95/100<br/>Weighted: 95 × 0.12 = 11.4<br/>━━━━━━━━━━━━━━━━<br/>Candidate: Senior Frontend Dev<br/>Job: Senior Frontend Developer<br/>Similarity: 95%"]
+        
+        D4["4. EDUCATION (12% weight)<br/>━━━━━━━━━━━━━━━━<br/>Raw Score: 80/100<br/>Weighted: 80 × 0.12 = 9.6<br/>━━━━━━━━━━━━━━━━<br/>Candidate: Bachelor's CS<br/>Required: Bachelor's<br/>Status: Meets requirement"]
+        
+        D5["5. SOFT SKILLS (12% weight)<br/>━━━━━━━━━━━━━━━━<br/>Raw Score: 75/100<br/>Weighted: 75 × 0.12 = 9.0<br/>━━━━━━━━━━━━━━━━<br/>Matched: Communication,<br/>Problem Solving<br/>Gaps: Leadership"]
+        
+        D6["6. TECHNOLOGY (8% weight)<br/>━━━━━━━━━━━━━━━━<br/>Raw Score: 85/100<br/>Weighted: 85 × 0.08 = 6.8<br/>━━━━━━━━━━━━━━━━<br/>Matched: React, TypeScript,<br/>Webpack, Jest<br/>Missing: Docker"]
+        
+        D7["7. LOCATION (8% weight)<br/>━━━━━━━━━━━━━━━━<br/>Raw Score: 100/100<br/>Weighted: 100 × 0.08 = 8.0<br/>━━━━━━━━━━━━━━━━<br/>Job: Remote<br/>Status: Perfect match"]
+    end
+    
+    subgraph CALCULATION["🧮 TÍNH TOÁN TỔNG ĐIỂM"]
+        C1["Total Score =<br/>27.0 + 18.0 + 11.4 + 9.6 +<br/>9.0 + 6.8 + 8.0<br/>━━━━━━━━━━━━━━━━<br/>= 89.8<br/>━━━━━━━━━━━━━━━━<br/>Rounded: 90"]
+        
+        C2["Ví dụ khác để đạt 83:<br/>━━━━━━━━━━━━━━━━<br/>Skills: 85 × 0.30 = 25.5<br/>Experience: 90 × 0.18 = 16.2<br/>Title: 90 × 0.12 = 10.8<br/>Education: 80 × 0.12 = 9.6<br/>Soft Skills: 70 × 0.12 = 8.4<br/>Technology: 80 × 0.08 = 6.4<br/>Location: 100 × 0.08 = 8.0<br/>━━━━━━━━━━━━━━━━<br/>Total = 84.9 ≈ 83"]
+    end
+    
+    subgraph INTERPRETATION["📈 Ý NGHĨA ĐIỂM SỐ"]
+        I1["Score Range: 0-100<br/>━━━━━━━━━━━━━━━━<br/>90-100: EXCELLENT<br/>→ Perfect match, highly recommended<br/>━━━━━━━━━━━━━━━━<br/>80-89: VERY GOOD<br/>→ Strong candidate, recommend<br/>━━━━━━━━━━━━━━━━<br/>70-79: GOOD<br/>→ Qualified, consider<br/>━━━━━━━━━━━━━━━━<br/>60-69: FAIR<br/>→ Potential, needs review<br/>━━━━━━━━━━━━━━━━<br/>50-59: WEAK<br/>→ Below average<br/>━━━━━━━━━━━━━━━━<br/>0-49: POOR<br/>→ Not suitable"]
+        
+        I2["83 Điểm = VERY GOOD MATCH<br/>━━━━━━━━━━━━━━━━<br/>✅ Strong technical skills<br/>✅ Meets experience requirement<br/>✅ Good title alignment<br/>✅ Suitable education<br/>✅ Location compatible<br/>━━━━━━━━━━━━━━━━<br/>Khuyến nghị:<br/>• Nên phỏng vấn<br/>• Candidate có tiềm năng<br/>• Có thể cần training nhỏ<br/>cho một số skills"]
+    end
+    
+    subgraph ASSESSMENT["🎯 CÁCH ĐÁNH GIÁ"]
+        A1["1. Skills Assessment<br/>━━━━━━━━━━━━━━━━<br/>• Required skills match %<br/>• Optional skills bonus<br/>• Extra skills (bonus)<br/>• Missing skills (penalty)"]
+        
+        A2["2. Experience Assessment<br/>━━━━━━━━━━━━━━━━<br/>• Years of experience<br/>• Level mapping<br/>• Gap analysis"]
+        
+        A3["3. Title Assessment<br/>━━━━━━━━━━━━━━━━<br/>• Jaccard similarity<br/>• Keyword matching<br/>• Level alignment"]
+        
+        A4["4. Education Assessment<br/>━━━━━━━━━━━━━━━━<br/>• Degree level match<br/>• Field of study<br/>• School preference"]
+        
+        A5["5. Soft Skills Assessment<br/>━━━━━━━━━━━━━━━━<br/>• NLP extraction from JD<br/>• Candidate soft skills<br/>• Compatibility score"]
+        
+        A6["6. Technology Assessment<br/>━━━━━━━━━━━━━━━━<br/>• NLP extraction from JD<br/>• Candidate technologies<br/>• Category matching"]
+        
+        A7["7. Location Assessment<br/>━━━━━━━━━━━━━━━━<br/>• Remote vs On-site<br/>• City matching<br/>• Geographic feasibility"]
+    end
+    
+    E1 --> BREAKDOWN
+    D1 --> C1
+    D2 --> C1
+    D3 --> C1
+    D4 --> C1
+    D5 --> C1
+    D6 --> C1
+    D7 --> C1
+    
+    C1 --> I1
+    C1 --> I2
+    C2 --> I2
+    
+    I2 --> ASSESSMENT
+    
+    %% Styling
+    classDef example fill:#e3f2fd,stroke:#0277bd,stroke-width:3px,color:#000
+    classDef breakdown fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef calc fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef interpretation fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef assessment fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    
+    class E1,EXAMPLE example
+    class D1,D2,D3,D4,D5,D6,D7,BREAKDOWN breakdown
+    class C1,C2,CALCULATION calc
+    class I1,I2,INTERPRETATION interpretation
+    class A1,A2,A3,A4,A5,A6,A7,ASSESSMENT assessment
+

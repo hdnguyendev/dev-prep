@@ -7,6 +7,7 @@ export { default as CompanyDetail } from "./CompanyDetail";
 export { default as Interview } from "./Interview";
 export { default as Interviews } from "./Interviews";
 export { default as InterviewFeedback } from "./InterviewFeedback";
+export { default as InterviewThankYou } from "./InterviewThankYou";
 export { default as Login } from "./Login";
 export { default as RecruiterRegister } from "./RecruiterRegister";
 export { default as NotFound } from "./NotFound";

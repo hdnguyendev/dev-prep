@@ -25,13 +25,24 @@ type InterviewRow = { id: string; status: string; createdAt: string; overallScor
 
 const chartColors = ["#6366f1", "#22c55e", "#f97316", "#06b6d4", "#a855f7", "#ef4444", "#0ea5e9", "#16a34a"];
 
+/**
+ * Format application status from UPPER_SNAKE_CASE to Title Case
+ * Example: "APPLIED" -> "Applied", "INTERVIEW_SCHEDULED" -> "Interview Scheduled"
+ */
+const formatStatus = (status: string): string => {
+  return status
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 const countBy = (rows: any[], field: string) => {
   const counts: Record<string, number> = {};
   rows.forEach((r) => {
     const key = String(r?.[field] ?? "Unknown");
     counts[key] = (counts[key] ?? 0) + 1;
   });
-  return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  return Object.entries(counts).map(([name, value]) => ({ name: formatStatus(name), value }));
 };
 
 // const startOfDay = (d: Date) => {
@@ -278,6 +289,77 @@ export default function CandidateDashboard() {
     ].filter((item) => item.count > 0);
   }, [applications]);
 
+  // Interview completion rate over time
+  const interviewCompletionTrend = useMemo(() => {
+    const months: Record<string, { total: number; completed: number }> = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      months[key] = { total: 0, completed: 0 };
+    }
+    
+    interviews.forEach((i) => {
+      if (!i.createdAt) return;
+      const date = new Date(i.createdAt);
+      const key = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      if (key in months) {
+        months[key].total += 1;
+        if (i.status === "COMPLETED") {
+          months[key].completed += 1;
+        }
+      }
+    });
+    
+    return Object.entries(months).map(([month, data]) => ({
+      month,
+      completionRate: data.total > 0 ? (data.completed / data.total) * 100 : 0,
+      total: data.total,
+      completed: data.completed,
+    }));
+  }, [interviews]);
+
+  // Application status changes over time (by day)
+  const statusTimeline = useMemo(() => {
+    const statusCounts: Record<string, Record<string, number>> = {};
+    const now = new Date();
+    // Get last 30 days
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const key = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      statusCounts[key] = {};
+    }
+    
+    applications.forEach((a) => {
+      if (!a.appliedAt) return;
+      const date = new Date(a.appliedAt);
+      date.setHours(0, 0, 0, 0);
+      const key = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      if (key in statusCounts) {
+        statusCounts[key][a.status] = (statusCounts[key][a.status] || 0) + 1;
+      }
+    });
+    
+    const statuses = ["APPLIED", "REVIEWING", "SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED", "REJECTED"];
+    return Object.entries(statusCounts).map(([day, counts]) => ({
+      day,
+      ...Object.fromEntries(statuses.map(s => [formatStatus(s), counts[s] || 0])),
+    }));
+  }, [applications]);
+
+  // Top application statuses (for pie chart)
+  const topStatuses = useMemo(() => {
+    return appsByStatus
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5)
+      .map(item => ({
+        name: item.name,
+        value: item.value,
+      }));
+  }, [appsByStatus]);
+
   const stats = useMemo(() => {
     const totalApps = applications.length;
     const totalInts = interviews.length;
@@ -349,55 +431,55 @@ export default function CandidateDashboard() {
       )}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Dashboard</CardTitle>
+          <CardTitle className="text-base">Dashboard</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-dashed border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 via-background to-background dark:from-blue-950/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
+            <CardHeader className="pb-1.5 pt-3 px-3">
+              <CardTitle className="text-xs text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                 Total Applications
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{stats.totalApps}</div>
-              <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">{stats.pendingApps} pending</div>
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-semibold text-blue-600 dark:text-blue-400">{stats.totalApps}</div>
+              <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-0.5">{stats.pendingApps} pending</div>
             </CardContent>
           </Card>
           <Card className="border-dashed border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/50 via-background to-background dark:from-amber-950/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-amber-500" />
+            <CardHeader className="pb-1.5 pt-3 px-3">
+              <CardTitle className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 In Progress
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-amber-600 dark:text-amber-400">{stats.inProgressApps}</div>
-              <div className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">Active applications</div>
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-semibold text-amber-600 dark:text-amber-400">{stats.inProgressApps}</div>
+              <div className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-0.5">Active applications</div>
             </CardContent>
           </Card>
           <Card className="border-dashed border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/50 via-background to-background dark:from-emerald-950/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
+            <CardHeader className="pb-1.5 pt-3 px-3">
+              <CardTitle className="text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Success Rate
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{stats.successRate}%</div>
-              <div className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1">{stats.successfulApps} successful</div>
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">{stats.successRate}%</div>
+              <div className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">{stats.successfulApps} successful</div>
             </CardContent>
           </Card>
           <Card className="border-dashed border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/50 via-background to-background dark:from-purple-950/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-purple-700 dark:text-purple-400 flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-purple-500" />
+            <CardHeader className="pb-1.5 pt-3 px-3">
+              <CardTitle className="text-xs text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                 Interviews
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-purple-600 dark:text-purple-400">{stats.totalInts}</div>
-              <div className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-semibold text-purple-600 dark:text-purple-400">{stats.totalInts}</div>
+              <div className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-0.5">
                 {stats.completedInts} completed ({stats.completionRate.toFixed(0)}%)
               </div>
             </CardContent>
@@ -405,223 +487,160 @@ export default function CandidateDashboard() {
         </CardContent>
       </Card>
 
-      {stats.avgScore !== null && (
-        <Card className="border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/30 via-background to-background dark:from-cyan-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-cyan-700 dark:text-cyan-400">Interview Performance</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2">
-            <Card className="border-dashed border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/50 to-background dark:from-cyan-950/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-cyan-700 dark:text-cyan-400 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-cyan-500" />
-                  Average Score
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-semibold text-cyan-600 dark:text-cyan-400">{Math.round(stats.avgScore)}</div>
-                <div className="text-xs text-cyan-600/70 dark:text-cyan-400/70 mt-1">Out of 100</div>
-              </CardContent>
-            </Card>
-            <Card className="border-dashed border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/50 to-background dark:from-indigo-950/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-indigo-500" />
-                  Completed Interviews
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-semibold text-indigo-600 dark:text-indigo-400">{stats.completedInts}</div>
-                <div className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-1">{stats.completionRate.toFixed(1)}% completion rate</div>
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Compact Charts Section */}
-      <div className="grid gap-3 lg:grid-cols-3">
-        {/* Weekly Activity Trend */}
-        <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/30 via-background to-background dark:from-blue-950/10">
+      {/* Application Status Overview + Activity Trend - 1:3 ratio */}
+      <div className="grid gap-3 lg:grid-cols-4">
+        {/* Application Status Overview - 1/4 width */}
+        <Card className="lg:col-span-1 border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-br from-emerald-50/40 via-background to-background dark:from-emerald-950/20 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-700 dark:text-blue-400">Weekly Activity</CardTitle>
-            <p className="text-xs text-blue-600/70 dark:text-blue-400/70">Last 4 weeks</p>
-          </CardHeader>
-          <CardContent className="h-56">
-            {weeklyActivity.every((w) => w.applications === 0 && w.interviews === 0) ? (
-              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No recent activity</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={224}>
-                <BarChart data={weeklyActivity}>
-                  <defs>
-                    <linearGradient id="colorWeeklyApps" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#6366f1" stopOpacity={0.8}/>
-                      <stop offset="100%" stopColor="#6366f1" stopOpacity={0.4}/>
-                    </linearGradient>
-                    <linearGradient id="colorWeeklyInts" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.8}/>
-                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0.4}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="week" 
-                    tick={{ fontSize: 10 }}
-                    stroke="hsl(var(--muted-foreground))"
-                  />
-                  <YAxis 
-                    allowDecimals={false}
-                    tick={{ fontSize: 10 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    width={30}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px"
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Bar dataKey="applications" radius={[4, 4, 0, 0]} fill="url(#colorWeeklyApps)" name="Apps" />
-                  <Bar dataKey="interviews" radius={[4, 4, 0, 0]} fill="url(#colorWeeklyInts)" name="Interviews" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Application to Interview Conversion */}
-        <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/30 via-background to-background dark:from-purple-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-purple-700 dark:text-purple-400">Conversion Rate</CardTitle>
-            <p className="text-xs text-purple-600/70 dark:text-purple-400/70">Apps → Interviews</p>
-          </CardHeader>
-          <CardContent className="h-56">
-            {conversionData.appsWithInterviews === 0 && conversionData.appsWithoutInterviews === 0 ? (
-              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No data</div>
-            ) : (
-              <div className="space-y-2">
-                <ResponsiveContainer width="100%" height={140}>
-                  <PieChart>
-                    <Pie 
-                      dataKey="count" 
-                      data={[
-                        { name: "With Interviews", count: conversionData.appsWithInterviews },
-                        { name: "No Interviews", count: conversionData.appsWithoutInterviews },
-                      ]} 
-                      nameKey="name" 
-                      innerRadius={35} 
-                      outerRadius={55}
-                      paddingAngle={2}
-                    >
-                      <Cell fill="#a855f7" />
-                      <Cell fill="#e5e7eb" />
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--background))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px"
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="text-center">
-                  <div className="text-lg font-semibold">{conversionData.conversionRate}%</div>
-                  <div className="text-xs text-muted-foreground">
-                    {conversionData.appsWithInterviews} of {applications.length} apps
+            <div>
+              <CardTitle className="text-sm font-semibold text-foreground mb-1">Application Status</CardTitle>
+              <p className="text-xs text-muted-foreground mb-2">
+                See where your applications stand. Focus on those in progress and follow up on pending ones.
+              </p>
+              {appsByStatus.length > 0 && (
+                <div className="text-center mt-1">
+                  <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                    {applications.length}
                   </div>
+                  <div className="text-xs text-muted-foreground">Total</div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Success Funnel */}
-        <Card className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/30 via-background to-background dark:from-emerald-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-emerald-700 dark:text-emerald-400">Success Funnel</CardTitle>
-            <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">Application stages</p>
+              )}
+            </div>
           </CardHeader>
-          <CardContent className="h-56">
-            {successFunnel.length === 0 ? (
-              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No data</div>
+          <CardContent className="h-64">
+            {appsByStatus.length === 0 ? (
+              <div className="text-xs text-muted-foreground flex items-center justify-center h-full text-center">No applications yet</div>
             ) : (
-              <ResponsiveContainer width="100%" height={224}>
-                <BarChart data={successFunnel} layout="vertical">
-                  <defs>
-                    <linearGradient id="colorFunnel" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.8}/>
-                      <stop offset="100%" stopColor="#16a34a" stopOpacity={0.8}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis 
-                    type="category" 
-                    dataKey="stage" 
-                    width={70}
-                    tick={{ fontSize: 10 }}
-                    stroke="hsl(var(--muted-foreground))"
-                  />
+              <ResponsiveContainer width="100%" height={256}>
+                <PieChart>
+                  <Pie 
+                    dataKey="value" 
+                    data={appsByStatus} 
+                    nameKey="name" 
+                    innerRadius={40} 
+                    outerRadius={70}
+                    paddingAngle={2}
+                    labelLine={false}
+                  >
+                    {appsByStatus.map((_, idx) => (
+                      <Cell 
+                        key={idx} 
+                        fill={chartColors[idx % chartColors.length]}
+                        stroke="hsl(var(--background))"
+                        strokeWidth={1.5}
+                      />
+                    ))}
+                  </Pie>
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--background))",
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
-                      fontSize: "12px"
+                      fontSize: "11px",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                     }}
+                    formatter={(value: number, name: string) => [
+                      `${value} application${value !== 1 ? 's' : ''}`,
+                      name
+                    ]}
                   />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="url(#colorFunnel)" />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Monthly Activity Trend */}
-        <Card className="border-primary/10 bg-gradient-to-br from-primary/5 via-background to-background">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Monthly Activity Trend</CardTitle>
-            <p className="text-xs text-muted-foreground">Applications & Interviews (Last 6 months)</p>
+        {/* Your Activity Over Time - 3/4 width */}
+        <Card className="lg:col-span-3 border-primary/20 bg-gradient-to-br from-indigo-50/50 via-background to-background dark:from-indigo-950/20 dark:border-indigo-800/30 shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold text-foreground mb-1">Your Activity Over Time</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Track your job search progress. See how your applications and interviews have changed over the past 6 months.
+                </p>
+              </div>
+              {monthlyTrend.length >= 2 && (() => {
+                const recent = monthlyTrend[monthlyTrend.length - 1];
+                const previous = monthlyTrend[monthlyTrend.length - 2];
+                const appChange = previous.applications > 0 
+                  ? ((recent.applications - previous.applications) / previous.applications * 100).toFixed(0)
+                  : recent.applications > 0 ? "100" : "0";
+                const intChange = previous.interviews > 0
+                  ? ((recent.interviews - previous.interviews) / previous.interviews * 100).toFixed(0)
+                  : recent.interviews > 0 ? "100" : "0";
+                return (
+                  <div className="text-right space-y-1">
+                    <div className="text-xs text-muted-foreground">This month</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs">
+                        <span className="font-medium text-indigo-600 dark:text-indigo-400">{recent.applications}</span>
+                        <span className="text-xs text-muted-foreground ml-1">apps</span>
+                        {Number(appChange) !== 0 && (
+                          <span className={`text-xs ml-1 ${Number(appChange) > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {Number(appChange) > 0 ? '↑' : '↓'} {Math.abs(Number(appChange))}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs">
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">{recent.interviews}</span>
+                        <span className="text-xs text-muted-foreground ml-1">interviews</span>
+                        {Number(intChange) !== 0 && (
+                          <span className={`text-xs ml-1 ${Number(intChange) > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {Number(intChange) > 0 ? '↑' : '↓'} {Math.abs(Number(intChange))}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </CardHeader>
-          <CardContent className="h-80">
+          <CardContent className="h-64">
             {monthlyTrend.every((t) => t.applications === 0 && t.interviews === 0) ? (
-              <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No recent activity</div>
+              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No recent activity. Start applying to see your progress!</div>
             ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <AreaChart data={monthlyTrend}>
+              <ResponsiveContainer width="100%" height={256}>
+                <AreaChart data={monthlyTrend} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorApplications" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                      <stop offset="50%" stopColor="#6366f1" stopOpacity={0.15}/>
                       <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorInterviews" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.4}/>
+                      <stop offset="50%" stopColor="#22c55e" stopOpacity={0.15}/>
                       <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <XAxis 
                     dataKey="month" 
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                     stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={0.5}
                   />
                   <YAxis 
                     allowDecimals={false}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                     stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={0.5}
                   />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--background))",
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                     }}
+                    formatter={(value: number, name: string) => [
+                      `${value} ${name.toLowerCase()}`,
+                      name === "Applications" ? "📝 Applications" : "🎤 Interviews"
+                    ]}
                   />
-                  <Legend />
                   <Area 
                     type="monotone" 
                     dataKey="applications" 
@@ -629,6 +648,8 @@ export default function CandidateDashboard() {
                     strokeWidth={2}
                     fill="url(#colorApplications)"
                     name="Applications"
+                    dot={{ fill: "#6366f1", r: 3, strokeWidth: 1.5, stroke: "#fff" }}
+                    activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
                   />
                   <Area 
                     type="monotone" 
@@ -637,152 +658,144 @@ export default function CandidateDashboard() {
                     strokeWidth={2}
                     fill="url(#colorInterviews)"
                     name="Interviews"
+                    dot={{ fill: "#22c55e", r: 3, strokeWidth: 1.5, stroke: "#fff" }}
+                    activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Applications by Status */}
-        <Card className="border-primary/10 bg-gradient-to-br from-emerald-500/10 via-background to-background">
+      {/* Application Journey Timeline + Interview Status Breakdown - 2 columns */}
+      <div className="grid gap-3 md:grid-cols-2">
+        {/* Status Distribution Over Time */}
+        <Card className="border-violet-200/50 dark:border-violet-800/30 bg-gradient-to-br from-violet-50/40 via-background to-background dark:from-violet-950/20 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Applications by Status</CardTitle>
-            <p className="text-xs text-muted-foreground">Current distribution</p>
+            <div>
+              <CardTitle className="text-sm font-semibold text-foreground mb-1">Application Journey Timeline</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Track how your applications progress through different stages each day. See your success rate improve over the last 30 days.
+              </p>
+            </div>
           </CardHeader>
-          <CardContent className="h-80">
-            {appsByStatus.length === 0 ? (
-              <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
+          <CardContent className="h-56">
+            {statusTimeline.every((t) => Object.values(t).filter(v => typeof v === 'number').every(v => v === 0)) ? (
+              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No data available. Your application history will appear here.</div>
             ) : (
-              <div className="space-y-4">
-                <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                    <Pie 
-                      dataKey="value" 
-                      data={appsByStatus} 
-                      nameKey="name" 
-                      innerRadius={60} 
-                      outerRadius={90}
-                      paddingAngle={2}
-                    >
-                    {appsByStatus.map((_, idx) => (
-                      <Cell key={idx} fill={chartColors[idx % chartColors.length]} />
-                    ))}
-                  </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--background))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
-                      }}
-                    />
-                </PieChart>
-              </ResponsiveContainer>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {appsByStatus.map((item, idx) => (
-                    <div key={item.name} className="flex items-center gap-2">
-                      <div 
-                        className="h-3 w-3 rounded-full" 
-                        style={{ backgroundColor: chartColors[idx % chartColors.length] }}
-                      />
-                      <span className="text-muted-foreground">{item.name}:</span>
-                      <span className="font-medium">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Interview Score Trend */}
-        {scoreTrend.length > 0 && (
-          <Card className="border-primary/10 bg-gradient-to-br from-cyan-500/10 via-background to-background">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Interview Score Trend</CardTitle>
-              <p className="text-xs text-muted-foreground">Average score over time</p>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height={320}>
-                <AreaChart data={scoreTrend}>
-                  <defs>
-                    <linearGradient id="colorScoreTrend" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+              <ResponsiveContainer width="100%" height={224}>
+                <BarChart data={statusTimeline} margin={{ top: 5, right: 5, left: 0, bottom: 40 }}>
                   <XAxis 
-                    dataKey="month" 
-                    tick={{ fontSize: 12 }}
+                    dataKey="day" 
+                    tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }}
                     stroke="hsl(var(--muted-foreground))"
-                  />
-                  <YAxis 
-                    domain={[0, 100]}
-                    tick={{ fontSize: 12 }}
-                    stroke="hsl(var(--muted-foreground))"
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
-                    formatter={(value: number) => [`${value.toFixed(1)}`, "Avg Score"]}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="avgScore" 
-                    stroke="#06b6d4" 
-                    strokeWidth={2}
-                    fill="url(#colorScoreTrend)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Interviews by Status */}
-        <Card className="border-primary/10 bg-gradient-to-br from-orange-500/10 via-background to-background">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Interviews by Status</CardTitle>
-            <p className="text-xs text-muted-foreground">Current interview status</p>
-          </CardHeader>
-          <CardContent className="h-80">
-            {intsByStatus.length === 0 ? (
-              <div className="text-sm text-muted-foreground flex items-center justify-center h-full">No data</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={intsByStatus}>
-                  <defs>
-                    <linearGradient id="colorInterviewsBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f97316" stopOpacity={0.8}/>
-                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.8}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={0.5}
+                    angle={-45}
+                    textAnchor="end"
+                    height={45}
                   />
                   <YAxis 
                     allowDecimals={false}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
                     stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={0.5}
                   />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--background))",
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                     }}
+                    formatter={(value: number, name: string) => [
+                      `${value} application${value !== 1 ? 's' : ''}`,
+                      name
+                    ]}
                   />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="url(#colorInterviewsBar)">
-                    {intsByStatus.map((_, idx) => (
-                      <Cell key={idx} fill={chartColors[idx % chartColors.length]} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="Applied" stackId="a" fill="#6366f1" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Reviewing" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Shortlisted" stackId="a" fill="#f97316" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Interview Scheduled" stackId="a" fill="#06b6d4" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Hired" stackId="a" fill="#a855f7" radius={[4, 4, 0, 0]} />
                 </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Interview Status Breakdown */}
+        <Card className="border-orange-200/50 dark:border-orange-800/30 bg-gradient-to-br from-orange-50/40 via-background to-background dark:from-orange-950/20 shadow-sm">
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-sm font-semibold text-foreground mb-1">Interview Status Breakdown</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Monitor your interview pipeline. See how many interviews you have at each stage and prepare accordingly.
+                </p>
+              </div>
+              {intsByStatus.length > 0 && (
+                <div className="text-right">
+                  <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    {interviews.length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Total</div>
+                  {stats.completedInts > 0 && (
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                      {stats.completedInts} completed
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="h-56">
+            {intsByStatus.length === 0 ? (
+              <div className="text-xs text-muted-foreground flex items-center justify-center h-full">No interviews yet. Keep applying to get interview opportunities!</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={224}>
+                <PieChart>
+                  <defs>
+                    <linearGradient id="colorInterviewsPie" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#f97316" stopOpacity={0.9}/>
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.7}/>
+                    </linearGradient>
+                  </defs>
+                  <Pie
+                    data={intsByStatus}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={48}
+                    outerRadius={82}
+                    paddingAngle={3}
+                    labelLine={false}
+                  >
+                    {intsByStatus.map((_, idx) => (
+                      <Cell 
+                        key={idx} 
+                        fill={chartColors[idx % chartColors.length]}
+                        stroke="hsl(var(--background))"
+                        strokeWidth={1.5}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+                    }}
+                    formatter={(value: number, name: string) => [
+                      `${value} interview${value !== 1 ? 's' : ''}`,
+                      name
+                    ]}
+                  />
+                </PieChart>
               </ResponsiveContainer>
             )}
           </CardContent>

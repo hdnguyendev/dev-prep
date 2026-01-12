@@ -1,0 +1,102 @@
+graph TB
+    subgraph DB["💾 DATABASE - Neon PostgreSQL"]
+        JOB_TABLE[("Job Table<br/>━━━━━━━━━━━━━━━━<br/>• id: UUID<br/>• title: String<br/>• description: Text<br/>• requirements: Text<br/>• responsibilities: Text<br/>• location: String<br/>• isRemote: Boolean<br/>• experienceLevel: String<br/>• requiredDegree: String<br/>• preferredDegree: String<br/>• requiredField: String<br/>• status: JobStatus<br/>• deadline: DateTime<br/>• publishedAt: DateTime")]
+        
+        JOB_SKILLS[("JobSkill Table<br/>━━━━━━━━━━━━━━━━<br/>• jobId: UUID<br/>• skillId: UUID<br/>• isRequired: Boolean")]
+        
+        SKILL_TABLE[("Skill Table<br/>━━━━━━━━━━━━━━━━<br/>• id: UUID<br/>• name: String<br/>• iconUrl: String")]
+        
+        COMPANY_TABLE[("Company Table<br/>━━━━━━━━━━━━━━━━<br/>• id: UUID<br/>• name: String<br/>• logoUrl: String")]
+    end
+    
+    subgraph ORM["🔧 PRISMA ORM"]
+        PRISMA_CLIENT["Prisma Client<br/>prisma.job.findMany()<br/>prisma.job.findUnique()"]
+        
+        QUERY1["Query 1: Find Matching Jobs<br/>━━━━━━━━━━━━━━━━<br/>WHERE:<br/>• status = 'PUBLISHED'<br/>• deadline >= today<br/>• id NOT IN appliedJobs<br/>INCLUDE:<br/>• skills (with skill details)<br/>• company (name only)<br/>ORDER BY: publishedAt DESC<br/>TAKE: 200 jobs"]
+        
+        QUERY2["Query 2: Find Specific Job<br/>━━━━━━━━━━━━━━━━<br/>WHERE:<br/>• id = jobId<br/>INCLUDE:<br/>• skills (with skill details)<br/>• company (name only)"]
+    end
+    
+    subgraph SERVICE["⚙️ MATCHING SERVICE"]
+        FUNC1["findMatchingJobsForCandidate()<br/>━━━━━━━━━━━━━━━━<br/>Input: candidateId<br/>Output: MatchResult[]"]
+        
+        FUNC2["findMatchingCandidatesForJob()<br/>━━━━━━━━━━━━━━━━<br/>Input: jobId<br/>Output: MatchResult[]"]
+        
+        FUNC3["calculateCandidateJobMatch()<br/>━━━━━━━━━━━━━━━━<br/>Input: candidateId, jobId<br/>Output: MatchResult"]
+        
+        PREPARE["Prepare Job Data<br/>━━━━━━━━━━━━━━━━<br/>Extract from Prisma result:<br/>• title<br/>• description<br/>• requirements<br/>• responsibilities<br/>• skills (with isRequired flag)<br/>• experienceLevel<br/>• location<br/>• isRemote<br/>• requiredDegree<br/>• preferredDegree<br/>• requiredField"]
+    end
+    
+    subgraph SCORING["📊 SCORING ALGORITHM"]
+        CALC["calculateMatchScore()<br/>━━━━━━━━━━━━━━━━<br/>Input:<br/>• candidateData<br/>• jobData<br/>Output:<br/>• matchScore (0-100)<br/>• breakdown<br/>• details"]
+        
+        DIM1["Dimension 1: Skills<br/>Uses: jobData.skills"]
+        DIM2["Dimension 2: Experience<br/>Uses: jobData.experienceLevel"]
+        DIM3["Dimension 3: Title<br/>Uses: jobData.title"]
+        DIM4["Dimension 4: Education<br/>Uses: jobData.requiredDegree,<br/>preferredDegree, requiredField"]
+        DIM5["Dimension 5: Soft Skills<br/>Uses: jobData.description,<br/>requirements, responsibilities<br/>(extracted via NLP)"]
+        DIM6["Dimension 6: Technology<br/>Uses: jobData.description,<br/>requirements<br/>(extracted via NLP)"]
+        DIM7["Dimension 7: Location<br/>Uses: jobData.location,<br/>jobData.isRemote"]
+    end
+    
+    subgraph API["🌐 API ROUTES"]
+        ROUTE1["GET /matching/candidate/:id/jobs<br/>━━━━━━━━━━━━━━━━<br/>Calls: findMatchingJobsForCandidate()"]
+        
+        ROUTE2["GET /matching/job/:id/candidates<br/>━━━━━━━━━━━━━━━━<br/>Calls: findMatchingCandidatesForJob()"]
+        
+        ROUTE3["GET /matching/candidate/:cId/job/:jId<br/>━━━━━━━━━━━━━━━━<br/>Calls: calculateCandidateJobMatch()"]
+    end
+    
+    %% Database Relations
+    JOB_TABLE -->|1:N| JOB_SKILLS
+    JOB_SKILLS -->|N:1| SKILL_TABLE
+    JOB_TABLE -->|N:1| COMPANY_TABLE
+    
+    %% ORM Queries
+    PRISMA_CLIENT -->|Executes| QUERY1
+    PRISMA_CLIENT -->|Executes| QUERY2
+    QUERY1 -->|Fetches| JOB_TABLE
+    QUERY1 -->|Includes| JOB_SKILLS
+    QUERY1 -->|Includes| SKILL_TABLE
+    QUERY1 -->|Includes| COMPANY_TABLE
+    QUERY2 -->|Fetches| JOB_TABLE
+    QUERY2 -->|Includes| JOB_SKILLS
+    QUERY2 -->|Includes| SKILL_TABLE
+    QUERY2 -->|Includes| COMPANY_TABLE
+    
+    %% Service Functions
+    FUNC1 -->|Uses| QUERY1
+    FUNC2 -->|Uses| QUERY2
+    FUNC3 -->|Uses| QUERY2
+    FUNC1 -->|Prepares| PREPARE
+    FUNC2 -->|Prepares| PREPARE
+    FUNC3 -->|Prepares| PREPARE
+    
+    %% Scoring
+    PREPARE -->|Passes jobData| CALC
+    CALC -->|Uses| DIM1
+    CALC -->|Uses| DIM2
+    CALC -->|Uses| DIM3
+    CALC -->|Uses| DIM4
+    CALC -->|Uses| DIM5
+    CALC -->|Uses| DIM6
+    CALC -->|Uses| DIM7
+    
+    %% API Routes
+    ROUTE1 -->|Calls| FUNC1
+    ROUTE2 -->|Calls| FUNC2
+    ROUTE3 -->|Calls| FUNC3
+    
+    %% Styling
+    classDef database fill:#336791,stroke:#fff,stroke-width:3px,color:#fff
+    classDef orm fill:#2d3748,stroke:#fff,stroke-width:2px,color:#fff
+    classDef service fill:#00d8ff,stroke:#20232a,stroke-width:2px,color:#000
+    classDef scoring fill:#51cf66,stroke:#fff,stroke-width:2px,color:#000
+    classDef api fill:#61dafb,stroke:#20232a,stroke-width:2px,color:#000
+    
+    class JOB_TABLE,JOB_SKILLS,SKILL_TABLE,COMPANY_TABLE,DB database
+    class PRISMA_CLIENT,QUERY1,QUERY2,ORM orm
+    class FUNC1,FUNC2,FUNC3,PREPARE,SERVICE service
+    class CALC,DIM1,DIM2,DIM3,DIM4,DIM5,DIM6,DIM7,SCORING scoring
+    class ROUTE1,ROUTE2,ROUTE3,API api
+

@@ -24,8 +24,13 @@ import {
   FileText,
   ExternalLink,
   AlertTriangle,
+  ChevronRight,
+  Loader2,
+  Code,
+  Briefcase
 } from "lucide-react";
 import { getCompanySizeOptions, getFoundedYearOptions } from "@/constants/company";
+import ApplicationDetailModal from "@/components/recruiter/ApplicationDetailModal";
 
 type Stats = {
   totalJobs: number;
@@ -225,6 +230,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   // const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({
     totalJobs: 0,
     activeJobs: 0,
@@ -242,6 +248,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteText, setEditingNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [company, setCompany] = useState<Company | null>(null);
   const [editForm, setEditForm] = useState<Partial<Company>>({});
   const [saving, setSaving] = useState(false);
@@ -264,7 +271,10 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
   const [appSearchInput, setAppSearchInput] = useState("");
   const [appSearch, setAppSearch] = useState("");
   const [appStatusFilter, setAppStatusFilter] = useState<string>("");
-  // const [appSortBy, setAppSortBy] = useState<"newest" | "oldest">("newest");
+  const [appJobFilter, setAppJobFilter] = useState<string>("");
+  const [appDateFrom, setAppDateFrom] = useState<string>("");
+  const [appDateTo, setAppDateTo] = useState<string>("");
+  const [appSortBy, setAppSortBy] = useState<"newest" | "oldest" | "name">("newest");
   const [appPage, setAppPage] = useState(1);
   const appPageSize = 10;
 
@@ -389,45 +399,95 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
           </div>
         </CardHeader>
         <CardContent className="pt-0 space-y-3">
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:w-[420px] flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={appSearchInput}
-                  onChange={(e) => setAppSearchInput(e.target.value)}
-                  onKeyPress={handleAppSearchKeyPress}
-                  placeholder="Search by candidate, email, job..."
-                  className="pl-9"
-                />
+          {/* Filters */}
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative w-full lg:w-[420px] flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={appSearchInput}
+                    onChange={(e) => setAppSearchInput(e.target.value)}
+                    onKeyPress={handleAppSearchKeyPress}
+                    placeholder="Search by candidate, email, job..."
+                    className="pl-9"
+                  />
+                </div>
+                <Button onClick={handleAppSearch} size="sm">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
               </div>
-              <Button onClick={handleAppSearch} size="sm">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={appStatusFilter}
+                  onChange={(e) => setAppStatusFilter(e.target.value)}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">All status</option>
+                  <option value="APPLIED">Applied</option>
+                  <option value="REVIEWING">Reviewing</option>
+                  <option value="SHORTLISTED">Shortlisted</option>
+                  <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                  <option value="INTERVIEWED">Interviewed</option>
+                  <option value="OFFER_SENT">Offer Sent</option>
+                  <option value="HIRED">Hired</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="WITHDRAWN">Withdrawn</option>
+                </select>
+                <select
+                  value={appJobFilter}
+                  onChange={(e) => setAppJobFilter(e.target.value)}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">All jobs</option>
+                  {allJobs.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {job.title}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={appSortBy}
+                  onChange={(e) => setAppSortBy(e.target.value as "newest" | "oldest" | "name")}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="name">Name A-Z</option>
+                </select>
+                {(appSearch || appStatusFilter || appJobFilter || appDateFrom || appDateTo) && (
+                  <Button size="sm" variant="ghost" onClick={() => { 
+                    setAppSearch(""); 
+                    setAppStatusFilter(""); 
+                    setAppJobFilter("");
+                    setAppDateFrom("");
+                    setAppDateTo("");
+                  }}>
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={appStatusFilter}
-                onChange={(e) => setAppStatusFilter(e.target.value)}
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="">All status</option>
-                <option value="APPLIED">APPLIED</option>
-                <option value="REVIEWING">REVIEWING</option>
-                <option value="SHORTLISTED">SHORTLISTED</option>
-                <option value="INTERVIEW_SCHEDULED">INTERVIEW_SCHEDULED</option>
-                <option value="INTERVIEWED">INTERVIEWED</option>
-                <option value="OFFER_SENT">OFFER_SENT</option>
-                <option value="HIRED">HIRED</option>
-                <option value="REJECTED">REJECTED</option>
-                <option value="WITHDRAWN">WITHDRAWN</option>
-              </select>
-              {(appSearch || appStatusFilter) && (
-                <Button size="sm" variant="ghost" onClick={() => { setAppSearch(""); setAppStatusFilter(""); }}>
-                  Clear
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground whitespace-nowrap">From:</label>
+                <Input
+                  type="date"
+                  value={appDateFrom}
+                  onChange={(e) => setAppDateFrom(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground whitespace-nowrap">To:</label>
+                <Input
+                  type="date"
+                  value={appDateTo}
+                  onChange={(e) => setAppDateTo(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -435,57 +495,143 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
             <table className="min-w-full text-sm">
               <thead className="bg-muted/50">
                 <tr className="border-b text-xs font-semibold uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left w-[32%]">Candidate</th>
-                  <th className="px-4 py-3 text-left w-[36%]">Job</th>
-                  <th className="px-4 py-3 text-center w-[18%]">Status</th>
-                  <th className="px-4 py-3 text-right w-[14%]">Applied</th>
+                  <th className="px-4 py-3 text-left">Candidate</th>
+                  <th className="px-4 py-3 text-left">Job</th>
+                  <th className="px-4 py-3 text-left">Skills</th>
+                  <th className="px-4 py-3 text-left">Experience</th>
+                  <th className="px-4 py-3 text-center">Status</th>
+                  <th className="px-4 py-3 text-center">Notes</th>
+                  <th className="px-4 py-3 text-right">Applied</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {pagedApps.map((a, index) => {
-                  const candidateName = `${a?.candidate?.user?.firstName ?? ""} ${a?.candidate?.user?.lastName ?? ""}`.trim() || (a?.candidate?.user?.email ?? "Candidate");
+                  const getUserDisplayName = () => {
+                    if (!a?.candidate?.user) {
+                      return "Unknown Candidate";
+                    }
+                    const { firstName, lastName, email } = a.candidate.user;
+                    const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+                    return fullName || email || "Unknown Candidate";
+                  };
+                  const candidateName = getUserDisplayName();
+                  
+                  const getSkills = () => {
+                    return a.candidate?.skills?.slice(0, 3).map(s => s.skill?.name).filter(Boolean).join(", ") || "—";
+                  };
+                  
+                  const getExperienceYears = () => {
+                    if (!a.candidate?.experiences || a.candidate.experiences.length === 0) return "—";
+                    const totalMonths = a.candidate.experiences.reduce((acc, exp) => {
+                      const start = new Date(exp.startDate);
+                      const end = exp.endDate ? new Date(exp.endDate) : new Date();
+                      const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+                      return acc + Math.max(0, months);
+                    }, 0);
+                    const years = Math.floor(totalMonths / 12);
+                    return years > 0 ? `${years}+ years` : "< 1 year";
+                  };
+                  
+                  const notesCount = a.notes?.length || 0;
+                  
+                  const formatStatus = (status: string): string => {
+                    return status
+                      .split("_")
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                      .join(" ");
+                  };
                   
                   return (
                     <tr
                       key={a.id}
+                      onClick={() => handleApplicationClick(a.id)}
                       className={`hover:bg-muted/50 transition cursor-pointer ${
                         index % 2 === 0 ? "bg-background" : "bg-muted/20"
                       }`}
-                      onClick={() => handleApplicationClick(a.id)}
                     >
                       <td className="px-4 py-3">
-                        <div className="font-semibold break-words">{candidateName}</div>
-                        <div className="text-xs text-muted-foreground break-words mt-1">{a?.candidate?.user?.email ?? ""}</div>
+                        <div className="flex items-center gap-2">
+                          {a?.candidate?.user?.avatarUrl ? (
+                            <img
+                              src={a.candidate.user.avatarUrl}
+                              alt={candidateName}
+                              className="h-8 w-8 rounded-full object-cover border shrink-0"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border shrink-0">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-semibold break-words">{candidateName}</div>
+                            <div className="text-xs text-muted-foreground break-words">{a?.candidate?.user?.email ?? ""}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-semibold break-words">{a?.job?.title ?? "Job"}</div>
-                        <div className="text-xs text-muted-foreground break-words mt-1">{a?.job?.company?.name ?? ""}</div>
+                        <div className="text-xs text-muted-foreground break-words">{a?.job?.company?.name ?? ""}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-xs break-words max-w-[150px] truncate" title={getSkills()}>
+                          {getSkills()}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-xs">{getExperienceYears()}</div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-center">
-                          <Badge variant="outline" className="inline-flex h-8 items-center gap-2 px-3 text-sm font-medium">
-                            {a.status === "APPLIED" && <Clock className="h-3.5 w-3.5" />}
-                            {a.status === "REVIEWING" && <Clock className="h-3.5 w-3.5" />}
-                            {a.status === "SHORTLISTED" && <CheckCircle2 className="h-3.5 w-3.5" />}
-                            {a.status === "INTERVIEW_SCHEDULED" && <Calendar className="h-3.5 w-3.5" />}
-                            {a.status === "INTERVIEWED" && <CheckCircle2 className="h-3.5 w-3.5" />}
-                            {a.status === "OFFER_SENT" && <CheckCircle2 className="h-3.5 w-3.5" />}
-                            {a.status === "HIRED" && <CheckCircle2 className="h-3.5 w-3.5" />}
-                            {a.status === "REJECTED" && <XCircle className="h-3.5 w-3.5" />}
-                            {a.status === "WITHDRAWN" && <XCircle className="h-3.5 w-3.5" />}
-                            {a.status}
+                          <Badge 
+                            variant={a.status === "HIRED" || a.status === "OFFER_SENT" ? "success" : 
+                                   a.status === "REJECTED" || a.status === "WITHDRAWN" ? "error" :
+                                   a.status === "REVIEWING" || a.status === "INTERVIEW_SCHEDULED" ? "warning" : "info"}
+                            className="text-xs"
+                          >
+                            {formatStatus(a.status)}
                           </Badge>
                         </div>
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        {notesCount > 0 ? (
+                          <Badge variant="outline" className="text-xs">
+                            {notesCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right text-muted-foreground whitespace-nowrap">
-                        {new Date(a.appliedAt).toLocaleDateString()}
+                        <div className="text-xs">{new Date(a.appliedAt).toLocaleDateString()}</div>
+                        <div className="text-[10px] text-muted-foreground/70">
+                          {new Date(a.appliedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1">
+                          {a.resumeUrl && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(a.resumeUrl, '_blank');
+                              }}
+                              className="h-7 w-7 p-0"
+                              title="View Resume"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
                 {pagedApps.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">
+                    <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
                       No applications match your filters.
                     </td>
                   </tr>
@@ -945,6 +1091,60 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
     }
   };
 
+  const getAllowedStatusesForRecruiter = (currentStatus: string): string[] => {
+    const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+      "APPLIED": ["REVIEWING", "REJECTED"],
+      "REVIEWING": ["SHORTLISTED", "REJECTED"],
+      "SHORTLISTED": ["INTERVIEW_SCHEDULED", "REJECTED"],
+      "INTERVIEW_SCHEDULED": ["REJECTED"],
+      "INTERVIEWED": ["REJECTED"],
+      "OFFER_SENT": ["REJECTED"],
+      "OFFER_ACCEPTED": ["REJECTED"],
+      "OFFER_REJECTED": ["REJECTED"],
+      "HIRED": [],
+      "REJECTED": [],
+      "WITHDRAWN": [],
+    };
+    const allowedNextStatuses = ALLOWED_TRANSITIONS[currentStatus] || [];
+    return [currentStatus, ...allowedNextStatuses];
+  };
+
+  const handleStatusUpdate = async (applicationId: string, nextStatus: string) => {
+    if (!recruiterUserId || !selectedApplication || selectedApplication.id !== applicationId) return;
+    try {
+      setUpdating(true);
+      setError(null);
+      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:9999";
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${recruiterUserId}`,
+      };
+      const response = await fetch(
+        `${apiBase}/applications/${applicationId}/status`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ status: nextStatus }),
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setAllApplications((prev) =>
+          prev.map((app) =>
+            app.id === applicationId ? { ...app, status: nextStatus } : app
+          )
+        );
+        setSelectedApplication({ ...selectedApplication, status: nextStatus });
+      } else {
+        setError(data.message || "Failed to update status");
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const getStatusConfig = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: "default" | "outline" | "success"; icon: React.ReactNode; color: string }> = {
       APPLIED: {
@@ -1052,17 +1252,48 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
 
   useEffect(() => {
     setAppPage(1);
-  }, [appSearch, appStatusFilter]);
+  }, [appSearch, appStatusFilter, appJobFilter, appDateFrom, appDateTo]);
 
-  // Client-side filtering only for status (search is done on server)
+  // Client-side filtering
   const filteredApps = useMemo(() => {
     const next = (allApplications || []).filter((a) => {
       if (appStatusFilter && String(a.status) !== appStatusFilter) return false;
+      if (appJobFilter && String(a.jobId) !== appJobFilter) return false;
+      
+      if (appDateFrom) {
+        const applied = new Date(a.appliedAt).getTime();
+        if (applied < new Date(appDateFrom).getTime()) return false;
+      }
+      if (appDateTo) {
+        const applied = new Date(a.appliedAt).getTime();
+        const toDate = new Date(appDateTo);
+        toDate.setHours(23, 59, 59, 999);
+        if (applied > toDate.getTime()) return false;
+      }
+      
       return true;
     });
-    next.sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
+    
+    // Sorting
+    next.sort((a, b) => {
+      if (appSortBy === "newest") {
+        return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+      } else if (appSortBy === "oldest") {
+        return new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime();
+      } else if (appSortBy === "name") {
+        const getName = (app: RecruiterApplication) => {
+          if (!app.candidate?.user) return "";
+          const { firstName, lastName, email } = app.candidate.user;
+          const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+          return fullName || email || "";
+        };
+        return getName(a).localeCompare(getName(b));
+      }
+      return 0;
+    });
+    
     return next;
-  }, [allApplications, appStatusFilter]);
+  }, [allApplications, appStatusFilter, appJobFilter, appDateFrom, appDateTo, appSortBy]);
 
   const appTotalPages = Math.max(1, Math.ceil(filteredApps.length / appPageSize));
   const appCurrentPage = Math.min(appPage, appTotalPages);
@@ -1275,10 +1506,9 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                   <TabsContent value="overview" className="space-y-6">
                     {/* Visual Insights */}
                     <div className="grid gap-4 lg:grid-cols-3">
-                      <Card className="overflow-hidden border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/30 via-background to-background dark:from-blue-950/10">
+                      <Card className="overflow-hidden">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-blue-500" />
+                          <CardTitle className="text-sm flex items-center gap-2">
                             Applications (last 14 days)
                           </CardTitle>
                         </CardHeader>
@@ -1309,10 +1539,9 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                         </CardContent>
                       </Card>
 
-                      <Card className="overflow-hidden border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/30 via-background to-background dark:from-purple-950/10">
+                      <Card className="overflow-hidden">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm text-purple-700 dark:text-purple-400 flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-purple-500" />
+                          <CardTitle className="text-sm flex items-center gap-2">
                             Application breakdown
                           </CardTitle>
                         </CardHeader>
@@ -1344,10 +1573,9 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                         </CardContent>
                       </Card>
 
-                      <Card className="overflow-hidden border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/30 via-background to-background dark:from-indigo-950/10">
+                      <Card className="overflow-hidden">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-indigo-500" />
+                          <CardTitle className="text-sm flex items-center gap-2">
                             Job status
                           </CardTitle>
                         </CardHeader>
@@ -1389,53 +1617,41 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
 
                 {/* Stats Grid */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  <Card className="border-dashed border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 via-background to-background dark:from-blue-950/20">
+                  <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-blue-500" />
-                        Total Jobs
-                      </CardTitle>
+                      <CardTitle className="text-sm">Total Jobs</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{stats.totalJobs}</div>
-                      <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">{stats.activeJobs} active</p>
+                      <div className="text-2xl font-semibold">{stats.totalJobs}</div>
+                      <p className="text-xs text-muted-foreground mt-1">{stats.activeJobs} active</p>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-dashed border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/50 via-background to-background dark:from-purple-950/20">
+                  <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-purple-700 dark:text-purple-400 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-purple-500" />
-                        Applications
-                      </CardTitle>
+                      <CardTitle className="text-sm">Applications</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-semibold text-purple-600 dark:text-purple-400">{stats.totalApplications}</div>
-                      <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">{stats.pendingApplications} pending review</p>
+                      <div className="text-2xl font-semibold">{stats.totalApplications}</div>
+                      <p className="text-xs text-muted-foreground mt-1">{stats.pendingApplications} pending review</p>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-dashed border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/50 via-background to-background dark:from-emerald-950/20">
+                  <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                        Interviews
-                      </CardTitle>
+                      <CardTitle className="text-sm">Interviews</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{stats.totalInterviews}</div>
-                      <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1">{stats.upcomingInterviews} upcoming</p>
+                      <div className="text-2xl font-semibold">{stats.totalInterviews}</div>
+                      <p className="text-xs text-muted-foreground mt-1">{stats.upcomingInterviews} upcoming</p>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Recent Jobs */}
-                <Card className="border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/30 via-background to-background dark:from-cyan-950/10">
+                <Card>
                   <CardHeader>
-                    <CardTitle className="text-cyan-700 dark:text-cyan-400 flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-cyan-500" />
-                      Recent Job Posts
-                    </CardTitle>
+                    <CardTitle>Recent Job Posts</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {recentJobs.length === 0 ? (
@@ -1454,19 +1670,19 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                           return (
                           <div
                             key={job.id}
-                              className="flex items-center justify-between rounded-lg border border-cyan-200/50 dark:border-cyan-800/50 bg-gradient-to-r from-cyan-50/30 to-background dark:from-cyan-950/10 p-4 hover:from-cyan-50/50 hover:dark:from-cyan-950/20 hover:shadow-md transition-all cursor-pointer group"
+                              className="flex items-center justify-between rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer group"
                             onClick={() => navigate(`/recruiter/jobs/${job.id}/applications`)}
                           >
                             <div className="flex-1">
-                                <h3 className="font-semibold text-cyan-900 dark:text-cyan-100 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors">{job.title}</h3>
-                                <p className="text-xs text-cyan-700/70 dark:text-cyan-400/70 mt-1">
+                                <h3 className="font-semibold group-hover:text-primary transition-colors">{job.title}</h3>
+                                <p className="text-xs text-muted-foreground mt-1">
                                 {job.location || "Remote"} • Posted {new Date(job.createdAt).toLocaleDateString()}
                               </p>
                             </div>
                               <div className="flex items-center gap-4">
                               <div className="text-right">
-                                  <div className="text-lg font-semibold text-cyan-600 dark:text-cyan-400">{job.applicationsCount || 0}</div>
-                                  <div className="text-xs text-cyan-600/70 dark:text-cyan-400/70">applications</div>
+                                  <div className="text-lg font-semibold">{job.applicationsCount || 0}</div>
+                                  <div className="text-xs text-muted-foreground">applications</div>
                               </div>
                                 <Badge variant="outline" className={`gap-1.5 border ${statusColor}`}>
                                 {job.status === "PUBLISHED" ? (
@@ -1487,58 +1703,166 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                   </CardContent>
                 </Card>
 
+                {/* Recently Applications */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Recently Applications</CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate("/recruiter/applications")}
+                        className="text-xs gap-1.5"
+                      >
+                        View All
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const recentApplications = [...allApplications]
+                        .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
+                        .slice(0, 5);
+
+                      if (recentApplications.length === 0) {
+                        return <p className="text-sm text-muted-foreground">No applications yet.</p>;
+                      }
+
+                      const statusVariantMap: Record<string, "info" | "warning" | "success" | "error" | "muted"> = {
+                        APPLIED: "info",
+                        REVIEWING: "warning",
+                        INTERVIEW_SCHEDULED: "info",
+                        INTERVIEWED: "info",
+                        OFFER_SENT: "success",
+                        OFFER_ACCEPTED: "success",
+                        OFFER_REJECTED: "error",
+                        REJECTED: "error",
+                        HIRED: "success",
+                      };
+
+                      const formatStatus = (status: string): string => {
+                        return status
+                          .split("_")
+                          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                          .join(" ");
+                      };
+
+                      const getCandidateName = (app: RecruiterApplication): string => {
+                        if (!app.candidate?.user) {
+                          return "Unknown Candidate";
+                        }
+                        const { firstName, lastName, email } = app.candidate.user;
+                        const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+                        return fullName || email || "Unknown Candidate";
+                      };
+
+                      return (
+                        <div className="space-y-3">
+                          {recentApplications.map((app) => {
+                            const candidateName = getCandidateName(app);
+                            const jobTitle = app.job?.title || "Unknown Job";
+                            const companyName = app.job?.company?.name || "";
+
+                            return (
+                              <div
+                                key={app.id}
+                                className="flex items-center justify-between rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer group"
+                                onClick={() => navigate(`/recruiter/jobs/${app.jobId}/applications`, { state: { applicationId: app.id } })}
+                              >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {app.candidate?.user?.avatarUrl ? (
+                                    <img
+                                      src={app.candidate.user.avatarUrl}
+                                      alt={candidateName}
+                                      className="h-10 w-10 rounded-full object-cover border shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border shrink-0">
+                                      <User className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold group-hover:text-primary transition-colors truncate">
+                                      {candidateName}
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                      {jobTitle}
+                                      {companyName && ` • ${companyName}`}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Applied {new Date(app.appliedAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                  <Badge
+                                    variant={statusVariantMap[app.status] || "muted"}
+                                    className="text-xs"
+                                  >
+                                    {formatStatus(app.status)}
+                                  </Badge>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+
                 {/* Activity Overview */}
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Card className="border-orange-200 dark:border-orange-800 bg-gradient-to-br from-orange-50/30 via-background to-background dark:from-orange-950/10">
+                  <Card>
                     <CardHeader>
-                      <CardTitle className="text-orange-700 dark:text-orange-400 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-orange-500" />
+                      <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4" />
                         Hiring Pipeline
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        <div className="flex justify-between items-center p-2 rounded-lg bg-orange-50/50 dark:bg-orange-950/20">
-                          <span className="text-sm text-orange-700 dark:text-orange-400">New Applications</span>
-                          <span className="font-semibold text-orange-600 dark:text-orange-400">{stats.pendingApplications}</span>
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
+                          <span className="text-sm">New Applications</span>
+                          <span className="font-semibold">{stats.pendingApplications}</span>
                         </div>
-                        <div className="flex justify-between items-center p-2 rounded-lg bg-orange-50/50 dark:bg-orange-950/20">
-                          <span className="text-sm text-orange-700 dark:text-orange-400">Scheduled Interviews</span>
-                          <span className="font-semibold text-orange-600 dark:text-orange-400">{stats.upcomingInterviews}</span>
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
+                          <span className="text-sm">Scheduled Interviews</span>
+                          <span className="font-semibold">{stats.upcomingInterviews}</span>
                         </div>
-                        <div className="flex justify-between items-center p-2 rounded-lg bg-orange-50/50 dark:bg-orange-950/20">
-                          <span className="text-sm text-orange-700 dark:text-orange-400">Active Job Posts</span>
-                          <span className="font-semibold text-orange-600 dark:text-orange-400">{stats.activeJobs}</span>
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
+                          <span className="text-sm">Active Job Posts</span>
+                          <span className="font-semibold">{stats.activeJobs}</span>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50/30 via-background to-background dark:from-pink-950/10">
+                  <Card>
                     <CardHeader>
-                      <CardTitle className="text-pink-700 dark:text-pink-400 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-pink-500" />
+                      <CardTitle className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
                         Quick Tips
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2 text-sm">
-                        <li className="flex items-start gap-2 text-pink-700 dark:text-pink-400">
-                          <span className="text-pink-500 dark:text-pink-400 mt-0.5">•</span>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-0.5">•</span>
                           <span>Review pending applications daily</span>
                         </li>
-                        <li className="flex items-start gap-2 text-pink-700 dark:text-pink-400">
-                          <span className="text-pink-500 dark:text-pink-400 mt-0.5">•</span>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-0.5">•</span>
                           <span>Schedule interviews within 48 hours</span>
                         </li>
-                        <li className="flex items-start gap-2 text-pink-700 dark:text-pink-400">
-                          <span className="text-pink-500 dark:text-pink-400 mt-0.5">•</span>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-0.5">•</span>
                           <span>Keep job descriptions updated</span>
                         </li>
-                        <li className="flex items-start gap-2 text-pink-700 dark:text-pink-400">
-                          <span className="text-pink-500 dark:text-pink-400 mt-0.5">•</span>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-0.5">•</span>
                           <span>Respond to candidate inquiries promptly</span>
                         </li>
                       </ul>
@@ -1548,22 +1872,18 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                   </TabsContent>
 
                   <TabsContent value="jobs" className="space-y-4">
-                    <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/30 via-background to-background dark:from-blue-950/10">
+                    <Card>
                       <CardHeader className="pb-3">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                           <div>
-                            <CardTitle className="text-lg text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-blue-500" />
-                              Jobs
-                            </CardTitle>
-                            <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                            <CardTitle className="text-lg">Jobs</CardTitle>
+                            <div className="text-xs text-muted-foreground mt-1">
                               {filteredJobs.length} result{filteredJobs.length === 1 ? "" : "s"}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Button 
                               onClick={() => navigate("/recruiter/jobs", { state: { mode: "create" } })}
-                              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Create
@@ -2021,29 +2341,53 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
             )}
 
       {/* Application Detail Modal */}
-      {selectedApplication && (
+      <ApplicationDetailModal
+        application={selectedApplication}
+        onClose={() => setSelectedApplication(null)}
+        onStatusUpdate={handleStatusUpdate}
+        onAddNote={async (applicationId: string, content: string) => {
+          await handleAddNote();
+        }}
+        onEditNote={async (noteId: string, content: string) => {
+          setEditingNoteText(content);
+          await handleSaveEditNote();
+        }}
+        onDeleteNote={async (noteId: string) => {
+          setNoteIdToDelete(noteId);
+          await handleDeleteNote(noteId);
+        }}
+        getAllowedStatuses={getAllowedStatusesForRecruiter}
+        getStatusConfig={getStatusConfig}
+        recruiterProfileId={recruiterProfileId}
+        updating={updating}
+        savingNote={savingNote}
+        showJobApplicationsLink={true}
+      />
+
+      {/* Old Modal - Removed, using ApplicationDetailModal component */}
+      {false && selectedApplication && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between border-b">
+          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto border-0 shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-gradient-to-r from-blue-50/50 via-background to-background dark:from-blue-950/10 pb-4">
               <div className="flex items-center gap-3">
                 {selectedApplication.candidate?.user?.avatarUrl ? (
                   <img
                     src={selectedApplication.candidate.user.avatarUrl}
                     alt="Avatar"
-                    className="h-10 w-10 rounded-full object-cover border"
+                    className="h-12 w-12 rounded-full object-cover border-2 border-primary/20"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border">
-                    <User className="h-5 w-5 text-muted-foreground" />
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border-2 border-primary/20">
+                    <User className="h-6 w-6 text-primary" />
                   </div>
                 )}
                 <div>
-                  <CardTitle>
+                  <CardTitle className="text-lg">
                     {selectedApplication.candidate?.user
                       ? `${selectedApplication.candidate.user.firstName || ''} ${selectedApplication.candidate.user.lastName || ''}`.trim() || selectedApplication.candidate.user.email
                       : "Unknown"}
                   </CardTitle>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {selectedApplication.candidate?.user?.email}
                   </p>
                 </div>
@@ -2052,114 +2396,176 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedApplication(null)}
+                className="h-8 w-8 p-0"
               >
                 ✕
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              {/* Status */}
-              <div>
-                <div className="text-sm font-medium mb-2">Status</div>
-                <Badge variant="outline" className={`gap-1.5 border ${getStatusConfig(selectedApplication.status).color}`}>
-                  {getStatusConfig(selectedApplication.status).icon}
-                  {getStatusConfig(selectedApplication.status).label}
-                </Badge>
+            <CardContent className="space-y-5 pt-5">
+              {/* Job Info */}
+              <div className="rounded-lg border border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-background dark:from-blue-950/10 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Briefcase className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wide">Job Application</div>
+                </div>
+                <div className="text-base font-semibold text-foreground">{selectedApplication.job?.title || "Unknown Job"}</div>
+                <div className="text-sm text-muted-foreground mt-0.5">{selectedApplication.job?.company?.name || ""}</div>
               </div>
 
-              {/* Applied Date */}
-              <div>
-                <div className="text-sm font-medium mb-2">Applied Date</div>
-                <div className="text-sm text-muted-foreground">
-                  {new Date(selectedApplication.appliedAt).toLocaleString()}
+              {/* Status & Applied Date - Side by side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-lg border border-purple-200/50 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/30 to-background dark:from-purple-950/10 p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
+                    <div className="text-xs font-medium text-purple-700 dark:text-purple-400">Status</div>
+                  </div>
+                  <div className="relative inline-block w-full">
+                    <select
+                      value={selectedApplication.status}
+                      onChange={(e) => handleStatusUpdate(selectedApplication.id, e.target.value)}
+                      className={`w-full inline-flex h-9 items-center gap-1.5 pl-8 pr-8 text-sm font-medium rounded-md border cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-offset-2 ${getStatusConfig(selectedApplication.status).color}`}
+                      disabled={updating}
+                    >
+                      {getAllowedStatusesForRecruiter(selectedApplication.status).map((key) => (
+                        <option key={key} value={key}>
+                          {getStatusConfig(key).label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                      {getStatusConfig(selectedApplication.status).icon}
+                    </div>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    {updating && (
+                      <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-green-200/50 dark:border-green-800/50 bg-gradient-to-br from-green-50/30 to-background dark:from-green-950/10 p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Calendar className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                    <div className="text-xs font-medium text-green-700 dark:text-green-400">Applied Date</div>
+                  </div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {new Date(selectedApplication.appliedAt).toLocaleDateString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {new Date(selectedApplication.appliedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
                 </div>
               </div>
 
-              {/* Candidate Profile */}
-              {selectedApplication.candidate?.id ? (
-                <div>
-                  <div className="text-sm font-medium mb-2">Candidate Profile</div>
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-2">
+                {selectedApplication.candidate?.id && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/recruiter/candidates/${encodeURIComponent(selectedApplication.candidate!.id)}`)}
+                    onClick={() => window.open(`/candidates/${encodeURIComponent(selectedApplication.candidate!.id)}`, '_blank')}
+                    className="gap-2 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20"
                   >
-                    View full profile
+                    <User className="h-4 w-4" />
+                    View Profile
                   </Button>
-                </div>
-              ) : null}
-
-              {/* Resume */}
-              {selectedApplication.resumeUrl && (
-                <div>
-                  <div className="text-sm font-medium mb-2">Resume</div>
-                  <a
-                    href={selectedApplication.resumeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                )}
+                {selectedApplication.resumeUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(selectedApplication.resumeUrl!, '_blank')}
+                    className="gap-2 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/20"
                   >
                     <FileText className="h-4 w-4" />
                     View Resume
                     <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
+                  </Button>
+                )}
+              </div>
 
-              {/* Cover Letter */}
-              {selectedApplication.coverLetter && (
+              {/* Candidate Information */}
+              <div className="rounded-lg border border-indigo-200/50 dark:border-indigo-800/50 bg-gradient-to-br from-indigo-50/20 to-background dark:from-indigo-950/10 p-4 space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-indigo-200/50 dark:border-indigo-800/50">
+                  <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <div className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">Candidate Information</div>
+                </div>
+                
+                {/* Skills */}
                 <div>
-                  <div className="text-sm font-medium mb-2">Cover Letter</div>
-                  <div className="text-sm text-muted-foreground whitespace-pre-line bg-muted/50 rounded-lg p-4">
-                    {selectedApplication.coverLetter}
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Code className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">Skills</div>
                   </div>
-                </div>
-              )}
-
-              {/* Candidate Skills & Experience */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">Skills</div>
                   <div className="flex flex-wrap gap-2">
                     {(selectedApplication.candidate?.skills || [])
                       .map((cs) => cs?.skill?.name || "")
                       .filter((n) => n.trim().length > 0)
-                      .slice(0, 16)
+                      .slice(0, 12)
                       .map((name) => (
-                        <Badge key={`skill-${name}`} variant="outline">
+                        <Badge key={`skill-${name}`} variant="outline" className="text-xs border-indigo-200 dark:border-indigo-800">
                           {name}
                         </Badge>
                       ))}
                     {(selectedApplication.candidate?.skills || []).length === 0 && (
-                      <div className="text-sm text-muted-foreground">No skills yet.</div>
+                      <div className="text-sm text-muted-foreground">No skills listed</div>
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">Experience</div>
+
+                {/* Experience */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Briefcase className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">Experience</div>
+                  </div>
                   <div className="space-y-2">
                     {(selectedApplication.candidate?.experiences || []).slice(0, 3).map((exp) => (
-                      <div key={exp.id} className="rounded-md border bg-muted/20 p-3">
-                        <div className="text-sm font-medium">
-                          {exp.position} • {exp.companyName}
+                      <div key={exp.id} className="rounded-md border border-indigo-200/50 dark:border-indigo-800/50 bg-indigo-50/30 dark:bg-indigo-950/10 p-3">
+                        <div className="text-sm font-medium text-foreground">
+                          {exp.position}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {exp.companyName}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
                           {new Date(exp.startDate).toLocaleDateString()} –{" "}
                           {exp.isCurrent || !exp.endDate ? "Present" : new Date(exp.endDate).toLocaleDateString()}
                         </div>
                       </div>
                     ))}
                     {(selectedApplication.candidate?.experiences || []).length === 0 && (
-                      <div className="text-sm text-muted-foreground">No experience yet.</div>
+                      <div className="text-sm text-muted-foreground">No experience listed</div>
                     )}
                   </div>
                 </div>
               </div>
 
+              {/* Cover Letter */}
+              {selectedApplication.coverLetter && (
+                <div className="space-y-2 rounded-lg border border-amber-200/50 dark:border-amber-800/50 bg-gradient-to-br from-amber-50/20 to-background dark:from-amber-950/10 p-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-amber-200/50 dark:border-amber-800/50">
+                    <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <div className="text-sm font-semibold text-amber-900 dark:text-amber-100">Cover Letter</div>
+                  </div>
+                  <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                    {selectedApplication.coverLetter}
+                  </div>
+                </div>
+              )}
+
               {/* Recruiter Notes */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Recruiter Notes</div>
-                  <div className="text-xs text-muted-foreground">
+              <div className="space-y-3 rounded-lg border border-pink-200/50 dark:border-pink-800/50 bg-gradient-to-br from-pink-50/20 to-background dark:from-pink-950/10 p-4">
+                <div className="flex items-center justify-between pb-2 border-b border-pink-200/50 dark:border-pink-800/50">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+                    <div className="text-sm font-semibold text-pink-900 dark:text-pink-100">Recruiter Notes</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-pink-100/50 dark:bg-pink-950/30 px-2 py-1 rounded-full">
                     {(selectedApplication.notes || []).length} note{(selectedApplication.notes || []).length === 1 ? "" : "s"}
                   </div>
                 </div>
@@ -2168,25 +2574,29 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                   {(selectedApplication.notes || []).map((n) => {
                     const canEdit = recruiterProfileId && n.authorId === recruiterProfileId;
                     return (
-                      <div key={n.id} className="rounded-lg border bg-muted/20 p-3">
+                      <div key={n.id} className="rounded-lg border border-pink-200/50 dark:border-pink-800/50 bg-pink-50/30 dark:bg-pink-950/10 p-3">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(n.createdAt).toLocaleString()}
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-1.5 rounded-full bg-pink-500"></div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </div>
                           </div>
                           {canEdit && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 disabled={savingNote}
                                 onClick={() => handleStartEditNote(n.id, n.content)}
+                                className="h-7 px-2 text-xs"
                               >
                                 Edit
                               </Button>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-red-600 hover:text-red-700"
+                                className="text-red-600 hover:text-red-700 h-7 px-2 text-xs"
                                 disabled={savingNote}
                                 onClick={() => handleDeleteNote(n.id)}
                               >
@@ -2202,6 +2612,7 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                               value={editingNoteText}
                               onChange={(e) => setEditingNoteText(e.target.value)}
                               rows={3}
+                              className="text-sm"
                             />
                             <div className="flex justify-end gap-2">
                               <Button
@@ -2221,24 +2632,28 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
                             </div>
                           </div>
                         ) : (
-                          <div className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{n.content}</div>
+                          <div className="mt-2 whitespace-pre-line text-sm text-foreground leading-relaxed">{n.content}</div>
                         )}
                       </div>
                     );
                   })}
 
                   {(selectedApplication.notes || []).length === 0 && (
-                    <div className="text-sm text-muted-foreground">No notes yet.</div>
+                    <div className="text-sm text-muted-foreground text-center py-4">No notes yet.</div>
                   )}
                 </div>
 
-                <div className="space-y-2 rounded-lg border bg-background p-3">
-                  <div className="text-xs font-medium text-muted-foreground">Add note</div>
+                <div className="space-y-2 rounded-lg border border-pink-200/50 dark:border-pink-800/50 bg-background p-3">
+                  <div className="flex items-center gap-1.5">
+                    <Plus className="h-3.5 w-3.5 text-pink-600 dark:text-pink-400" />
+                    <div className="text-xs font-medium text-pink-700 dark:text-pink-400">Add note</div>
+                  </div>
                   <Textarea
                     value={noteDraft}
                     onChange={(e) => setNoteDraft(e.target.value)}
                     rows={3}
                     placeholder="Write an internal note for this candidate..."
+                    className="text-sm"
                   />
                   <div className="flex justify-end">
                     <Button size="sm" disabled={savingNote || noteDraft.trim().length === 0} onClick={handleAddNote}>
@@ -2249,12 +2664,15 @@ const RecruiterDashboard = ({ showOnly }: { showOnly?: "applications" | "company
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
+              <div className="flex justify-between items-center pt-4 border-t">
                 <Button
-                  variant="outline"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => navigate(`/recruiter/jobs/${selectedApplication.jobId}/applications`)}
+                  className="gap-2"
                 >
-                  View All Applications
+                  <ExternalLink className="h-4 w-4" />
+                  View Job Applications
                 </Button>
                 <Button
                   variant="outline"

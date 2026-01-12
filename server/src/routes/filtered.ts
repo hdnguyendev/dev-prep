@@ -147,6 +147,8 @@ filteredRoutes.get("/applications", async (c) => {
       }
     }
 
+    // Get applications with candidate and user data
+    // Use include: true instead of select to ensure relation is properly loaded
     const [data, total] = await Promise.all([
       prisma.application.findMany({
         where: whereClause,
@@ -156,22 +158,21 @@ filteredRoutes.get("/applications", async (c) => {
           job: {
             include: {
               company: true,
-              // include scalar fields like interviewQuestions by default
             },
           },
           candidate: {
             include: {
-              user: true,
-              skills: { include: { skill: true } },
+              user: true, // Use true instead of select to ensure relation loads properly
+              skills: { 
+                include: { skill: true } 
+              },
               experiences: true,
             },
           },
           interviews: {
-            // Include all interviews (PENDING, IN_PROGRESS, COMPLETED, etc.) so recruiters can see feedback
             orderBy: { createdAt: "desc" },
           },
           offers: {
-            // Include all offers so recruiters can manage them
             orderBy: { createdAt: "desc" },
           },
           notes: { orderBy: { createdAt: "desc" } },
@@ -181,9 +182,61 @@ filteredRoutes.get("/applications", async (c) => {
       prisma.application.count({ where: whereClause }),
     ]);
 
+    // Fix: Ensure user is loaded for each candidate
+    // If user is null but userId exists, fetch it separately
+    // This handles edge cases where Prisma include might not work correctly
+    const dataWithUsers = await Promise.all(
+      data.map(async (app) => {
+        if (app.candidate) {
+          // Debug: Log if user is null
+          if (!app.candidate.user) {
+            console.warn(`⚠️ Application ${app.id}: Candidate ${app.candidate.id} has user null`);
+            console.warn(`   - userId: ${app.candidate.userId}`);
+            console.warn(`   - candidate data:`, JSON.stringify({
+              id: app.candidate.id,
+              userId: app.candidate.userId,
+              hasUser: !!app.candidate.user,
+            }));
+          }
+          
+          // If user is null but userId exists, this is a data integrity issue
+          // Fetch user explicitly to fix it
+          if (!app.candidate.user && app.candidate.userId) {
+            try {
+              console.log(`🔍 Attempting to fetch user ${app.candidate.userId} for candidate ${app.candidate.id}...`);
+              const user = await prisma.user.findUnique({
+                where: { id: app.candidate.userId },
+              });
+              if (user) {
+                app.candidate.user = user;
+                console.log(`✅ Fixed: Loaded user ${user.email} for candidate ${app.candidate.id}`);
+              } else {
+                // User doesn't exist - this is a data integrity issue
+                // This shouldn't happen due to onDelete: Cascade, but handle it gracefully
+                console.error(`❌ Data integrity issue: CandidateProfile ${app.candidate.id} has userId ${app.candidate.userId} but User record doesn't exist`);
+                console.error(`   This is an orphaned CandidateProfile. Consider cleaning up the database.`);
+              }
+            } catch (error) {
+              console.error(`❌ Failed to fetch user ${app.candidate.userId} for candidate ${app.candidate.id}:`, error);
+              if (error instanceof Error) {
+                console.error(`   Error message: ${error.message}`);
+                console.error(`   Error stack: ${error.stack}`);
+              }
+            }
+          }
+          
+          // Final validation: If candidate exists, user should always exist
+          if (!app.candidate.user && app.candidate.userId) {
+            console.error(`⚠️ Final check failed: Candidate ${app.candidate.id} has userId ${app.candidate.userId} but user is still null after fetch attempt`);
+          }
+        }
+        return app;
+      })
+    );
+
     return c.json({
       success: true,
-      data,
+      data: dataWithUsers,
       meta: { total, page, pageSize: take },
     });
   } catch (error) {

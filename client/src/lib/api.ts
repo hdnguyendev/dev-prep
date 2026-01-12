@@ -247,6 +247,8 @@ type ListParams = {
   include?: string;
   q?: string;
   search?: string;
+  // Generic boolean / enum filters (used by CRUD routes, e.g. isVerified for companies)
+  isVerified?: boolean;
 };
 
 const buildQuery = (params?: Record<string, string | number | undefined>) => {
@@ -386,12 +388,20 @@ class ApiClient {
     return this.request<Job[]>(`/jobs${buildQuery(params)}`, {}, token);
   }
 
+  getJobSuggestions(query: string, token?: string) {
+    return this.request<string[]>(`/jobs/suggestions${buildQuery({ q: query })}`, {}, token);
+  }
+
   getJob(id: string, token?: string) {
     return this.request<Job>(`/jobs/${id}`, {}, token);
   }
 
   listCompanies(params?: ListParams, token?: string) {
     return this.request<Company[]>(`/companies${buildQuery(params)}`, {}, token);
+  }
+
+  getCompanySuggestions(query: string, token?: string) {
+    return this.request<string[]>(`/companies/suggestions${buildQuery({ q: query })}`, {}, token);
   }
 
   getCompanyBySlug(slug: string, token?: string) {
@@ -408,6 +418,10 @@ class ApiClient {
 
   listInterviews(params?: ListParams, token?: string) {
     return this.request<Interview[]>(`/interviews${buildQuery(params)}`, {}, token);
+  }
+
+  getInterview(interviewId: string, token?: string) {
+    return this.request<Interview>(`/interviews/${interviewId}`, {}, token);
   }
 
   getInterviewFeedback(interviewId: string, token?: string) {
@@ -899,9 +913,30 @@ class ApiClient {
     }>(`/membership/payment/${orderCode}/status`, { method: "GET" }, token);
   }
 
-
-
-
+  /**
+   * Generate a single interview question using AI
+   * @param params - Question generation parameters
+   * @param token - Authentication token
+   */
+  generateQuestion(
+    params: {
+      role: string;
+      type: string;
+      level: string;
+      techstack?: string;
+      existingQuestions?: string[];
+    },
+    token?: string
+  ) {
+    return this.request<{ question: string }>(
+      "/ai/generate-question",
+      {
+        method: "POST",
+        body: JSON.stringify(params),
+      },
+      token
+    );
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

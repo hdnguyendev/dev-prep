@@ -1,0 +1,110 @@
+graph TB
+    subgraph DEPLOY["🚀 Deployment"]
+        subgraph CF_PAGES["Cloudflare Pages"]
+            FE[React 19 + TypeScript<br/>Vite + Tailwind CSS<br/>React Router]
+            FE_AUTH[Clerk Authentication]
+            FE_VAPI[Vapi.ai SDK<br/>Voice Integration]
+        end
+        
+        subgraph CF_WORKERS["Cloudflare Workers"]
+            BE[Hono Framework<br/>Bun Runtime<br/>TypeScript]
+            BE_PRISMA[Prisma ORM]
+            BE_AUTH[Clerk Backend]
+        end
+        
+        subgraph NEON["Neon PostgreSQL"]
+            DB[(PostgreSQL<br/>Serverless Database)]
+        end
+        
+        subgraph CF_R2["Cloudflare R2"]
+            R2[Object Storage<br/>Resumes & Images]
+        end
+    end
+
+    subgraph AI_SERVICES["🤖 AI Services"]
+        VAPI[Vapi.ai<br/>Voice Orchestration]
+        GPT4[OpenAI GPT-4<br/>Conversation Engine]
+        GEMINI[Google Gemini 2.5 Flash<br/>Evaluation & Analysis]
+        DEEPGRAM[Deepgram Nova-2<br/>Speech-to-Text]
+        ELEVENLABS[11Labs<br/>Text-to-Speech]
+    end
+
+    subgraph F1_GROUP["🎯 Feature 1: Job Discovery & Matching<br/>(Intelligent Recommendation System)"]
+        F1[Rule-based Matching Algorithm]
+        F1_TECH[Tech Stack:<br/>Hono + Prisma + PostgreSQL<br/>7-Dimensional Scoring<br/>Skills, Experience, Title, Location]
+        F1 --> F1_TECH
+    end
+
+    subgraph F2_GROUP["🎤 Feature 2: Interview Practice & Simulation<br/>(AI Interview Assistant)"]
+        F2[Real-time Voice Interview]
+        F2_TECH[Tech Stack:<br/>Vapi.ai + GPT-4<br/>Deepgram + 11Labs<br/>React + Vapi SDK]
+        F2 --> F2_TECH
+    end
+
+    subgraph F3_GROUP["📊 Feature 3: Evaluation & Improvement<br/>(Intelligent Feedback System)"]
+        F3[Transcript Analysis & Feedback]
+        F3_TECH[Tech Stack:<br/>Google Gemini 2.5 Flash<br/>Hono + Prisma<br/>Structured JSON Response]
+        F3 --> F3_TECH
+    end
+
+    %% Frontend Structure
+    FE --> FE_AUTH
+    FE --> FE_VAPI
+
+    %% Backend Structure
+    BE --> BE_PRISMA
+    BE --> BE_AUTH
+
+    %% AI Services Connections
+    VAPI --> GPT4
+    VAPI --> DEEPGRAM
+    VAPI --> ELEVENLABS
+
+    %% Frontend to Backend
+    FE -->|HTTP/REST API| BE
+    FE_VAPI -->|WebRTC Voice Stream| VAPI
+
+    %% Backend to Database & Storage
+    BE_PRISMA -->|Query via Hyperdrive| DB
+    BE -->|Upload Files| R2
+
+    %% Feature 1: Job Matching Flow
+    FE -->|Request Matching| BE
+    BE -->|Execute Algorithm| F1
+    F1 -->|Store Match Scores| DB
+    F1 -->|Return Results| BE
+    BE -->|Display Jobs| FE
+
+    %% Feature 2: Interview Flow
+    FE -->|Start Interview| FE_VAPI
+    FE_VAPI -->|Voice Stream| VAPI
+    VAPI -->|Process Conversation| GPT4
+    VAPI -->|Transcribe Speech| DEEPGRAM
+    VAPI -->|Synthesize Voice| ELEVENLABS
+    VAPI -->|Store Transcript| BE
+    BE -->|Save Interview Data| DB
+
+    %% Feature 3: Evaluation Flow
+    BE -->|Send Transcript| GEMINI
+    GEMINI -->|Return Analysis| BE
+    BE -->|Store Feedback| DB
+    BE -->|Return Results| FE
+    FE -->|Display Feedback| F3
+
+    %% Styling
+    classDef frontend fill:#61dafb,stroke:#20232a,stroke-width:3px,color:#000
+    classDef backend fill:#00d8ff,stroke:#20232a,stroke-width:3px,color:#000
+    classDef database fill:#336791,stroke:#fff,stroke-width:3px,color:#fff
+    classDef storage fill:#f38020,stroke:#fff,stroke-width:3px,color:#fff
+    classDef ai fill:#ff6b6b,stroke:#fff,stroke-width:3px,color:#fff
+    classDef feature fill:#51cf66,stroke:#fff,stroke-width:3px,color:#000
+    classDef deploy fill:#ffd43b,stroke:#000,stroke-width:2px,color:#000
+
+    class FE,FE_AUTH,FE_VAPI frontend
+    class BE,BE_PRISMA,BE_AUTH backend
+    class DB database
+    class R2 storage
+    class VAPI,GPT4,GEMINI,DEEPGRAM,ELEVENLABS ai
+    class F1,F1_TECH,F2,F2_TECH,F3,F3_TECH feature
+    class CF_PAGES,CF_WORKERS,NEON,CF_R2 deploy
+

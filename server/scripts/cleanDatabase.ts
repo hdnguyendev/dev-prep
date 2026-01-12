@@ -2,152 +2,205 @@ import prisma from "../src/app/db/prisma";
 
 /**
  * Xóa toàn bộ dữ liệu trong database theo thứ tự để tránh lỗi foreign key constraints
+ * Script này sẽ xóa TẤT CẢ dữ liệu trong database, không thể hoàn tác!
  */
 async function cleanDatabase() {
   console.log("🧹 Bắt đầu xóa toàn bộ dữ liệu trong database...");
+  console.log("⚠️  CẢNH BÁO: Tất cả dữ liệu sẽ bị xóa vĩnh viễn!\n");
 
   try {
-    // Xóa theo thứ tự từ child tables đến parent tables
-    // 1. Interview related
-    console.log("📝 Đang xóa InterviewExchanges...");
-    const deletedExchanges = await prisma.interviewExchange.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedExchanges.count} InterviewExchanges`);
+    const results: Record<string, number> = {};
 
-    console.log("📝 Đang xóa Interviews...");
-    const deletedInterviews = await prisma.interview.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedInterviews.count} Interviews`);
+    // ============================================
+    // 1. INTERVIEW RELATED (Child tables first)
+    // ============================================
+    console.log("📝 [1/10] Đang xóa InterviewExchanges...");
+    results.interviewExchanges = (await prisma.interviewExchange.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.interviewExchanges} InterviewExchanges`);
 
-    // 2. Application related
-    console.log("📝 Đang xóa ApplicationNotes...");
-    const deletedNotes = await prisma.applicationNote.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedNotes.count} ApplicationNotes`);
+    console.log("📝 [1/10] Đang xóa Interviews...");
+    results.interviews = (await prisma.interview.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.interviews} Interviews`);
 
-    console.log("📝 Đang xóa ApplicationHistory...");
-    const deletedHistory = await prisma.applicationHistory.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedHistory.count} ApplicationHistory`);
+    // ============================================
+    // 2. APPLICATION RELATED
+    // ============================================
+    console.log("\n📝 [2/10] Đang xóa Offers...");
+    results.offers = (await prisma.offer.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.offers} Offers`);
 
-    console.log("📝 Đang xóa Applications...");
-    const deletedApplications = await prisma.application.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedApplications.count} Applications`);
+    console.log("📝 [2/10] Đang xóa ApplicationNotes...");
+    results.applicationNotes = (await prisma.applicationNote.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.applicationNotes} ApplicationNotes`);
 
-    // 3. Job related
-    console.log("📝 Đang xóa SavedJobs...");
-    const deletedSavedJobs = await prisma.savedJob.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedSavedJobs.count} SavedJobs`);
+    console.log("📝 [2/10] Đang xóa ApplicationHistory...");
+    results.applicationHistory = (await prisma.applicationHistory.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.applicationHistory} ApplicationHistory`);
 
-    console.log("📝 Đang xóa JobSkills...");
-    const deletedJobSkills = await prisma.jobSkill.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedJobSkills.count} JobSkills`);
+    console.log("📝 [2/10] Đang xóa Applications...");
+    results.applications = (await prisma.application.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.applications} Applications`);
 
-    console.log("📝 Đang xóa JobCategories...");
-    const deletedJobCategories = await prisma.jobCategory.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedJobCategories.count} JobCategories`);
+    // ============================================
+    // 3. JOB RELATED
+    // ============================================
+    console.log("\n📝 [3/10] Đang xóa SavedJobs...");
+    results.savedJobs = (await prisma.savedJob.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.savedJobs} SavedJobs`);
 
-    console.log("📝 Đang xóa Jobs...");
-    const deletedJobs = await prisma.job.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedJobs.count} Jobs`);
+    console.log("📝 [3/10] Đang xóa JobSkills...");
+    results.jobSkills = (await prisma.jobSkill.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.jobSkills} JobSkills`);
 
-    // 4. Company related
-    console.log("📝 Đang xóa CompanyReviews...");
-    const deletedReviews = await prisma.companyReview.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedReviews.count} CompanyReviews`);
+    console.log("📝 [3/10] Đang xóa JobCategories...");
+    results.jobCategories = (await prisma.jobCategory.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.jobCategories} JobCategories`);
 
-    console.log("📝 Đang xóa CompanyFollows...");
-    const deletedFollows = await prisma.companyFollow.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedFollows.count} CompanyFollows`);
+    console.log("📝 [3/10] Đang xóa Jobs...");
+    results.jobs = (await prisma.job.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.jobs} Jobs`);
 
-    // 5. Candidate Profile related
-    console.log("📝 Đang xóa CandidateSkills...");
-    const deletedCandidateSkills = await prisma.candidateSkill.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedCandidateSkills.count} CandidateSkills`);
+    // ============================================
+    // 4. COMPANY RELATED
+    // ============================================
+    console.log("\n📝 [4/10] Đang xóa CompanyReviews...");
+    results.companyReviews = (await prisma.companyReview.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.companyReviews} CompanyReviews`);
 
-    console.log("📝 Đang xóa Projects...");
-    const deletedProjects = await prisma.project.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedProjects.count} Projects`);
+    console.log("📝 [4/10] Đang xóa CompanyFollows...");
+    results.companyFollows = (await prisma.companyFollow.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.companyFollows} CompanyFollows`);
 
-    console.log("📝 Đang xóa Experiences...");
-    const deletedExperiences = await prisma.experience.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedExperiences.count} Experiences`);
+    // Xóa RecruiterProfiles TRƯỚC Companies vì có foreign key constraint
+    console.log("📝 [4/10] Đang xóa RecruiterProfiles...");
+    results.recruiterProfiles = (await prisma.recruiterProfile.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.recruiterProfiles} RecruiterProfiles`);
 
-    console.log("📝 Đang xóa Education...");
-    const deletedEducation = await prisma.education.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedEducation.count} Education`);
+    console.log("📝 [4/10] Đang xóa Companies...");
+    results.companies = (await prisma.company.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.companies} Companies`);
 
-    console.log("📝 Đang xóa CandidateProfiles...");
-    const deletedCandidateProfiles = await prisma.candidateProfile.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedCandidateProfiles.count} CandidateProfiles`);
+    // ============================================
+    // 5. CANDIDATE PROFILE RELATED
+    // ============================================
+    console.log("\n📝 [5/10] Đang xóa CandidateSkills...");
+    results.candidateSkills = (await prisma.candidateSkill.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.candidateSkills} CandidateSkills`);
 
-    // 6. Recruiter Profile related
-    console.log("📝 Đang xóa RecruiterProfiles...");
-    const deletedRecruiterProfiles = await prisma.recruiterProfile.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedRecruiterProfiles.count} RecruiterProfiles`);
+    console.log("📝 [5/10] Đang xóa Projects...");
+    results.projects = (await prisma.project.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.projects} Projects`);
 
-    // 7. Company
-    console.log("📝 Đang xóa Companies...");
-    const deletedCompanies = await prisma.company.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedCompanies.count} Companies`);
+    console.log("📝 [5/10] Đang xóa Experiences...");
+    results.experiences = (await prisma.experience.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.experiences} Experiences`);
 
-    // 8. Skills & Categories (independent)
-    console.log("📝 Đang xóa Skills...");
-    const deletedSkills = await prisma.skill.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedSkills.count} Skills`);
+    console.log("📝 [5/10] Đang xóa Education...");
+    results.education = (await prisma.education.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.education} Education`);
 
-    console.log("📝 Đang xóa Categories...");
-    const deletedCategories = await prisma.category.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedCategories.count} Categories`);
+    console.log("📝 [5/10] Đang xóa CandidateProfiles...");
+    results.candidateProfiles = (await prisma.candidateProfile.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.candidateProfiles} CandidateProfiles`);
 
-    // 9. Messages & Notifications
-    console.log("📝 Đang xóa Messages...");
-    const deletedMessages = await prisma.message.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedMessages.count} Messages`);
+    // ============================================
+    // 6. MEMBERSHIP & PAYMENT RELATED
+    // ============================================
+    console.log("\n📝 [6/10] Đang xóa PaymentTransactions...");
+    results.paymentTransactions = (await prisma.paymentTransaction.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.paymentTransactions} PaymentTransactions`);
 
-    console.log("📝 Đang xóa Notifications...");
-    const deletedNotifications = await prisma.notification.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedNotifications.count} Notifications`);
+    console.log("📝 [6/10] Đang xóa UserMemberships...");
+    results.userMemberships = (await prisma.userMembership.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.userMemberships} UserMemberships`);
 
-    // 10. QuestionBank
-    console.log("📝 Đang xóa QuestionBank...");
-    const deletedQuestionBank = await prisma.questionBank.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedQuestionBank.count} QuestionBank entries`);
+    console.log("📝 [6/10] Đang xóa MembershipPlans...");
+    results.membershipPlans = (await prisma.membershipPlan.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.membershipPlans} MembershipPlans`);
 
-    // 11. Users (cuối cùng vì nhiều bảng phụ thuộc)
-    console.log("📝 Đang xóa Users...");
-    const deletedUsers = await prisma.user.deleteMany({});
-    console.log(`   ✅ Đã xóa ${deletedUsers.count} Users`);
+    // ============================================
+    // 7. SKILLS & CATEGORIES (Independent)
+    // ============================================
+    console.log("\n📝 [7/10] Đang xóa Skills...");
+    results.skills = (await prisma.skill.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.skills} Skills`);
 
-    // Tổng kết
-    const totalDeleted =
-      deletedExchanges.count +
-      deletedInterviews.count +
-      deletedNotes.count +
-      deletedHistory.count +
-      deletedApplications.count +
-      deletedSavedJobs.count +
-      deletedJobSkills.count +
-      deletedJobCategories.count +
-      deletedJobs.count +
-      deletedReviews.count +
-      deletedFollows.count +
-      deletedCandidateSkills.count +
-      deletedProjects.count +
-      deletedExperiences.count +
-      deletedEducation.count +
-      deletedCandidateProfiles.count +
-      deletedRecruiterProfiles.count +
-      deletedCompanies.count +
-      deletedSkills.count +
-      deletedCategories.count +
-      deletedMessages.count +
-      deletedNotifications.count +
-      deletedQuestionBank.count +
-      deletedUsers.count;
+    console.log("📝 [7/10] Đang xóa Categories...");
+    results.categories = (await prisma.category.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.categories} Categories`);
 
-    console.log("\n✅ Hoàn thành! Đã xóa toàn bộ dữ liệu trong database.");
-    console.log(`📊 Tổng số bản ghi đã xóa: ${totalDeleted}`);
+    // ============================================
+    // 8. MESSAGES & NOTIFICATIONS
+    // ============================================
+    console.log("\n📝 [8/10] Đang xóa Messages...");
+    results.messages = (await prisma.message.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.messages} Messages`);
+
+    console.log("📝 [8/10] Đang xóa Notifications...");
+    results.notifications = (await prisma.notification.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.notifications} Notifications`);
+
+    // ============================================
+    // 9. QUESTION BANK
+    // ============================================
+    console.log("\n📝 [9/10] Đang xóa QuestionBank...");
+    results.questionBank = (await prisma.questionBank.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.questionBank} QuestionBank entries`);
+
+    // ============================================
+    // 10. USERS (Cuối cùng vì nhiều bảng phụ thuộc)
+    // ============================================
+    console.log("\n📝 [10/10] Đang xóa Users...");
+    results.users = (await prisma.user.deleteMany({})).count;
+    console.log(`   ✅ Đã xóa ${results.users} Users`);
+
+    // ============================================
+    // TỔNG KẾT
+    // ============================================
+    const totalDeleted = Object.values(results).reduce((sum, count) => sum + count, 0);
+
+    console.log("\n" + "=".repeat(60));
+    console.log("✅ HOÀN THÀNH! Đã xóa toàn bộ dữ liệu trong database.");
+    console.log("=".repeat(60));
+    console.log("\n📊 Chi tiết số bản ghi đã xóa:");
+    console.log("   - InterviewExchanges:     ", results.interviewExchanges);
+    console.log("   - Interviews:              ", results.interviews);
+    console.log("   - Offers:                  ", results.offers);
+    console.log("   - ApplicationNotes:        ", results.applicationNotes);
+    console.log("   - ApplicationHistory:      ", results.applicationHistory);
+    console.log("   - Applications:            ", results.applications);
+    console.log("   - SavedJobs:               ", results.savedJobs);
+    console.log("   - JobSkills:               ", results.jobSkills);
+    console.log("   - JobCategories:            ", results.jobCategories);
+    console.log("   - Jobs:                    ", results.jobs);
+    console.log("   - CompanyReviews:         ", results.companyReviews);
+    console.log("   - CompanyFollows:          ", results.companyFollows);
+    console.log("   - RecruiterProfiles:        ", results.recruiterProfiles);
+    console.log("   - Companies:               ", results.companies);
+    console.log("   - CandidateSkills:         ", results.candidateSkills);
+    console.log("   - Projects:                ", results.projects);
+    console.log("   - Experiences:             ", results.experiences);
+    console.log("   - Education:               ", results.education);
+    console.log("   - CandidateProfiles:       ", results.candidateProfiles);
+    console.log("   - PaymentTransactions:     ", results.paymentTransactions);
+    console.log("   - UserMemberships:         ", results.userMemberships);
+    console.log("   - MembershipPlans:         ", results.membershipPlans);
+    console.log("   - Skills:                  ", results.skills);
+    console.log("   - Categories:              ", results.categories);
+    console.log("   - Messages:                 ", results.messages);
+    console.log("   - Notifications:           ", results.notifications);
+    console.log("   - QuestionBank:            ", results.questionBank);
+    console.log("   - Users:                    ", results.users);
+    console.log("\n📈 Tổng số bản ghi đã xóa: ", totalDeleted);
     console.log("\n💡 Database hiện tại đã trống và sẵn sàng để seed dữ liệu mới.");
+    console.log("💡 Bạn có thể chạy seed scripts để tạo dữ liệu mẫu.");
 
   } catch (error) {
-    console.error("❌ Lỗi khi xóa dữ liệu:", error);
+    console.error("\n❌ Lỗi khi xóa dữ liệu:", error);
+    if (error instanceof Error) {
+      console.error("   Message:", error.message);
+      console.error("   Stack:", error.stack);
+    }
     throw error;
   } finally {
     await prisma.$disconnect();

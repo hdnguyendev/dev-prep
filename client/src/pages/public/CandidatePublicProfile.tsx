@@ -1,29 +1,129 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   ExternalLink, 
-  User, 
   Globe, 
   Linkedin, 
   Github, 
   FileText, 
-  Briefcase, 
   MapPin, 
   Calendar, 
-  Sparkles,
   Loader2,
   Eye,
   Mail,
-  GraduationCap,
-  Code
+  Phone,
+  Download
 } from "lucide-react";
 import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
 import { getCurrentUser } from "@/lib/auth";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
+
+// Function to download profile as PDF with enhanced color rendering
+const downloadProfileAsPDF = async (fullName: string) => {
+  try {
+    // Dynamic import html2pdf
+    const html2pdf = (await import('html2pdf.js')).default;
+    
+    const element = document.getElementById('profile-content');
+    if (!element) {
+      alert('Không tìm thấy nội dung profile để tải xuống');
+      return;
+    }
+
+    // Add print styles to ensure colors are preserved
+    const printStyle = document.createElement('style');
+    printStyle.id = 'pdf-print-styles';
+    printStyle.textContent = `
+      #profile-content * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+    `;
+    if (!document.getElementById('pdf-print-styles')) {
+      document.head.appendChild(printStyle);
+    }
+
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: `${fullName.replace(/\s+/g, '_')}_Profile.pdf`,
+      image: { 
+        type: 'jpeg', 
+        quality: 1.0  // Maximum quality
+      },
+      html2canvas: { 
+        scale: 3,  // Higher scale for better quality and colors
+        useCORS: true,
+        logging: false,
+        letterRendering: true,
+        backgroundColor: '#ffffff',
+        removeContainer: false,
+        allowTaint: true,
+        foreignObjectRendering: true,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        onclone: (clonedDoc: Document) => {
+          // Force all colors to be preserved in the cloned document
+          const clonedElement = clonedDoc.getElementById('profile-content');
+          if (clonedElement) {
+            // Apply color preservation to all elements
+            const allElements = clonedElement.querySelectorAll('*');
+            allElements.forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              const computedStyle = window.getComputedStyle(el as Element);
+              
+              // Preserve all color-related styles
+              htmlEl.style.color = computedStyle.color;
+              htmlEl.style.backgroundColor = computedStyle.backgroundColor;
+              
+              // Preserve border colors
+              if (computedStyle.borderColor && computedStyle.borderColor !== 'rgba(0, 0, 0, 0)') {
+                htmlEl.style.borderColor = computedStyle.borderColor;
+              }
+              
+              // Preserve gradient backgrounds by converting to solid colors where possible
+              const bgImage = computedStyle.backgroundImage;
+              if (bgImage && bgImage !== 'none') {
+                // Keep gradient if it's a linear gradient
+                htmlEl.style.backgroundImage = bgImage;
+              }
+              
+              // Ensure text colors are preserved
+              htmlEl.style.webkitPrintColorAdjust = 'exact';
+              htmlEl.style.printColorAdjust = 'exact';
+              htmlEl.style.colorAdjust = 'exact';
+            });
+          }
+        }
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait',
+        compress: false  // Don't compress to maintain quality
+      },
+      pagebreak: { 
+        mode: ['avoid-all', 'css', 'legacy'],
+        avoid: ['.border-b', 'section', 'h2', 'h3']
+      }
+    };
+
+    await html2pdf().set(opt).from(element).save();
+    
+    // Cleanup
+    if (document.getElementById('pdf-print-styles')) {
+      document.head.removeChild(printStyle);
+    }
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    // Fallback: Use browser print
+    window.print();
+  }
+};
 
 type CandidateSkill = { id: string; skillId: string; level?: string | null; skill?: { id: string; name: string } };
 type Experience = {
@@ -36,6 +136,7 @@ type Experience = {
   isCurrent?: boolean;
   description?: string | null;
 };
+
 type Education = {
   id: string;
   institution: string;
@@ -73,6 +174,7 @@ type CandidateProfile = {
     email?: string;
     notificationEmail?: string | null;
     avatarUrl?: string | null;
+    phone?: string | null;
   };
   skills?: CandidateSkill[];
   experiences?: Experience[];
@@ -89,6 +191,7 @@ export default function CandidatePublicProfile() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [canView, setCanView] = useState<boolean>(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   const fullName = useMemo(() => {
     const fn = profile?.user?.firstName ?? "";
@@ -152,8 +255,8 @@ export default function CandidatePublicProfile() {
 
   if (loading) {
     return (
-      <main className="min-h-dvh bg-muted/40 py-8">
-        <div className="container mx-auto px-4">
+      <main className="min-h-dvh bg-white dark:bg-gray-950 py-8">
+        <div className="container mx-auto px-4 max-w-4xl">
           <Card>
             <CardContent className="py-12 flex items-center justify-center">
               <div className="flex flex-col items-center gap-3">
@@ -169,15 +272,12 @@ export default function CandidatePublicProfile() {
 
   if (!canView || error || !profile) {
     return (
-      <main className="min-h-dvh bg-muted/40 py-8">
-        <div className="container mx-auto px-4">
+      <main className="min-h-dvh bg-white dark:bg-gray-950 py-8">
+        <div className="container mx-auto px-4 max-w-4xl">
           <Card className="border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20">
-            <CardHeader>
-              <CardTitle className="text-red-700 dark:text-red-400">Profile Unavailable</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="py-12 space-y-4 text-center">
               <div className="text-sm text-red-600 dark:text-red-400">{error || "Profile not found or not available"}</div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center">
                 <SignedOut>
                   <Button variant="outline" onClick={() => (window.location.href = "/login")}>
                     Login
@@ -199,419 +299,392 @@ export default function CandidatePublicProfile() {
   const skills = profile.skills || [];
   const experiences = profile.experiences || [];
   const sortedExperiences = [...experiences].sort((a, b) => (a.startDate < b.startDate ? 1 : -1));
+  const educations = profile.educations || [];
+  const sortedEducations = [...educations].sort((a, b) => (a.startDate < b.startDate ? 1 : -1));
+  const projects = profile.projects || [];
+  const sortedProjects = [...projects].sort((a, b) => {
+    const aDate = a.startDate || "";
+    const bDate = b.startDate || "";
+    return aDate < bDate ? 1 : -1;
+  });
 
   return (
-    <main className="min-h-dvh bg-muted/40 py-8">
-      <div className="container mx-auto px-4">
-        <div className="space-y-6">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {profile.user?.avatarUrl ? (
-                <div className="relative">
-                  <img
-                    src={profile.user.avatarUrl}
-                    alt={`${fullName} avatar`}
-                    className="h-20 w-20 rounded-full object-cover border-4 border-primary/20 shadow-lg"
-                    draggable={false}
-                  />
-                  <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-green-500 border-2 border-background"></div>
-                </div>
-              ) : (
-                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center border-4 border-primary/20 shadow-lg">
-                  <div className="text-2xl font-semibold text-white">
-                    {(fullName || "C")
-                      .split(" ")
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((s) => s[0]?.toUpperCase())
-                      .join("")}
+    <main className="min-h-dvh bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-8 print:py-0 print:bg-white">
+      <div className="container mx-auto px-4 max-w-4xl print:max-w-full print:px-8">
+        {/* CV Document */}
+        <Card id="profile-content" className="border border-gray-200 dark:border-gray-800 shadow-xl print:shadow-none bg-white dark:bg-gray-900 overflow-hidden relative">
+          {/* Decorative top border */}
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 print:hidden"></div>
+          <CardContent className="p-6 print:p-4 space-y-5 relative">
+            {/* Header - CV Style */}
+            <div className="border-b border-gray-200 dark:border-gray-800 pb-5 mb-5">
+              <div className="flex items-start justify-between gap-6 mb-4">
+                {/* Avatar and Name Section */}
+                <div className="flex items-start gap-4 flex-1">
+                  {/* Avatar */}
+                  {profile.user?.avatarUrl ? (
+                    <div className="relative flex-shrink-0 group">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity blur-sm print:hidden"></div>
+                      <img
+                        src={profile.user.avatarUrl}
+                        alt={`${fullName} avatar`}
+                        className="relative h-20 w-20 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700 shadow-md group-hover:shadow-lg transition-all print:h-16 print:w-16"
+                        draggable={false}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-20 w-20 rounded-lg bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center border-2 border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow print:h-16 print:w-16">
+                      <div className="text-xl font-semibold text-white print:text-lg">
+                        {(fullName || "C")
+                          .split(" ")
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((s) => s[0]?.toUpperCase())
+                          .join("")}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Name and Headline */}
+                  <div className="flex-1 pt-0.5">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1.5 print:text-xl">
+                      {fullName}
+                    </h1>
+                    {profile.headline && (
+                      <p className="text-base text-gray-600 dark:text-gray-400 font-medium mb-2 print:text-sm">
+                        {profile.headline}
+                      </p>
+                    )}
                   </div>
                 </div>
-              )}
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">{fullName}</h1>
-                {profile.headline ? (
-                  <p className="text-sm text-muted-foreground mt-1">{profile.headline}</p>
-                ) : null}
-                {profile.address && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {profile.address}
+                
+                {/* Actions */}
+                <div className="flex flex-col items-end gap-1.5 print:hidden">
+                  <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs">
+                    <Eye className="h-3 w-3" />
+                    Public Profile
+                  </Badge>
+                  <div className="flex gap-1.5">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-1.5 h-8 text-xs px-3"
+                      onClick={async () => {
+                        setDownloadingPDF(true);
+                        try {
+                          await downloadProfileAsPDF(fullName);
+                        } catch (error) {
+                          console.error('Failed to download PDF:', error);
+                          alert('Không thể tải xuống PDF. Vui lòng thử lại.');
+                        } finally {
+                          setDownloadingPDF(false);
+                        }
+                      }}
+                      disabled={downloadingPDF}
+                    >
+                      {downloadingPDF ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Đang tạo PDF...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-3 w-3" />
+                          Download PDF
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {profile.cvUrl && (
+                    <a
+                      href={profile.cvUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200/50 dark:border-orange-800/50 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-900/50 dark:hover:to-amber-900/50 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-sm transition-all group"
+                    >
+                      <div className="p-1 rounded-md bg-orange-500/10 dark:bg-orange-400/10 group-hover:bg-orange-500/20 dark:group-hover:bg-orange-400/20 transition-colors">
+                        <FileText className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-orange-700 dark:group-hover:text-orange-300 transition-colors">
+                        View Resume
+                      </span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-4">
+                {/* Contact Details: Email, Phone, Address - Enhanced styling */}
+                {(profile.user?.notificationEmail || profile.user?.email || profile.user?.phone || profile.address) && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {profile.user?.notificationEmail && (
+                      <a 
+                        href={`mailto:${profile.user.notificationEmail}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-800/50 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/50 dark:hover:to-indigo-900/50 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all group"
+                      >
+                        <div className="p-1.5 rounded-md bg-blue-500/10 dark:bg-blue-400/10 group-hover:bg-blue-500/20 dark:group-hover:bg-blue-400/20 transition-colors">
+                          <Mail className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                          {profile.user.notificationEmail}
+                        </span>
+                      </a>
+                    )}
+                    {profile.user?.email && profile.user.email !== profile.user?.notificationEmail && (
+                      <a 
+                        href={`mailto:${profile.user.email}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200/50 dark:border-indigo-800/50 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/50 dark:hover:to-purple-900/50 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group"
+                      >
+                        <div className="p-1.5 rounded-md bg-indigo-500/10 dark:bg-indigo-400/10 group-hover:bg-indigo-500/20 dark:group-hover:bg-indigo-400/20 transition-colors">
+                          <Mail className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">
+                          {profile.user.email}
+                        </span>
+                      </a>
+                    )}
+                    {profile.user?.phone && (
+                      <a 
+                        href={`tel:${profile.user.phone}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200/50 dark:border-purple-800/50 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/50 dark:hover:to-pink-900/50 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-sm transition-all group"
+                      >
+                        <div className="p-1.5 rounded-md bg-purple-500/10 dark:bg-purple-400/10 group-hover:bg-purple-500/20 dark:group-hover:bg-purple-400/20 transition-colors">
+                          <Phone className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                          {profile.user.phone}
+                        </span>
+                      </a>
+                    )}
+                    {profile.address && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200/50 dark:border-green-800/50 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/50 dark:hover:to-emerald-900/50 hover:border-green-300 dark:hover:border-green-700 hover:shadow-sm transition-all group">
+                        <div className="p-1.5 rounded-md bg-green-500/10 dark:bg-green-400/10 group-hover:bg-green-500/20 dark:group-hover:bg-green-400/20 transition-colors">
+                          <MapPin className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          {profile.address}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
-                {profile.user?.notificationEmail && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                    <Mail className="h-3.5 w-3.5" />
-                    {profile.user.notificationEmail}
+
+                {/* Social Links: Website, LinkedIn, GitHub - No header, subtle styling */}
+                {(profile.website || profile.linkedin || profile.github) && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {profile.website && (
+                      <a 
+                        href={profile.website} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50/50 dark:bg-gray-900/30 border border-gray-200/50 dark:border-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm transition-all group"
+                      >
+                        <Globe className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                          {profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                        </span>
+                      </a>
+                    )}
+                    {profile.linkedin && (
+                      <a 
+                        href={profile.linkedin} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50/50 dark:bg-gray-900/30 border border-gray-200/50 dark:border-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm transition-all group"
+                      >
+                        <Linkedin className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          LinkedIn
+                        </span>
+                      </a>
+                    )}
+                    {profile.github && (
+                      <a 
+                        href={profile.github} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50/50 dark:bg-gray-900/30 border border-gray-200/50 dark:border-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm transition-all group"
+                      >
+                        <Github className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
+                          GitHub
+                        </span>
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
             </div>
-            <Badge variant="outline" className="gap-2 px-3 py-1.5">
-              <Eye className="h-3.5 w-3.5" />
-              Public Profile
-            </Badge>
-          </div>
 
-          {/* Layout 2 columns */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* About Section */}
-              <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/30 via-background to-background dark:from-blue-950/10">
-                <CardHeader className="border-b border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    <CardTitle className="text-lg text-blue-700 dark:text-blue-400">About</CardTitle>
-                  </div>
-                  <CardDescription>Professional summary and contact information</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-6">
-                  {profile.bio ? (
-                    <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
-                      {profile.bio}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground italic">No bio available</div>
-                  )}
+            {/* Professional Summary */}
+            {profile.bio && (
+              <section className="mb-5">
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {profile.bio}
+                </p>
+              </section>
+            )}
 
-                  {/* CV Section */}
-                  {profile.cvUrl && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                      <FileText className="h-5 w-5 text-primary" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs text-muted-foreground mb-1">Resume / CV</div>
-                        <Button asChild variant="default" size="sm" className="gap-2">
-                          <a href={profile.cvUrl} target="_blank" rel="noreferrer">
-                            <FileText className="h-3.5 w-3.5" />
-                            View CV
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Social Links */}
-                  {(profile.website || profile.linkedin || profile.github) && (
-                    <div className="space-y-2">
-                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Links</div>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.website && (
-                          <Button asChild variant="outline" size="sm" className="gap-2">
-                            <a href={profile.website} target="_blank" rel="noreferrer">
-                              <Globe className="h-3.5 w-3.5" />
-                              Website
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
-                        )}
-                        {profile.linkedin && (
-                          <Button asChild variant="outline" size="sm" className="gap-2">
-                            <a href={profile.linkedin} target="_blank" rel="noreferrer">
-                              <Linkedin className="h-3.5 w-3.5" />
-                              LinkedIn
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
-                        )}
-                        {profile.github && (
-                          <Button asChild variant="outline" size="sm" className="gap-2">
-                            <a href={profile.github} target="_blank" rel="noreferrer">
-                              <Github className="h-3.5 w-3.5" />
-                              GitHub
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Experience Section */}
-              <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/30 via-background to-background dark:from-amber-950/10">
-                <CardHeader className="border-b border-amber-200 dark:border-amber-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                      <CardTitle className="text-lg text-amber-700 dark:text-amber-400">Experience</CardTitle>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {sortedExperiences.length} {sortedExperiences.length === 1 ? 'entry' : 'entries'}
-                    </Badge>
-                  </div>
-                  <CardDescription>Work experience and professional background</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-6">
-                  {sortedExperiences.length === 0 ? (
-                    <div className="text-center py-8 rounded-lg border-2 border-dashed border-amber-200 dark:border-amber-800 bg-amber-50/20 dark:bg-amber-950/10">
-                      <Briefcase className="h-12 w-12 mx-auto text-amber-400 mb-3" />
-                      <div className="text-sm text-muted-foreground">No experience listed</div>
-                    </div>
-                  ) : (
-                    sortedExperiences.map((exp, index) => (
-                      <Card
-                        key={exp.id}
-                        className={`border-2 transition-all hover:shadow-md ${
-                          index % 3 === 0 ? 'border-blue-200 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-950/10' :
-                          index % 3 === 1 ? 'border-purple-200 dark:border-purple-800 bg-purple-50/30 dark:bg-purple-950/10' :
-                          'border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-950/10'
-                        }`}
-                      >
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className={`h-3 w-3 rounded-full ${
-                                  index % 3 === 0 ? 'bg-blue-500' :
-                                  index % 3 === 1 ? 'bg-purple-500' :
-                                  'bg-green-500'
-                                }`} />
-                                <div className="text-base font-semibold text-foreground">
-                                  {exp.position}
-                                </div>
-                              </div>
-                              <div className="text-sm font-medium text-primary mb-2">
-                                {exp.companyName}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-2">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} –{" "}
-                                  {exp.isCurrent || !exp.endDate ? (
-                                    <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">Present</Badge>
-                                  ) : (
-                                    new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                                  )}
-                                </div>
-                                {exp.location && (
-                                  <div className="flex items-center gap-1">
-                                    <MapPin className="h-3 w-3" />
-                                    {exp.location}
-                                  </div>
-                                )}
-                              </div>
-                              {exp.description && (
-                                <div className="mt-3 text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                                  {exp.description}
-                                </div>
-                              )}
-                            </div>
-                            {exp.isCurrent && (
-                              <Badge variant="default" className="whitespace-nowrap">
-                                Current
-                              </Badge>
+            {/* Experience */}
+            {sortedExperiences.length > 0 && (
+              <section className="mb-5">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 pb-1.5 border-b border-amber-200 dark:border-amber-800 print:text-sm print:border-gray-300">
+                  Professional Experience
+                </h2>
+                <div className="space-y-3">
+                  {sortedExperiences.map((exp, idx) => (
+                    <div key={exp.id} className="relative pl-6 border-l-2 border-amber-300 dark:border-amber-700 pb-4 last:pb-0 group hover:border-amber-400 dark:hover:border-amber-600 transition-colors">
+                      <div className="absolute -left-2.5 top-0 h-3.5 w-3.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border-2 border-white dark:border-gray-900 shadow-sm group-hover:scale-110 transition-all print:h-2 print:w-2 print:border-gray-300"></div>
+                      <div className="p-3 rounded-lg bg-gradient-to-r from-amber-50/40 via-orange-50/20 to-transparent dark:from-amber-950/20 dark:via-orange-950/10 border border-amber-100 dark:border-amber-900/30 hover:shadow-sm hover:border-amber-200 dark:hover:border-amber-800 transition-all print:bg-transparent print:border-0 print:p-0">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 mb-2">
+                          <div className="flex-1">
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-0.5 print:text-xs">
+                              {exp.position}
+                            </h3>
+                            <p className="text-xs font-medium text-amber-700 dark:text-amber-400 print:text-xs">
+                              {exp.companyName}
+                            </p>
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap font-medium print:text-xs">
+                            {new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} –{" "}
+                            {exp.isCurrent || !exp.endDate ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-xs font-semibold shadow-sm">Present</span>
+                            ) : (
+                              new Date(exp.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
                             )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
+                        </div>
+                        {exp.location && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-1 print:text-xs">
+                            <MapPin className="h-3 w-3 text-amber-500" />
+                            {exp.location}
+                          </p>
+                        )}
+                        {exp.description && (
+                          <ul className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed space-y-1 mt-2 print:text-xs">
+                            {exp.description.split('\n').filter(Boolean).map((line, idx) => (
+                              <li key={idx} className="flex items-start gap-3">
+                                <span className="text-amber-500 dark:text-amber-400 mt-1.5 font-bold">•</span>
+                                <span className="flex-1">{line.trim()}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
-              {/* Education Section */}
-              <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/30 via-background to-background dark:from-purple-950/10">
-                <CardHeader className="border-b border-purple-200 dark:border-purple-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                      <CardTitle className="text-lg text-purple-700 dark:text-purple-400">Education</CardTitle>
+            {/* Education */}
+            {sortedEducations.length > 0 && (
+              <section className="mb-5">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 pb-1.5 border-b border-purple-200 dark:border-purple-800 print:text-sm print:border-gray-300">
+                  Education
+                </h2>
+                <div className="space-y-3">
+                  {sortedEducations.map((edu, idx) => (
+                    <div key={edu.id} className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 p-3 rounded-lg bg-gradient-to-r from-purple-50/40 via-pink-50/20 to-transparent dark:from-purple-950/20 dark:via-pink-950/10 border border-purple-100 dark:border-purple-900/30 hover:shadow-sm hover:border-purple-200 dark:hover:border-purple-800 transition-all print:bg-transparent print:border-0 print:p-0">
+                      <div className="flex-1">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-0.5 print:text-xs">
+                          {edu.institution}
+                        </h3>
+                        {(edu.degree || edu.fieldOfStudy) && (
+                          <p className="text-xs text-purple-700 dark:text-purple-400 font-medium print:text-xs print:text-gray-700">
+                            {[edu.degree, edu.fieldOfStudy].filter(Boolean).join(" • ")}
+                          </p>
+                        )}
+                        {edu.grade && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 font-medium print:text-xs print:bg-transparent print:p-0">
+                            Grade: {edu.grade}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap font-medium print:text-xs">
+                        {new Date(edu.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} –{" "}
+                        {edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Present"}
+                      </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {(profile.educations || []).length} {(profile.educations || []).length === 1 ? 'entry' : 'entries'}
-                    </Badge>
-                  </div>
-                  <CardDescription>Educational background</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-6">
-                  {(profile.educations || []).length === 0 ? (
-                    <div className="text-center py-8 rounded-lg border-2 border-dashed border-purple-200 dark:border-purple-800 bg-purple-50/20 dark:bg-purple-950/10">
-                      <GraduationCap className="h-12 w-12 mx-auto text-purple-400 mb-3" />
-                      <div className="text-sm text-muted-foreground">No education listed</div>
-                    </div>
-                  ) : (
-                    [...(profile.educations || [])]
-                      .sort((a, b) => (a.startDate < b.startDate ? 1 : -1))
-                      .map((edu, index) => (
-                        <Card
-                          key={edu.id}
-                          className={`border-2 transition-all hover:shadow-md ${
-                            index % 2 === 0 ? 'border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/10' :
-                            'border-pink-200 dark:border-pink-800 bg-pink-50/30 dark:bg-pink-950/10'
-                          }`}
-                        >
-                          <CardContent className="pt-6">
-                            <div className="flex items-start gap-3">
-                              <div className={`h-3 w-3 rounded-full mt-1.5 ${index % 2 === 0 ? 'bg-indigo-500' : 'bg-pink-500'}`} />
-                              <div className="flex-1">
-                                <div className="text-base font-semibold text-foreground mb-1">
-                                  {edu.institution}
-                                </div>
-                                {(edu.degree || edu.fieldOfStudy) && (
-                                  <div className="text-sm font-medium text-primary mb-2">
-                                    {[edu.degree, edu.fieldOfStudy].filter(Boolean).join(" • ")}
-                                  </div>
-                                )}
-                                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                                  <div className="flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" />
-                                    {new Date(edu.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} –{" "}
-                                    {edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Present"}
-                                  </div>
-                                  {edu.grade && (
-                                    <div className="flex items-center gap-1">
-                                      <Sparkles className="h-3 w-3" />
-                                      {edu.grade}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                  )}
-                </CardContent>
-              </Card>
+                  ))}
+                </div>
+              </section>
+            )}
 
-              {/* Projects Section */}
-              <Card className="border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50/30 via-background to-background dark:from-cyan-950/10">
-                <CardHeader className="border-b border-cyan-200 dark:border-cyan-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Code className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-                      <CardTitle className="text-lg text-cyan-700 dark:text-cyan-400">Projects</CardTitle>
+            {/* Projects */}
+            {sortedProjects.length > 0 && (
+              <section className="mb-5">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 pb-1.5 border-b border-cyan-200 dark:border-cyan-800 print:text-sm print:border-gray-300">
+                  Projects
+                </h2>
+                <div className="space-y-3">
+                  {sortedProjects.map((proj, idx) => (
+                    <div key={proj.id} className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 p-3 rounded-lg bg-gradient-to-r from-cyan-50/40 via-teal-50/20 to-transparent dark:from-cyan-950/20 dark:via-teal-950/10 border border-cyan-100 dark:border-cyan-900/30 hover:shadow-sm hover:border-cyan-200 dark:hover:border-cyan-800 transition-all print:bg-transparent print:border-0 print:p-0">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white print:text-xs">
+                            {proj.name}
+                          </h3>
+                          {proj.url && (
+                            <a href={proj.url} target="_blank" rel="noreferrer" className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors print:hidden">
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                        {proj.description && (
+                          <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed mb-1.5 print:text-xs">
+                            {proj.description}
+                          </p>
+                        )}
+                        {proj.technologies && proj.technologies.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {proj.technologies.map((tech) => (
+                              <Badge key={tech} variant="outline" className="text-xs px-1.5 py-0.5 border-cyan-200 dark:border-cyan-800 bg-cyan-50/50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-400 print:text-[10px] print:border-gray-300 print:bg-transparent">
+                                {tech}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {proj.startDate && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap font-medium print:text-xs">
+                          {new Date(proj.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} –{" "}
+                          {proj.isCurrent || !proj.endDate ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-xs font-semibold shadow-sm">Ongoing</span>
+                          ) : (
+                            new Date(proj.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {(profile.projects || []).length} {(profile.projects || []).length === 1 ? 'project' : 'projects'}
-                    </Badge>
-                  </div>
-                  <CardDescription>Portfolio and projects</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-6">
-                  {(profile.projects || []).length === 0 ? (
-                    <div className="text-center py-8 rounded-lg border-2 border-dashed border-cyan-200 dark:border-cyan-800 bg-cyan-50/20 dark:bg-cyan-950/10">
-                      <Code className="h-12 w-12 mx-auto text-cyan-400 mb-3" />
-                      <div className="text-sm text-muted-foreground">No projects listed</div>
-                    </div>
-                  ) : (
-                    [...(profile.projects || [])]
-                      .sort((a, b) => {
-                        const aDate = a.startDate || "";
-                        const bDate = b.startDate || "";
-                        return aDate < bDate ? 1 : -1;
-                      })
-                      .map((proj, index) => (
-                        <Card
-                          key={proj.id}
-                          className={`border-2 transition-all hover:shadow-md ${
-                            index % 3 === 0 ? 'border-cyan-200 dark:border-cyan-800 bg-cyan-50/30 dark:bg-cyan-950/10' :
-                            index % 3 === 1 ? 'border-teal-200 dark:border-teal-800 bg-teal-50/30 dark:bg-teal-950/10' :
-                            'border-sky-200 dark:border-sky-800 bg-sky-50/30 dark:bg-sky-950/10'
-                          }`}
-                        >
-                          <CardContent className="pt-6">
-                            <div className="flex items-start gap-3">
-                              <div className={`h-3 w-3 rounded-full mt-1.5 ${
-                                index % 3 === 0 ? 'bg-cyan-500' :
-                                index % 3 === 1 ? 'bg-teal-500' :
-                                'bg-sky-500'
-                              }`} />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <div className="text-base font-semibold text-foreground">
-                                    {proj.name}
-                                  </div>
-                                  {proj.url && (
-                                    <Button size="sm" variant="ghost" asChild className="h-6 px-2">
-                                      <a href={proj.url} target="_blank" rel="noreferrer">
-                                        <ExternalLink className="h-3 w-3" />
-                                      </a>
-                                    </Button>
-                                  )}
-                                </div>
-                                {proj.description && (
-                                  <div className="text-sm text-muted-foreground mb-2 whitespace-pre-line">
-                                    {proj.description}
-                                  </div>
-                                )}
-                                {proj.technologies && proj.technologies.length > 0 && (
-                                  <div className="flex flex-wrap gap-2 mb-2">
-                                    {proj.technologies.map((tech) => (
-                                      <Badge key={tech} variant="outline" className="text-xs">
-                                        {tech}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                )}
-                                {proj.startDate && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Calendar className="h-3 w-3" />
-                                    {new Date(proj.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} –{" "}
-                                    {proj.isCurrent || !proj.endDate ? (
-                                      <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">Ongoing</Badge>
-                                    ) : (
-                                      new Date(proj.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Skills Section */}
-              <Card className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/30 via-background to-background dark:from-emerald-950/10">
-                <CardHeader className="border-b border-emerald-200 dark:border-emerald-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                      <CardTitle className="text-lg text-emerald-700 dark:text-emerald-400">Skills</CardTitle>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {skills.length} {skills.length === 1 ? 'skill' : 'skills'}
+            {/* Skills */}
+            {skills.length > 0 && (
+              <section className="mb-5">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 pb-1.5 border-b border-emerald-200 dark:border-emerald-800 print:text-sm print:border-gray-300">
+                  Skills
+                </h2>
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.map((s, idx) => (
+                    <Badge
+                      key={s.id}
+                      variant="outline"
+                      className="text-xs px-2 py-1 font-medium border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all print:text-xs print:border-gray-300 print:bg-transparent"
+                    >
+                      {s.skill?.name || s.skillId}
                     </Badge>
-                  </div>
-                  <CardDescription>Technical and professional skills</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {skills.length === 0 ? (
-                    <div className="text-center py-8 rounded-lg border-2 border-dashed border-emerald-200 dark:border-emerald-800 bg-emerald-50/20 dark:bg-emerald-950/10">
-                      <Sparkles className="h-12 w-12 mx-auto text-emerald-400 mb-3" />
-                      <div className="text-sm text-muted-foreground">No skills listed</div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {skills.map((s) => (
-                        <Badge
-                          key={s.id}
-                          variant="default"
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 max-w-full break-words"
-                        >
-                          {s.skill?.name || s.skillId}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
 }
-
-

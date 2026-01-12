@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
@@ -25,6 +24,7 @@ import {
   Eye,
   MousePointerClick,
 } from "lucide-react";
+import { SmartSearchInput } from "@/components/SmartSearchInput";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
@@ -498,13 +498,11 @@ const RecruiterJobs = () => {
                   <label className="text-sm font-medium">Search Jobs</label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
+                      <SmartSearchInput
                         value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
+                        onChange={setSearchInput}
                         onKeyPress={handleKeyPress}
                         placeholder="Search by title, company name..."
-                        className="pl-9"
                       />
                     </div>
                     <Button onClick={handleSearch} size="default">

@@ -1,0 +1,69 @@
+<mxGraphModel dx="1420" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0" adaptiveColors="auto">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <!-- Guest Actor -->
+    <mxCell id="actor-guest" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=middle;html=1;outlineConnect=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;noLabel=0;align=center;horizontal=1;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;" value="Guest" vertex="1">
+      <mxGeometry height="60" width="30" x="80" y="300" as="geometry" />
+    </mxCell>
+    <!-- System Boundary -->
+    <mxCell id="system-boundary" parent="1" style="swimlane;html=1;startSize=50;horizontal=1;swimlaneLine=0;swimlineWidth=1;swimlineColor=#005e9e;fontSize=23;fontStyle=2;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontFamily=Helvetica;verticalAlign=middle;direction=east;shadow=0;strokeColor=default;snapToPoint=0;strokeWidth=3;" value="Dev Prep System" vertex="1">
+      <mxGeometry height="800" width="600" x="200" y="50" as="geometry" />
+    </mxCell>
+    
+    <!-- Authentication Use Cases -->
+    <mxCell id="uc-login" parent="system-boundary" style="ellipse;html=1;fontSize=23;fontStyle=2;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#fff2cc;strokeColor=#d6b656;" value="Login" vertex="1">
+      <mxGeometry height="75" width="240" x="330" y="80" as="geometry" />
+    </mxCell>
+    
+    <!-- Guest Use Cases -->
+    <mxCell id="uc-view-home" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;" value="View Home" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="180" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-view-jobs" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;" value="View Jobs" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="280" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-view-job-details" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;" value="View Job Details" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="380" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-view-companies" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;" value="View Companies" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="480" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-view-company-details" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;" value="View Company Details" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="580" as="geometry" />
+    </mxCell>
+    <mxCell id="uc-view-pricing" parent="system-boundary" style="ellipse;html=1;fontSize=23;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;direction=east;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;" value="View Pricing" vertex="1">
+      <mxGeometry height="75" width="240" x="180" y="680" as="geometry" />
+    </mxCell>
+    <!-- Relationships: Guest to Use Cases -->
+    <mxCell id="rel-guest-login" edge="1" parent="1" source="actor-guest" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-login" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-view-home" edge="1" parent="1" source="actor-guest" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-home" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-view-jobs" edge="1" parent="1" source="actor-guest" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-jobs" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-view-job-details" edge="1" parent="1" source="actor-guest" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-job-details" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-view-companies" edge="1" parent="1" source="actor-guest" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-companies" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-view-company-details" edge="1" parent="1" source="actor-guest" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-company-details" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-guest-view-pricing" edge="1" parent="1" source="actor-guest" style="endArrow=openThin;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=23;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-pricing" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <!-- Include Relationships: Guest Use Cases include each other -->
+    <mxCell id="rel-include-job-details-jobs" edge="1" parent="1" source="uc-view-job-details" style="endArrow=open;dashed=1;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=20;labelBackgroundColor=#ffffff;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-jobs" value="&lt;&lt;include&gt;&gt;">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+    <mxCell id="rel-include-company-details-companies" edge="1" parent="1" source="uc-view-company-details" style="endArrow=open;dashed=1;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=20;labelBackgroundColor=#ffffff;labelBorderColor=none;textShadow=0;convertToSvg=0;fontStyle=2;fontFamily=Helvetica;horizontal=1;verticalAlign=middle;shadow=0;swimlaneLine=0;strokeColor=default;snapToPoint=0;endFill=0;strokeWidth=3;" target="uc-view-companies" value="&lt;&lt;include&gt;&gt;">
+      <mxGeometry height="50" relative="1" width="50" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>
+

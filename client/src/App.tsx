@@ -3,6 +3,7 @@ import {
   Home,
   Interview,
   InterviewFeedback,
+  InterviewThankYou,
   Jobs,
   JobDetail,
   Companies,
@@ -95,6 +96,7 @@ function AppRoutes() {
         {/* Legacy / candidate pages */}
         <Route path="/interview" element={<Interview />} />
         <Route path="/interviews/:id/feedback" element={<InterviewFeedback />} />
+        <Route path="/interviews/:id/thank-you" element={<InterviewThankYou />} />
         <Route path="/profile" element={<Navigate to="/candidate/profile" replace />} />
         <Route path="/saved-jobs" element={<Navigate to="/candidate/saved-jobs" replace />} />
 

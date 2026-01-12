@@ -1,0 +1,173 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+Table User {
+  id uuid [primary key]
+}
+
+Table CandidateProfile {
+  id uuid [primary key]
+  userId uuid [ref: > User.id]
+}
+
+Table RecruiterProfile {
+  id uuid [primary key]
+  userId uuid [ref: > User.id]
+  companyId uuid [ref: > Company.id]
+}
+
+// ============================================
+// RESUME DATA
+// ============================================
+
+Table Experience {
+  id uuid [primary key]
+  candidateId uuid [ref: > CandidateProfile.id]
+}
+
+Table Education {
+  id uuid [primary key]
+  candidateId uuid [ref: > CandidateProfile.id]
+}
+
+Table Project {
+  id uuid [primary key]
+  candidateId uuid [ref: > CandidateProfile.id]
+}
+
+Table Skill {
+  id uuid [primary key]
+}
+
+Table CandidateSkill {
+  id uuid [primary key]
+  candidateId uuid [ref: > CandidateProfile.id]
+  skillId uuid [ref: > Skill.id]
+}
+
+// ============================================
+// COMPANY & JOBS
+// ============================================
+
+Table Company {
+  id uuid [primary key]
+}
+
+Table Job {
+  id uuid [primary key]
+  companyId uuid [ref: > Company.id]
+  recruiterId uuid [ref: > RecruiterProfile.id]
+}
+
+Table Category {
+  id uuid [primary key]
+}
+
+Table JobCategory {
+  jobId uuid [ref: > Job.id, primary key]
+  categoryId uuid [ref: > Category.id, primary key]
+}
+
+Table JobSkill {
+  jobId uuid [ref: > Job.id, primary key]
+  skillId uuid [ref: > Skill.id, primary key]
+}
+
+Table SavedJob {
+  id uuid [primary key]
+  candidateId uuid [ref: > CandidateProfile.id]
+  jobId uuid [ref: > Job.id]
+}
+
+Table CompanyReview {
+  id uuid [primary key]
+  companyId uuid [ref: > Company.id]
+  candidateId uuid [ref: > CandidateProfile.id]
+}
+
+Table CompanyFollow {
+  id uuid [primary key]
+  candidateId uuid [ref: > CandidateProfile.id]
+  companyId uuid [ref: > Company.id]
+}
+
+// ============================================
+// APPLICATION & INTERVIEW
+// ============================================
+
+Table Application {
+  id uuid [primary key]
+  jobId uuid [ref: > Job.id]
+  candidateId uuid [ref: > CandidateProfile.id]
+}
+
+Table ApplicationHistory {
+  id uuid [primary key]
+  applicationId uuid [ref: > Application.id]
+}
+
+Table ApplicationNote {
+  id uuid [primary key]
+  applicationId uuid [ref: > Application.id]
+}
+
+Table Offer {
+  id uuid [primary key]
+  applicationId uuid [ref: > Application.id]
+}
+
+Table Interview {
+  id uuid [primary key]
+  applicationId uuid [ref: > Application.id]
+  candidateId uuid [ref: > CandidateProfile.id]
+  jobId uuid [ref: > Job.id]
+}
+
+Table InterviewExchange {
+  id uuid [primary key]
+  interviewId uuid [ref: > Interview.id]
+}
+
+Table QuestionBank {
+  id uuid [primary key]
+}
+
+// ============================================
+// MESSAGING & NOTIFICATIONS
+// ============================================
+
+Table Message {
+  id uuid [primary key]
+  senderId uuid [ref: > User.id]
+  receiverId uuid [ref: > User.id]
+}
+
+Table Notification {
+  id uuid [primary key]
+  userId uuid [ref: > User.id]
+}
+
+// ============================================
+// MEMBERSHIP & PAYMENT
+// ============================================
+
+Table MembershipPlan {
+  id uuid [primary key]
+}
+
+Table UserMembership {
+  id uuid [primary key]
+  userId uuid [ref: > User.id]
+  planId uuid [ref: > MembershipPlan.id]
+}
+
+Table PaymentTransaction {
+  id uuid [primary key]
+  userId uuid [ref: > User.id]
+  planId uuid [ref: > MembershipPlan.id]
+  membershipId uuid [ref: > UserMembership.id]
+}

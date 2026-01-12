@@ -1,0 +1,84 @@
+graph LR
+    subgraph FE["🌐 Frontend<br/>Cloudflare Pages"]
+        FE1[⚛️ React 19<br/>TypeScript]
+        FE2[🎨 Tailwind CSS<br/>Vite]
+        FE3[🔐 Clerk Auth]
+        FE4[🎤 Vapi SDK]
+    end
+
+    subgraph BE["⚙️ Backend<br/>Cloudflare Workers"]
+        BE1[🚀 Hono<br/>Bun Runtime]
+        BE2[🗄️ Prisma ORM]
+    end
+
+    subgraph DB["💾 Database<br/>Neon PostgreSQL"]
+        DB1[(📊 PostgreSQL)]
+    end
+
+    subgraph STORAGE["📦 Storage<br/>Cloudflare R2"]
+        R2[📁 Files]
+    end
+
+    subgraph AI["🤖 AI Services"]
+        AI1[🎙️ Vapi.ai]
+        AI2[💬 GPT-4]
+        AI3[🧠 Gemini 2.5]
+        AI4[🎧 Deepgram]
+        AI5[🔊 11Labs]
+    end
+
+    subgraph F1["🎯 Feature 1<br/>Job Matching"]
+        F1_TECH[📋 Rule-based Algorithm<br/>Hono + Prisma + DB]
+    end
+
+    subgraph F2["🎤 Feature 2<br/>AI Interview"]
+        F2_TECH[💬 Voice Interview<br/>Vapi + GPT-4<br/>Deepgram + 11Labs]
+    end
+
+    subgraph F3["📊 Feature 3<br/>Evaluation"]
+        F3_TECH[📝 AI Feedback<br/>Gemini 2.5<br/>Hono + DB]
+    end
+
+    %% Main Flow
+    FE1 --> BE1
+    FE2 --> BE1
+    FE3 --> BE1
+    FE4 --> AI1
+    BE1 --> BE2
+    BE2 --> DB1
+    BE1 --> R2
+
+    %% AI Connections
+    AI1 --> AI2
+    AI1 --> AI4
+    AI1 --> AI5
+
+    %% Features
+    BE1 --> F1_TECH
+    F1_TECH --> DB1
+    
+    FE4 --> F2_TECH
+    F2_TECH --> AI1
+    F2_TECH --> AI2
+    F2_TECH --> AI4
+    F2_TECH --> AI5
+    
+    BE1 --> F3_TECH
+    F3_TECH --> AI3
+    F3_TECH --> DB1
+
+    %% Styling
+    classDef frontend fill:#61dafb,stroke:#20232a,stroke-width:2px,color:#000
+    classDef backend fill:#00d8ff,stroke:#20232a,stroke-width:2px,color:#000
+    classDef database fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
+    classDef storage fill:#f38020,stroke:#fff,stroke-width:2px,color:#fff
+    classDef ai fill:#ff6b6b,stroke:#fff,stroke-width:2px,color:#fff
+    classDef feature fill:#51cf66,stroke:#fff,stroke-width:2px,color:#000
+
+    class FE1,FE2,FE3,FE4 frontend
+    class BE1,BE2 backend
+    class DB1 database
+    class R2 storage
+    class AI1,AI2,AI3,AI4,AI5 ai
+    class F1_TECH,F2_TECH,F3_TECH feature
+

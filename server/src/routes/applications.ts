@@ -136,6 +136,16 @@ export default applicationRoutes;
 
 /**
  * Update application status (used by recruiter/admin). Adds an entry to ApplicationHistory.
+ * 
+ * Recruiter can only change status following this flow:
+ * APPLIED => REVIEWING => SHORTLISTED => INTERVIEW_SCHEDULED => REJECTED
+ * 
+ * System-managed statuses (cannot be changed by recruiter):
+ * - INTERVIEWED (auto-set after interview completion)
+ * - OFFER_SENT (auto-set when offer is sent)
+ * - OFFER_ACCEPTED (auto-set when candidate accepts offer)
+ * - OFFER_REJECTED (auto-set when candidate rejects offer)
+ * - HIRED (cannot be set manually by recruiter)
  */
 applicationRoutes.patch("/:id/status", async (c) => {
   try {
@@ -150,6 +160,90 @@ applicationRoutes.patch("/:id/status", async (c) => {
       );
     }
 
+    // Get current application to check current status
+    const currentApp = await prisma.application.findUnique({
+      where: { id },
+      include: {
+        job: { include: { company: true } },
+        candidate: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                notificationEmail: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!currentApp) {
+      return c.json(
+        { success: false, message: "Application not found" },
+        404
+      );
+    }
+
+    // Get user to check role
+    const user = await getUserFromAuth(c);
+    if (!user) {
+      return c.json({ success: false, message: "Not authenticated" }, 401);
+    }
+
+    // System-managed statuses that recruiters cannot manually change
+    const SYSTEM_MANAGED_STATUSES = [
+      "INTERVIEWED",      // Auto-set after interview completion
+      "OFFER_SENT",       // Auto-set when offer is sent
+      "OFFER_ACCEPTED",   // Auto-set when candidate accepts offer
+      "OFFER_REJECTED",   // Auto-set when candidate rejects offer
+      "HIRED",            // Cannot be set manually by recruiter
+    ];
+
+    // If recruiter tries to set a system-managed status, reject
+    if (user.role === "RECRUITER" && SYSTEM_MANAGED_STATUSES.includes(status)) {
+      return c.json(
+        { 
+          success: false, 
+          message: `Status "${status}" is automatically managed by the system and cannot be changed manually. This status is set automatically when: ${status === "INTERVIEWED" ? "an interview is completed" : status === "OFFER_SENT" ? "an offer is sent" : status === "OFFER_ACCEPTED" ? "a candidate accepts an offer" : status === "OFFER_REJECTED" ? "a candidate rejects an offer" : status === "HIRED" ? "a candidate accepts an offer (final status)" : "system event occurs"}.` 
+        },
+        403
+      );
+    }
+
+    // Define allowed status transitions for recruiters
+    // HIRED is removed - recruiter cannot manually set HIRED status
+    const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+      "APPLIED": ["REVIEWING", "REJECTED"],
+      "REVIEWING": ["SHORTLISTED", "REJECTED"],
+      "SHORTLISTED": ["INTERVIEW_SCHEDULED", "REJECTED"],
+      "INTERVIEW_SCHEDULED": ["REJECTED"], // Can only reject, cannot hire directly
+      // Allow transitions from system-managed statuses back to recruiter-managed ones
+      "INTERVIEWED": ["REJECTED"], // After interview, recruiter can only reject
+      "OFFER_SENT": ["REJECTED"], // After offer sent, recruiter can only reject
+      "OFFER_ACCEPTED": ["REJECTED"], // After offer accepted, recruiter can only reject (HIRED is final, set automatically)
+      "OFFER_REJECTED": ["REJECTED"], // After offer rejected, can only reject application
+    };
+
+    // Validate status transition for recruiters
+    if (user.role === "RECRUITER") {
+      const currentStatus = currentApp.status;
+      const allowedNextStatuses = ALLOWED_TRANSITIONS[currentStatus] || [];
+      
+      if (!allowedNextStatuses.includes(status)) {
+        return c.json(
+          { 
+            success: false, 
+            message: `Invalid status transition. Current status is "${currentStatus}". Allowed next statuses are: ${allowedNextStatuses.join(", ")}.` 
+          },
+          400
+        );
+      }
+    }
+
+    // ADMIN can change to any status (no restrictions)
     const updated = await prisma.application.update({
       where: { id },
       data: { status },
@@ -177,7 +271,7 @@ applicationRoutes.patch("/:id/status", async (c) => {
           applicationId: id,
           status,
           note: note || null,
-          changedBy: "SYSTEM", // In future: replace with authenticated recruiter/admin ID
+          changedBy: user.role === "ADMIN" ? user.id : (user.recruiterProfile?.id || user.id || "SYSTEM"),
         },
       });
     } catch (historyError) {
@@ -310,6 +404,105 @@ applicationRoutes.patch("/:id/status", async (c) => {
           error instanceof Error
             ? error.message
             : "Failed to update application status",
+      },
+      500
+    );
+  }
+});
+
+/**
+ * Candidate withdraws their own application
+ * POST /applications/:id/withdraw
+ */
+applicationRoutes.post("/:id/withdraw", async (c) => {
+  try {
+    const { id } = c.req.param();
+    
+    // Get or create Clerk user with helper
+    const result = await getOrCreateClerkUser(c);
+    if (!result.success || !result.user) {
+      return c.json({
+        success: false,
+        message: result.error || "Authentication failed"
+      }, 401);
+    }
+
+    const user = result.user;
+    
+    // Only candidates can withdraw their own applications
+    if (user.role !== "CANDIDATE" || !user.candidateProfile) {
+      return c.json({ success: false, message: "Only candidates can withdraw applications" }, 403);
+    }
+
+    // Get application
+    const application = await prisma.application.findUnique({
+      where: { id },
+      include: {
+        candidate: true,
+        job: { include: { company: true } },
+      },
+    });
+
+    if (!application) {
+      return c.json({ success: false, message: "Application not found" }, 404);
+    }
+
+    // Verify candidate owns this application
+    if (application.candidateId !== user.candidateProfile.id) {
+      return c.json({ success: false, message: "Forbidden" }, 403);
+    }
+
+    // Check if already withdrawn or in final states
+    const finalStates = ["WITHDRAWN", "HIRED", "OFFER_ACCEPTED"];
+    if (finalStates.includes(application.status)) {
+      return c.json(
+        { success: false, message: `Cannot withdraw application with status: ${application.status}` },
+        400
+      );
+    }
+
+    // Update application status to WITHDRAWN
+    const updated = await prisma.application.update({
+      where: { id },
+      data: { status: "WITHDRAWN" },
+      include: {
+        job: { include: { company: true } },
+        candidate: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                notificationEmail: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Create history entry
+    try {
+      await prisma.applicationHistory.create({
+        data: {
+          applicationId: id,
+          status: "WITHDRAWN",
+          note: "Application withdrawn by candidate",
+          changedBy: user.id,
+        },
+      });
+    } catch (historyError) {
+      console.error("Failed to create application history:", historyError);
+    }
+
+    return c.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Withdraw application error:", error);
+    return c.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to withdraw application",
       },
       500
     );

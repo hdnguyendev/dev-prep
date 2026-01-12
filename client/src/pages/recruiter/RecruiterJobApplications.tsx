@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { isRecruiterLoggedIn, getCurrentUser } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -30,6 +28,8 @@ import {
   Loader2,
   Send,
 } from "lucide-react";
+import ApplicationDetailModal from "@/components/recruiter/ApplicationDetailModal";
+import CreateOfferForm from "@/components/recruiter/CreateOfferForm";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:9999";
 
@@ -201,6 +201,35 @@ const statusConfig: Record<string, { label: string; variant: "default" | "outlin
     icon: <XCircle className="h-3.5 w-3.5" />,
     color: "bg-slate-100 dark:bg-slate-950/30 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800",
   },
+};
+
+/**
+ * Get allowed status transitions for recruiter based on current status
+ * Recruiter can only change status following this flow:
+ * APPLIED => REVIEWING => SHORTLISTED => INTERVIEW_SCHEDULED => REJECTED
+ * 
+ * HIRED cannot be set manually by recruiter - it's a system-managed status
+ * From system-managed statuses, recruiter can only move to REJECTED
+ */
+const getAllowedStatusesForRecruiter = (currentStatus: string): string[] => {
+  const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    "APPLIED": ["REVIEWING", "REJECTED"],
+    "REVIEWING": ["SHORTLISTED", "REJECTED"],
+    "SHORTLISTED": ["INTERVIEW_SCHEDULED", "REJECTED"],
+    "INTERVIEW_SCHEDULED": ["REJECTED"], // Cannot hire directly, can only reject
+    // Allow transitions from system-managed statuses back to recruiter-managed ones
+    "INTERVIEWED": ["REJECTED"], // After interview, recruiter can only reject
+    "OFFER_SENT": ["REJECTED"], // After offer sent, recruiter can only reject
+    "OFFER_ACCEPTED": ["REJECTED"], // After offer accepted, recruiter can only reject (HIRED is final, set automatically)
+    "OFFER_REJECTED": ["REJECTED"], // After offer rejected, can only reject application
+    "HIRED": [], // Final status, no transitions allowed (system-managed)
+    "REJECTED": [], // Final status, no transitions allowed
+    "WITHDRAWN": [], // Final status, no transitions allowed
+  };
+
+  // Get allowed next statuses, always include current status for display
+  const allowedNextStatuses = ALLOWED_TRANSITIONS[currentStatus] || [];
+  return [currentStatus, ...allowedNextStatuses];
 };
 
 const RecruiterJobApplications = () => {
@@ -509,6 +538,9 @@ const RecruiterJobApplications = () => {
             app.id === applicationId ? { ...app, status: nextStatus } : app
           )
         );
+        if (selectedApplication && selectedApplication.id === applicationId) {
+          setSelectedApplication({ ...selectedApplication, status: nextStatus });
+        }
         setInlineEditingId(null);
       } else {
         setError(data.message || "Failed to update status");
@@ -518,6 +550,97 @@ const RecruiterJobApplications = () => {
     } finally {
       setUpdating(false);
       setInlineEditingId(null);
+    }
+  };
+
+  const handleStatusUpdate = async (applicationId: string, nextStatus: string) => {
+    await handleInlineStatusUpdate(applicationId, nextStatus);
+  };
+
+  const handleAddNoteModal = async (applicationId: string, content: string) => {
+    if (!userId || !selectedApplication || selectedApplication.id !== applicationId) return;
+    try {
+      setSavingNote(true);
+      const res = await fetch(`${API_BASE}/applications/${applicationId}/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userId}`,
+        },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        setError(data?.message || "Failed to add note");
+        return;
+      }
+      const created = data.data as { id: string; authorId: string; content: string; createdAt: string };
+      const next: Application = {
+        ...selectedApplication,
+        notes: [created, ...(selectedApplication.notes || [])],
+      };
+      upsertSelectedApplication(next);
+    } catch {
+      setError("Network error");
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleEditNoteModal = async (noteId: string, content: string) => {
+    if (!userId || !selectedApplication) return;
+    try {
+      setSavingNote(true);
+      const res = await fetch(`${API_BASE}/applications/${selectedApplication.id}/notes/${noteId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userId}`,
+        },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        setError(data?.message || "Failed to update note");
+        return;
+      }
+      const updated = data.data as { id: string; authorId: string; content: string; createdAt: string };
+      const next: Application = {
+        ...selectedApplication,
+        notes: (selectedApplication.notes || []).map((n) => (n.id === updated.id ? updated : n)),
+      };
+      upsertSelectedApplication(next);
+    } catch {
+      setError("Network error");
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleDeleteNoteModal = async (noteId: string) => {
+    if (!userId || !selectedApplication) return;
+    try {
+      setSavingNote(true);
+      const res = await fetch(`${API_BASE}/applications/${selectedApplication.id}/notes/${noteId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${userId}`,
+        },
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        setError(data?.message || "Failed to delete note");
+        return;
+      }
+      const next: Application = {
+        ...selectedApplication,
+        notes: (selectedApplication.notes || []).filter((n) => n.id !== noteId),
+      };
+      upsertSelectedApplication(next);
+    } catch {
+      setError("Network error");
+    } finally {
+      setSavingNote(false);
     }
   };
 
@@ -536,9 +659,16 @@ const RecruiterJobApplications = () => {
 
   const filteredApplications = useMemo(() => {
     return applications.filter((app) => {
-      const candidateName = app.candidate?.user
-        ? `${app.candidate.user.firstName || ''} ${app.candidate.user.lastName || ''}`.trim()
-        : "";
+      const getUserDisplayName = () => {
+        // Handle case where user is null but userId exists
+        if (!app.candidate?.user) {
+          return app.candidate?.userId ? `Candidate (${app.candidate.userId.slice(0, 8)}...)` : "";
+        }
+        const { firstName, lastName, email } = app.candidate.user;
+        const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+        return fullName || email || "";
+      };
+      const candidateName = getUserDisplayName();
       const email = app.candidate?.user?.email || "";
       const haystack = `${candidateName} ${email}`.toLowerCase();
 
@@ -763,9 +893,17 @@ const RecruiterJobApplications = () => {
           <div className="grid gap-3">
             {pagedApplications.map((app) => {
               const config = getStatusConfig(app.status);
-              const candidateName = app.candidate?.user
-                ? `${app.candidate.user.firstName || ''} ${app.candidate.user.lastName || ''}`.trim() || app.candidate.user.email
-                : "Unknown";
+              const getUserDisplayName = () => {
+                // Handle case where user is null but userId exists
+                if (!app.candidate?.user) {
+                  // If we have userId, we could fetch it, but for now show fallback
+                  return app.candidate?.userId ? `Candidate (${app.candidate.userId.slice(0, 8)}...)` : "Unknown Candidate";
+                }
+                const { firstName, lastName, email } = app.candidate.user;
+                const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+                return fullName || email || "Unknown Candidate";
+              };
+              const candidateName = getUserDisplayName();
               
               return (
                 <Card
@@ -808,9 +946,9 @@ const RecruiterJobApplications = () => {
                             className={`inline-flex h-8 items-center gap-1.5 pl-8 pr-8 text-sm font-medium rounded-md border cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-offset-2 ${config.color}`}
                           disabled={updating && inlineEditingId === app.id}
                         >
-                          {Object.keys(statusConfig).map((key) => (
+                          {getAllowedStatusesForRecruiter(app.status).map((key) => (
                             <option key={key} value={key}>
-                              {statusConfig[key].label}
+                              {statusConfig[key]?.label || key}
                             </option>
                           ))}
                         </select>
@@ -892,7 +1030,24 @@ const RecruiterJobApplications = () => {
       )}
 
       {/* Application Detail Modal */}
-      {selectedApplication && (
+      <ApplicationDetailModal
+        application={selectedApplication}
+        onClose={() => setSelectedApplication(null)}
+        onStatusUpdate={handleStatusUpdate}
+        onAddNote={handleAddNoteModal}
+        onEditNote={handleEditNoteModal}
+        onDeleteNote={handleDeleteNoteModal}
+        getAllowedStatuses={getAllowedStatusesForRecruiter}
+        getStatusConfig={getStatusConfig}
+        recruiterProfileId={recruiterProfileId}
+        updating={updating}
+        savingNote={savingNote}
+        showJobApplicationsLink={false}
+        onCreateOffer={() => setShowCreateOfferModal(true)}
+      />
+
+      {/* Old Modal - Removed, using ApplicationDetailModal component */}
+      {false && false && selectedApplication && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <CardHeader className="flex flex-row items-center justify-between border-b">
@@ -910,9 +1065,17 @@ const RecruiterJobApplications = () => {
                 )}
                 <div>
                   <CardTitle>
-                    {selectedApplication.candidate?.user
-                      ? `${selectedApplication.candidate.user.firstName || ''} ${selectedApplication.candidate.user.lastName || ''}`.trim() || selectedApplication.candidate.user.email
-                      : "Unknown"}
+                    {(() => {
+                      // Handle case where user is null but userId exists
+                      if (!selectedApplication.candidate?.user) {
+                        return selectedApplication.candidate?.userId 
+                          ? `Candidate (${selectedApplication.candidate.userId.slice(0, 8)}...)` 
+                          : "Unknown Candidate";
+                      }
+                      const { firstName, lastName, email } = selectedApplication.candidate.user;
+                      const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+                      return fullName || email || "Unknown Candidate";
+                    })()}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
                     {selectedApplication.candidate?.user?.email}
@@ -1001,7 +1164,7 @@ const RecruiterJobApplications = () => {
                                   <div className="mt-2">
                                     <div className="text-xs font-medium mb-1">Overall Score:</div>
                                     <div className="text-lg font-bold text-green-700 dark:text-green-300">
-                                      {interview.overallScore?.toFixed(1)} / 10
+                                      {interview.overallScore?.toFixed(1)} / 100
                                     </div>
                                   </div>
                                 )}
@@ -1279,7 +1442,7 @@ const RecruiterJobApplications = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/recruiter/candidates/${encodeURIComponent(selectedApplication.candidate!.id)}`)}
+                    onClick={() => window.open(`/candidates/${encodeURIComponent(selectedApplication.candidate!.id)}`, '_blank')}
                   >
                     View full profile
                   </Button>
@@ -1478,8 +1641,13 @@ const RecruiterJobApplications = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Send Offer</DialogTitle>
-            <DialogDescription>
-              Create and send an offer to {selectedApplication?.candidate?.user?.firstName} {selectedApplication?.candidate?.user?.lastName}
+              <DialogDescription>
+              Create and send an offer to {(() => {
+                if (!selectedApplication?.candidate?.user) return "this candidate";
+                const { firstName, lastName, email } = selectedApplication.candidate.user;
+                const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+                return fullName || email || "this candidate";
+              })()}
             </DialogDescription>
           </DialogHeader>
           {selectedApplication && (
@@ -1498,246 +1666,6 @@ const RecruiterJobApplications = () => {
         </DialogContent>
       </Dialog>
     </main>
-  );
-};
-
-// Create Offer Form Component
-const CreateOfferForm = ({
-  applicationId,
-  jobTitle,
-  onSuccess,
-  onCancel,
-  creating,
-  setCreating,
-}: {
-  applicationId: string;
-  jobTitle: string;
-  onSuccess: () => void;
-  onCancel: () => void;
-  creating: boolean;
-  setCreating: (val: boolean) => void;
-}) => {
-  const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
-  const [formData, setFormData] = useState({
-    title: jobTitle || "",
-    salaryMin: "",
-    salaryMax: "",
-    salaryCurrency: "USD",
-    employmentType: "FULL_TIME",
-    startDate: "",
-    expirationDate: "",
-    location: "",
-    isRemote: false,
-    description: "",
-    benefits: "",
-    terms: "",
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!applicationId || !formData.title || !formData.expirationDate) {
-      alert("Please fill in all required fields (Title, Expiration Date)");
-      return;
-    }
-
-    try {
-      setCreating(true);
-      const response = await fetch(`${API_BASE}/offers`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${userId}`,
-        },
-        body: JSON.stringify({
-          applicationId,
-          ...formData,
-          salaryMin: formData.salaryMin ? parseFloat(formData.salaryMin) : null,
-          salaryMax: formData.salaryMax ? parseFloat(formData.salaryMax) : null,
-          startDate: formData.startDate || null,
-          expirationDate: formData.expirationDate,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        onSuccess();
-      } else {
-        alert(data.message || "Failed to create offer");
-      }
-    } catch {
-      alert("Failed to create offer");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Offer Title *</Label>
-        <Input
-          id="title"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder="e.g., Software Engineer - Full-time"
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="salaryMin">Salary Min</Label>
-          <Input
-            id="salaryMin"
-            type="number"
-            value={formData.salaryMin}
-            onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
-            placeholder="50000"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="salaryMax">Salary Max</Label>
-          <Input
-            id="salaryMax"
-            type="number"
-            value={formData.salaryMax}
-            onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
-            placeholder="80000"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="salaryCurrency">Currency</Label>
-          <select
-            id="salaryCurrency"
-            value={formData.salaryCurrency}
-            onChange={(e) => setFormData({ ...formData, salaryCurrency: e.target.value })}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="USD">USD</option>
-            <option value="VND">VND</option>
-            <option value="EUR">EUR</option>
-            <option value="JPY">JPY</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="employmentType">Employment Type</Label>
-          <select
-            id="employmentType"
-            value={formData.employmentType}
-            onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="FULL_TIME">Full-time</option>
-            <option value="PART_TIME">Part-time</option>
-            <option value="CONTRACT">Contract</option>
-            <option value="FREELANCE">Freelance</option>
-            <option value="INTERNSHIP">Internship</option>
-            <option value="REMOTE">Remote</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="startDate">Start Date</Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={formData.startDate}
-            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="expirationDate">Expiration Date *</Label>
-          <Input
-            id="expirationDate"
-            type="date"
-            value={formData.expirationDate}
-            onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
-          <Input
-            id="location"
-            value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            placeholder="e.g., San Francisco, CA"
-          />
-        </div>
-        <div className="space-y-2 flex items-end">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.isRemote}
-              onChange={(e) => setFormData({ ...formData, isRemote: e.target.checked })}
-              className="h-4 w-4"
-            />
-            <span className="text-sm">Remote work</span>
-          </label>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Detailed description of the offer..."
-          rows={4}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="benefits">Benefits</Label>
-        <Textarea
-          id="benefits"
-          value={formData.benefits}
-          onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
-          placeholder="Health insurance, PTO, etc."
-          rows={3}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="terms">Terms & Conditions</Label>
-        <Textarea
-          id="terms"
-          value={formData.terms}
-          onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-          placeholder="Additional terms and conditions..."
-          rows={3}
-        />
-      </div>
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={creating}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={creating}>
-          {creating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending...
-            </>
-          ) : (
-            <>
-              <Send className="mr-2 h-4 w-4" />
-              Send Offer
-            </>
-          )}
-        </Button>
-      </DialogFooter>
-    </form>
   );
 };
 

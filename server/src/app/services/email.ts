@@ -49,6 +49,7 @@ export interface InterviewCompletedEmailToRecruiterPayload {
   overallScore: number;
   recommendation: string;
   applicationId: string;
+  previousOverallScore?: number; // If provided, this is an updated result email
 }
 
 export interface OfferAcceptedEmailToRecruiterPayload {
@@ -920,9 +921,24 @@ DevPrep Team`;
 export async function sendInterviewCompletedEmailToRecruiter(
   payload: InterviewCompletedEmailToRecruiterPayload
 ): Promise<void> {
-  const { to, recruiterName, candidateName, jobTitle, companyName, interviewId, overallScore, recommendation, applicationId } = payload;
+  const {
+    to,
+    recruiterName,
+    candidateName,
+    jobTitle,
+    companyName,
+    interviewId,
+    overallScore,
+    recommendation,
+    applicationId,
+    previousOverallScore,
+  } = payload;
 
-  const subject = `Interview completed: ${candidateName} - ${jobTitle}`;
+  const isUpdate = typeof previousOverallScore === "number";
+
+  const subject = isUpdate
+    ? `Updated interview result: ${candidateName} - ${jobTitle}`
+    : `Interview completed: ${candidateName} - ${jobTitle}`;
 
   const greeting = recruiterName ? `Hi ${recruiterName},` : "Hi there,";
 
@@ -938,37 +954,77 @@ export async function sendInterviewCompletedEmailToRecruiter(
     ? "#f59e0b" // yellow
     : "#ef4444"; // red
 
-  const text = `${greeting}
+  const textLines: string[] = [
+    greeting,
+    "",
+    `Candidate ${candidateName} has ${isUpdate ? "an updated evaluation for" : "completed the interview for"} ${jobTitle}${
+      companyName ? ` at ${companyName}` : ""
+    }.`,
+    "",
+    "Interview Results:",
+  ];
 
-Candidate ${candidateName} has completed the interview for ${jobTitle}${companyName ? ` at ${companyName}` : ""}.
+  if (isUpdate && typeof previousOverallScore === "number") {
+    textLines.push(
+      `- Previous Overall Score: ${previousOverallScore.toFixed(1)} / 100`,
+      `- Updated Overall Score: ${overallScore.toFixed(1)} / 100`
+    );
+  } else {
+    textLines.push(`- Overall Score: ${overallScore.toFixed(1)} / 100`);
+  }
 
-Interview Results:
-- Overall Score: ${overallScore.toFixed(1)} / 10
-- Recommendation: ${recommendationText}
+  textLines.push(
+    `- Recommendation: ${recommendationText}`,
+    "",
+    "You can view the detailed feedback in your DevPrep dashboard.",
+    "",
+    "Best regards,",
+    "DevPrep Team"
+  );
 
-You can view the detailed feedback in your DevPrep dashboard.
-
-Best regards,
-DevPrep Team`;
+  const text = textLines.join("\n");
 
   const baseUrl = process.env.FRONTEND_URL || process.env.APP_BASE_URL || "http://localhost:5173";
   const feedbackUrl = `${baseUrl}/interviews/${interviewId}/feedback`;
   const applicationUrl = `${baseUrl}/recruiter/jobs/${applicationId.split('-')[0]}/applications`; // Simplified, might need jobId
 
+  const htmlLines: string[] = [
+    greeting,
+    `<strong>${candidateName}</strong> has ${isUpdate ? "an updated evaluation for" : "completed the interview for"} <strong>${jobTitle}</strong>${
+      companyName ? ` at <strong>${companyName}</strong>` : ""
+    }.`,
+    "",
+    "<div style='background-color: #f9fafb; border-radius: 8px; padding: 16px; margin: 16px 0;'>",
+    "<div style='font-weight: 600; margin-bottom: 8px;'>Interview Results:</div>",
+  ];
+
+  if (isUpdate && typeof previousOverallScore === "number") {
+    htmlLines.push(
+      `<div style='margin: 8px 0;'><strong>Previous Overall Score:</strong> <span style='font-size: 16px; font-weight: 600; color: #4b5563;'>${previousOverallScore.toFixed(
+        1
+      )} / 100</span></div>`,
+      `<div style='margin: 8px 0;'><strong>Updated Overall Score:</strong> <span style='font-size: 18px; font-weight: 700; color: #0f766e;'>${overallScore.toFixed(
+        1
+      )} / 100</span></div>`
+    );
+  } else {
+    htmlLines.push(
+      `<div style='margin: 8px 0;'><strong>Overall Score:</strong> <span style='font-size: 18px; font-weight: 700; color: #0f766e;'>${overallScore.toFixed(
+        1
+      )} / 100</span></div>`
+    );
+  }
+
+  htmlLines.push(
+    `<div style='margin: 8px 0;'><strong>Recommendation:</strong> <span style='background-color: ${recommendationColor}20; color: ${recommendationColor}; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>${recommendationText}</span></div>`,
+    "</div>",
+    "Click the button below to view detailed feedback and analysis."
+  );
+
   const html = buildBaseHtml({
-    title: "Interview completed",
-    heading: "Interview Completed 📊",
-    bodyLines: [
-      greeting,
-      `<strong>${candidateName}</strong> has completed the interview for <strong>${jobTitle}</strong>${companyName ? ` at <strong>${companyName}</strong>` : ""}.`,
-      "",
-      "<div style='background-color: #f9fafb; border-radius: 8px; padding: 16px; margin: 16px 0;'>",
-      "<div style='font-weight: 600; margin-bottom: 8px;'>Interview Results:</div>",
-      `<div style='margin: 8px 0;'><strong>Overall Score:</strong> <span style='font-size: 18px; font-weight: 700; color: #0f766e;'>${overallScore.toFixed(1)} / 10</span></div>`,
-      `<div style='margin: 8px 0;'><strong>Recommendation:</strong> <span style='background-color: ${recommendationColor}20; color: ${recommendationColor}; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>${recommendationText}</span></div>`,
-      "</div>",
-      "Click the button below to view detailed feedback and analysis.",
-    ],
+    title: isUpdate ? "Updated interview result" : "Interview completed",
+    heading: isUpdate ? "Updated Interview Result 📊" : "Interview Completed 📊",
+    bodyLines: htmlLines,
     ctaLabel: "View Interview Feedback",
     ctaUrl: feedbackUrl,
   });

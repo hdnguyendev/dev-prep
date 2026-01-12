@@ -1,0 +1,74 @@
+graph TB
+    subgraph TITLE["🧠 GEMINI EVALUATION - 6 CRITERIA"]
+        direction TB
+    end
+    
+    subgraph C1["1️⃣ LENGTH (25%)"]
+        C1A["Word Count Check<br/>━━━━━━━━━━━━━━━━<br/>Junior: 18-70<br/>Mid: 25-90<br/>Senior: 35-120"]
+        C1B["Score Range<br/>0 → 4 → 7 → 8"]
+    end
+    
+    subgraph C2["2️⃣ STRUCTURE (20%)"]
+        C2A["STAR Method<br/>Situation → Task<br/>Action → Result"]
+        C2B["Score Range<br/>4 → 10"]
+    end
+    
+    subgraph C3["3️⃣ EXAMPLES (20%)"]
+        C3A["Concrete Evidence<br/>Numbers, Metrics, Time"]
+        C3B["Score Range<br/>4 → 10"]
+    end
+    
+    subgraph C4["4️⃣ CONFIDENCE (10%)"]
+        C4A["No Filler Words<br/>uh, um, maybe"]
+        C4B["Score Range<br/>4 → 8"]
+    end
+    
+    subgraph C5["5️⃣ KEYWORD (15%)"]
+        C5A["Must-have ×3<br/>Nice-to-have ×1"]
+        C5B["Score Range<br/>0 → 10"]
+    end
+    
+    subgraph C6["6️⃣ RELEVANCE (10%)"]
+        C6A["Q vs A Match<br/>Topic Alignment"]
+        C6B["Score Range<br/>0 → 10"]
+    end
+    
+    subgraph CALC["📊 CALCULATION"]
+        CALC1["Per-Question Score =<br/>(LENGTH × 0.25) +<br/>(STRUCTURE × 0.20) +<br/>(EXAMPLES × 0.20) +<br/>(CONFIDENCE × 0.10) +<br/>(KEYWORD × 0.15) +<br/>(RELEVANCE × 0.10)"]
+        CALC2["Overall Score =<br/>Average(Per-Question) × 10"]
+        CALC3["Recommendation:<br/>≥80 = HIRE<br/>60-79 = CONSIDER<br/>&lt;60 = REJECT"]
+    end
+    
+    C1A --> C1B
+    C2A --> C2B
+    C3A --> C3B
+    C4A --> C4B
+    C5A --> C5B
+    C6A --> C6B
+    
+    C1B --> CALC1
+    C2B --> CALC1
+    C3B --> CALC1
+    C4B --> CALC1
+    C5B --> CALC1
+    C6B --> CALC1
+    
+    CALC1 --> CALC2 --> CALC3
+    
+    %% Styling
+    classDef c1 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef c2 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef c3 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef c4 fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    classDef c5 fill:#e0f2f1,stroke:#004d40,stroke-width:2px,color:#000
+    classDef c6 fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    classDef calc fill:#c8e6c9,stroke:#1b5e20,stroke-width:3px,color:#000
+    
+    class C1,C1A,C1B c1
+    class C2,C2A,C2B c2
+    class C3,C3A,C3B c3
+    class C4,C4A,C4B c4
+    class C5,C5A,C5B c5
+    class C6,C6A,C6B c6
+    class CALC1,CALC2,CALC3,CALC calc
+

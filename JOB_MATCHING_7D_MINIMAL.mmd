@@ -1,0 +1,29 @@
+flowchart LR
+    INPUT([Candidate + Job]) --> D1["1. SKILLS<br/>30%"]
+    INPUT --> D2["2. EXPERIENCE<br/>18%"]
+    INPUT --> D3["3. TITLE<br/>12%"]
+    INPUT --> D4["4. EDUCATION<br/>12%"]
+    INPUT --> D5["5. SOFT SKILLS<br/>12%"]
+    INPUT --> D6["6. TECHNOLOGY<br/>8%"]
+    INPUT --> D7["7. LOCATION<br/>8%"]
+    
+    D1 --> SUM[Weighted Sum]
+    D2 --> SUM
+    D3 --> SUM
+    D4 --> SUM
+    D5 --> SUM
+    D6 --> SUM
+    D7 --> SUM
+    
+    SUM --> OUTPUT([Match Score<br/>0-100])
+    
+    style INPUT fill:#e1f5ff
+    style OUTPUT fill:#d4edda
+    style D1 fill:#fff3cd
+    style D2 fill:#fff3cd
+    style D3 fill:#fff3cd
+    style D4 fill:#fff3cd
+    style D5 fill:#fff3cd
+    style D6 fill:#fff3cd
+    style D7 fill:#fff3cd
+    style SUM fill:#f8d7da

@@ -1,0 +1,62 @@
+graph TB
+    subgraph "TẦNG ĐIỂM SỐ HỆ THỐNG"
+        direction TB
+        
+        subgraph Layer1["TẦNG 1: MATCHING SCORE<br/>(Điểm Khớp CV-Job)"]
+            direction LR
+            M1["Skills<br/>30%"]
+            M2["Experience<br/>18%"]
+            M3["Title<br/>12%"]
+            M4["Education<br/>12%"]
+            M5["Soft Skills<br/>12%"]
+            M6["Technology<br/>8%"]
+            M7["Location<br/>8%"]
+            M1 --> MS["Match Score<br/>0-100"]
+            M2 --> MS
+            M3 --> MS
+            M4 --> MS
+            M5 --> MS
+            M6 --> MS
+            M7 --> MS
+        end
+        
+        subgraph Layer2["TẦNG 2: INTERVIEW FEEDBACK SCORE<br/>(Điểm Phản Hồi Phỏng Vấn)"]
+            direction LR
+            I1["Length<br/>15%"]
+            I2["Structure<br/>20%"]
+            I3["Examples<br/>20%"]
+            I4["Confidence<br/>15%"]
+            I5["Keyword Match<br/>15%"]
+            I6["Relevance<br/>15%"]
+            I1 --> IS["Overall Score<br/>0-100<br/>(5 Categories)"]
+            I2 --> IS
+            I3 --> IS
+            I4 --> IS
+            I5 --> IS
+            I6 --> IS
+            IS --> IR["Recommendation<br/>HIRE / MAYBE / NO"]
+        end
+        
+        subgraph Layer3["TẦNG 3: ENGAGEMENT SCORE<br/>(Điểm Tương Tác/Hành Vi)"]
+            direction LR
+            E1["Job Views<br/>Views Count"]
+            E2["Job Clicks<br/>Clicks Count"]
+            E3["Application<br/>Applied Status"]
+            E1 --> ES["Engagement<br/>Metrics"]
+            E2 --> ES
+            E3 --> ES
+        end
+        
+        MS --> Final["TỔNG HỢP ĐÁNH GIÁ<br/>ỨNG VIÊN"]
+        IS --> Final
+        ES --> Final
+        
+        Final --> Decision["QUYẾT ĐỊNH TUYỂN DỤNG"]
+    end
+    
+    style Layer1 fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Layer2 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Layer3 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style Final fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style Decision fill:#ffebee,stroke:#c62828,stroke-width:3px
+
