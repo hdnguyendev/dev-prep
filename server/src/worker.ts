@@ -22,6 +22,13 @@ import companyRoutes from "./routes/companies";
 import reviewRoutes from "./routes/reviews";
 import savedJobRoutes from "./routes/savedJobs";
 import companyFollowRoutes from "./routes/companyFollows";
+import offerRoutes from "./routes/offers";
+import notificationRoutes from "./routes/notifications";
+import matchingRoutes from "./routes/matching";
+import jobRoutes from "./routes/jobs";
+import membershipRoutes from "./routes/membership";
+import candidateProfileRoutes from "./routes/candidateProfiles";
+import aiRoutes from "./routes/ai";
 
 // Cloudflare Workers environment bindings
 type Env = {
@@ -166,6 +173,13 @@ app.route("/companies", companyRoutes);
 app.route("/reviews", reviewRoutes);
 app.route("/saved-jobs", savedJobRoutes);
 app.route("/company-follows", companyFollowRoutes);
+app.route("/notifications", notificationRoutes);
+app.route("/matching", matchingRoutes);
+app.route("/jobs", jobRoutes);
+app.route("/membership", membershipRoutes);
+app.route("/candidate-profiles", candidateProfileRoutes);
+app.route("/ai", aiRoutes);
+app.route("/offers", offerRoutes);
 app.route("/", crudRoutes);
 app.route("/", swaggerRoutes);
 
